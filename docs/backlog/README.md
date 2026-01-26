@@ -47,6 +47,11 @@ Deze backlog is de single source of truth voor uitvoering van VVE Tooling MVP. A
   - [STORY-003 Bewoner ziet eigen status](stories/STORY-003-bewoner-ziet-eigen-status.md)
   - [STORY-004 Bestuur uploadt document](stories/STORY-004-bestuur-upload-document.md)
   - [STORY-005 Rol-gebaseerd inloggen](stories/STORY-005-inloggen-rol-gebaseerd.md)
+  - [STORY-006 Begroting opstellen en exporteren](stories/STORY-006-begroting-opstellen.md)
+  - [STORY-007 Onboarding wizard voor meerdere rollen](stories/STORY-007-onboarding-wizard-multi-role.md)
+  - [STORY-008 Documenten delen en downloaden](stories/STORY-008-documenten-delen-en-downloaden.md)
+  - [STORY-009 Rol-specifiek dashboard raamwerk](stories/STORY-009-rolspecifiek-dashboard-raamwerk.md)
+  - [STORY-010 Audit logging zichtbaar in UI](stories/STORY-010-audit-logging-ui.md)
 - **Decision log**
   - [Open vragen](decision-log/01-open-vragen.md)
   - [Besluiten](decision-log/02-besluiten.md)
@@ -93,3 +98,8 @@ Deze backlog is de single source of truth voor uitvoering van VVE Tooling MVP. A
 | STORY-003 | docs/backlog/stories/STORY-003-bewoner-ziet-eigen-status.md, docs/ux/design/02-bewoner-flows.md |
 | STORY-004 | docs/backlog/stories/STORY-004-bestuur-upload-document.md, docs/ui/components/feedback-notifications.md |
 | STORY-005 | docs/backlog/stories/STORY-005-inloggen-rol-gebaseerd.md, docs/ux/design/02-bewoner-flows.md |
+| STORY-006 | docs/backlog/stories/STORY-006-begroting-opstellen.md, docs/ui/components/lists-tables.md |
+| STORY-007 | docs/backlog/stories/STORY-007-onboarding-wizard-multi-role.md, docs/ux/design/03-beheerder-flows.md, docs/ux/design/04-bestuur-flows.md, docs/ux/design/02-bewoner-flows.md |
+| STORY-008 | docs/backlog/stories/STORY-008-documenten-delen-en-downloaden.md, docs/ui/components/feedback-notifications.md |
+| STORY-009 | docs/backlog/stories/STORY-009-rolspecifiek-dashboard-raamwerk.md, docs/ux/design/02-bewoner-flows.md, docs/ux/design/03-beheerder-flows.md, docs/ux/design/04-bestuur-flows.md, docs/architecture/constraints/01-randvoorwaarden-ux-development.md |
+| STORY-010 | docs/backlog/stories/STORY-010-audit-logging-ui.md, docs/ui/components/lists-tables.md |
