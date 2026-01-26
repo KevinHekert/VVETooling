@@ -4,8 +4,10 @@
 - **Datum**: 2026-01-26 (Updated: 2026-01-26)
 - **Eigenaar**: Product Management
 - **Status**: Final
-- **Versie**: 2.0
-- **Changelog**: v2.0 - Multi-user platform requirement (EP-009 toegevoegd, alle epics ge-update)
+- **Versie**: 2.1
+- **Changelog**: 
+  - v2.1 - Epics herbekeken vanuit PM perspectief: EP-004, EP-005, EP-006 ge-update om beter aan te sluiten bij multi-user doelstellingen en VvE onboarding voor alle rollen
+  - v2.0 - Multi-user platform requirement (EP-009 toegevoegd, alle epics ge-update)
 
 ## Bronverwijzingen
 Dit document is gebaseerd op:
