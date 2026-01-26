@@ -28,6 +28,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   // Bewoner items
   { label: 'Mijn Status', href: '/dashboard/bewoner', icon: '🏠', roles: ['bewoner', 'bestuurslid', 'penningmeester', 'beheerder'] },
+  { label: 'Mijn Reserves', href: '/dashboard/bewoner/reserves', icon: '🏦', roles: ['bewoner', 'bestuurslid'] },
   
   // Penningmeester/Beheerder items
   { label: 'Transacties', href: '/dashboard/penningmeester/transactions', icon: '💰', roles: ['penningmeester', 'beheerder'] },

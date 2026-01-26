@@ -31,6 +31,7 @@ Deze directory bevat implementatierapporten voor elke voltooide user story. Elk 
 | STORY-017 | Onboarding uitnodigingen en herinneringen | ✅ Geïmplementeerd | [STORY-017-implementatie.md](STORY-017-implementatie.md) |
 | STORY-021 | Auth & RBAC UI beheer | ✅ Geïmplementeerd | [STORY-021-implementatie.md](STORY-021-implementatie.md) |
 | STORY-025 | Notificaties en toasts consistent raamwerk | ✅ Geïmplementeerd | [STORY-025-implementatie.md](STORY-025-implementatie.md) |
+| STORY-028 | Mobile-first reserves dashboard | ✅ Geïmplementeerd | [STORY-028-implementatie.md](STORY-028-implementatie.md) |
 
 ## Template
 Gebruik de [template](TEMPLATE-implementatierapport.md) voor nieuwe rapporten.
