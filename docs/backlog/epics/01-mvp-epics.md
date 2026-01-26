@@ -37,7 +37,7 @@ Dit document definieert **Epics** voor VVE Tooling MVP. Elke epic is:
 | EP-006 | Bestuur en bewoners kunnen documenten inzien en delen | P0 | To Do | MVP Q2 |
 | EP-007 | VVE kan data exporteren en back-uppen | P1 | To Do | MVP Q2/Q3 |
 | EP-008 | VVE kan betalen voor platform (flat fee) | P0 | To Do | MVP Q2 |
-| **EP-009** | **Voorzitter en Bewoners kunnen inloggen en platform gebruiken** | **P0** | **To Do** | **MVP Q2** |
+| **EP-009** | **Bestuursleden en Bewoners kunnen inloggen en platform gebruiken** | **P0** | **To Do** | **MVP Q2** |
 
 ---
 
@@ -210,21 +210,21 @@ Penningmeesters kunnen **binnen 1-2 uur** een complete, VVE-conforme jaarrekenin
 ## EP-004: VVE kan snel en foutloos onboarden met alle gebruikers
 
 ### Probleemomschrijving
-VVE's hebben **moeite om het platform te implementeren** als complete organisatie. Penningmeesters moeten niet alleen zelf leren werken met de software, maar ook **voorzitter en bewoners activeren** om het platform te gebruiken. Als de onboarding te complex is of te veel tijd kost, haken ze af en blijven ze bij Excel en WhatsApp.
+VVE's hebben **moeite om het platform te implementeren** als complete organisatie. Penningmeesters moeten niet alleen zelf leren werken met de software, maar ook **andere bestuursleden en bewoners activeren** om het platform te gebruiken. Als de onboarding te complex is of te veel tijd kost, haken ze af en blijven ze bij Excel en WhatsApp.
 
 **User pain points**:
 - **Penningmeester**: "Ik heb geen tijd om een handleiding te lezen én ook nog anderen te helpen"
-- **Penningmeester**: "Hoe krijg ik voorzitter en bewoners ook aan boord?"
-- **Voorzitter**: "Ik wil snel kunnen zien waar we staan, zonder uitleg nodig te hebben"
+- **Penningmeester**: "Hoe krijg ik andere bestuursleden en bewoners ook aan boord?"
+- **Bestuurslid (voorzitter/secretaris)**: "Ik wil snel kunnen zien waar we staan, zonder uitleg nodig te hebben"
 - **Bewoner**: "Ik heb geen technische achtergrond, moet dit simpel zijn"
 - **Algemeen**: "We willen als VVE snel kunnen starten zonder lange training"
 
 ### Doelstelling
-**80%+ VVE's** kunnen binnen **1 uur** volledig inrichten (VVE setup + gebruikers activeren) en **alle rollen** (penningmeester, voorzitter, bewoners) kunnen direct waarde halen uit het platform, **zonder hulp** van support.
+**80%+ VVE's** kunnen binnen **1 uur** volledig inrichten (VVE setup + gebruikers activeren) en **alle rollen** (penningmeester, bestuursleden, bewoners) kunnen direct waarde halen uit het platform, **zonder hulp** van support.
 
 **Specifiek**:
 - Penningmeester: VVE inrichten en eerste transacties toevoegen (<30 min)
-- Voorzitter: Uitnodiging accepteren en dashboard zien (<10 min)
+- Bestuursleden (voorzitter, secretaris, etc.): Uitnodiging accepteren en dashboard zien (<10 min)
 - Bewoners: Account aanmaken en eigen status bekijken (<5 min)
 
 ### In Scope
@@ -237,15 +237,15 @@ VVE's hebben **moeite om het platform te implementeren** als complete organisati
 - Eerste transacties toevoegen (tutorial)
 
 **Gebruikers Activeren (Penningmeester)**:
-- Voorzitter/bestuur uitnodigen (stap in onboarding wizard)
+- Bestuursleden uitnodigen (stap in onboarding wizard)
 - Bewoners uitnodigen (bulk email invite met uitnodigingscode)
 - Uitleg/templates voor uitnodiging emails
 - Uitnodigingsstatus tracking (wie heeft geaccepteerd?)
 
-**Onboarding voor Voorzitter/Bestuur**:
-- Welkom email met duidelijke uitleg wat ze kunnen doen
+**Onboarding voor Bestuursleden**:
+- Welkom email met duidelijke uitleg wat ze kunnen doen (rol-specifiek: voorzitter, secretaris, etc.)
 - Korte tour van dashboard (tooltips, highlight key features)
-- Quick start guide specifiek voor voorzitter rol
+- Quick start guide per bestuursrol (voorzitter: overzicht, secretaris: documenten, etc.)
 
 **Onboarding voor Bewoners**:
 - Simpele account aanmaak flow (email + wachtwoord + uitnodigingscode)
@@ -254,7 +254,7 @@ VVE's hebben **moeite om het platform te implementeren** als complete organisati
 - Mobile-first design (meeste bewoners op smartphone)
 
 **Help & Tutorials (Rol-specifiek)**:
-- Video tutorials per rol (penningmeester, voorzitter, bewoner)
+- Video tutorials per rol (penningmeester, bestuursleden, bewoner)
 - Tooltips en inline help
 - FAQ sectie (rol-specifiek)
 - Progress indicator (% complete)
@@ -276,18 +276,18 @@ VVE's hebben **moeite om het platform te implementeren** als complete organisati
 **Quantitative - Gebruikers Activatie**:
 - ✅ Gemiddeld 3+ gebruikers uitgenodigd per VVE tijdens onboarding
 - ✅ 60%+ acceptance rate van uitnodigingen (binnen 7 dagen)
-- ✅ 70%+ voorzitters loggen in binnen 24u na uitnodiging
+- ✅ 70%+ bestuursleden loggen in binnen 24u na uitnodiging
 - ✅ 30%+ bewoners loggen in binnen 7 dagen na uitnodiging
 
 **Quantitative - Time to Value**:
 - ✅ 60%+ penningmeesters voegen transacties toe binnen 24u na signup
-- ✅ 50%+ voorzitters checken dashboard binnen 48u
+- ✅ 50%+ bestuursleden checken dashboard binnen 48u
 - ✅ 20%+ bewoners bekijken hun status binnen 7 dagen
 
 **Qualitative**:
 - ✅ "Zo makkelijk om te starten, zelfs voor onze bewoners!" (penningmeester feedback)
 - ✅ "Ik had geen hulp nodig om te beginnen" (alle rollen)
-- ✅ "Fijn dat iedereen direct kan inloggen" (voorzitter feedback)
+- ✅ "Fijn dat iedereen direct kan inloggen" (bestuurslid feedback)
 - ✅ Onboarding is geen blocker voor adoptie (alle gebruikersgroepen)
 
 ### Herleidbaarheid
@@ -304,16 +304,16 @@ VVE's hebben **moeite om het platform te implementeren** als complete organisati
 - [ ] Wizard heeft duidelijke stappen: VVE info → Splitsing → Eigenaren → Reserves → Gebruikers uitnodigen → First transaction
 - [ ] Wizard heeft progress indicator (stap X van Y)
 - [ ] Wizard heeft skip optie (kunnen later invullen)
-- [ ] Wizard bevat stap: "Nodig voorzitter en bewoners uit" met uitleg waarom dit belangrijk is
+- [ ] Wizard bevat stap: "Nodig bestuursleden en bewoners uit" met uitleg waarom dit belangrijk is
 - [ ] Penningmeester kan bulk email uitnodigingen versturen naar bewoners
 - [ ] Penningmeester ziet status van uitnodigingen (geaccepteerd/pending)
 
-**Voorzitter/Bestuur Onboarding**:
-- [ ] Voorzitter ontvangt duidelijke uitnodiging email met uitleg van hun rol
-- [ ] Voorzitter kan eenvoudig account aanmaken via uitnodigingslink
-- [ ] Voorzitter ziet welkom tour bij eerste login (5-10 seconden, key features)
-- [ ] Voorzitter ziet direct dashboard met financieel overzicht (geen lege state)
-- [ ] Help sectie heeft quick start guide voor voorzitter rol
+**Bestuursleden Onboarding**:
+- [ ] Bestuursleden ontvangen duidelijke uitnodiging email met uitleg van hun rol
+- [ ] Bestuursleden kunnen eenvoudig account aanmaken via uitnodigingslink
+- [ ] Bestuursleden zien welkom tour bij eerste login (5-10 seconden, key features)
+- [ ] Bestuursleden zien direct dashboard met financieel overzicht (geen lege state)
+- [ ] Help sectie heeft quick start guide per bestuursrol (voorzitter: leiding/overzicht, secretaris: documenten/notulen, etc.)
 
 **Bewoner Onboarding**:
 - [ ] Bewoner ontvangt simpele, vriendelijke uitnodiging email ("Bekijk jouw VVE")
@@ -405,30 +405,30 @@ VVE's beheren **gevoelige financiële data** van de organisatie en alle eigenare
 ## EP-006: Bestuur en bewoners kunnen documenten inzien en delen
 
 ### Probleemomschrijving
-VVE's ontvangen **veel documenten** (facturen, contracten, notulen, vergaderstukken, etc.) en hebben **geen centrale plek** om deze op te slaan en te delen met bestuur en bewoners. Nu gebruiken ze Google Drive, email of fysieke archieven, wat **versnipperd en onoverzichtelijk** is. **Bewoners moeten steeds vragen** om documenten en **voorzitters kunnen niet zelfstandig** documenten uploaden of inzien.
+VVE's ontvangen **veel documenten** (facturen, contracten, notulen, vergaderstukken, etc.) en hebben **geen centrale plek** om deze op te slaan en te delen met bestuur en bewoners. Nu gebruiken ze Google Drive, email of fysieke archieven, wat **versnipperd en onoverzichtelijk** is. **Bewoners moeten steeds vragen** om documenten en **bestuursleden kunnen niet allemaal zelfstandig** documenten uploaden of inzien.
 
 **User pain points**:
 - **Penningmeester**: "Ik moet facturen zoeken in mijn email of WhatsApp"
-- **Voorzitter**: "Ik kan notulen niet zelf uploaden, moet het naar penningmeester sturen"
+- **Secretaris**: "Ik kan notulen niet zelf uploaden, moet het naar penningmeester sturen"
 - **Bewoner**: "Ik moet steeds vragen om de jaarrekening of notulen"
 - **Bestuur**: "Delen met bewoners is omslachtig (email attachments naar 25 mensen)"
 - **Algemeen**: "Ik heb geen overzicht van wat er wel/niet is opgeslagen"
 
 ### Doelstelling
-**Bestuur** (penningmeester en voorzitter) kan **binnen seconden** documenten uploaden en organiseren. **Alle gebruikers** (inclusief bewoners) kunnen **direct en zelfstandig** documenten inzien en downloaden, met **100% overzicht** van alle VVE documenten.
+**Bestuur** (alle bestuursleden) kan **binnen seconden** documenten uploaden en organiseren. **Alle gebruikers** (inclusief bewoners) kunnen **direct en zelfstandig** documenten inzien en downloaden, met **100% overzicht** van alle VVE documenten.
 
 **Specifiek**:
-- Penningmeester: Uploaden, organiseren, categoriseren
-- Voorzitter/Bestuur: Uploaden (bijv. notulen, correspondentie), inzien alles
+- Penningmeester: Uploaden, organiseren, categoriseren, linken aan transacties
+- Bestuursleden (voorzitter, secretaris, etc.): Uploaden (bijv. notulen, correspondentie), inzien alles
 - Bewoners: Inzien en downloaden (self-service, geen vragen meer hoeven stellen)
 
 ### In Scope
-- Documenten uploaden (PDF, JPG, etc.) - Penningmeester en Voorzitter/Bestuur
+- Documenten uploaden (PDF, JPG, etc.) - Alle bestuursleden (penningmeester, secretaris, voorzitter, etc.)
 - Documenten categoriseren (factuur, contract, notulen, vergaderstukken, etc.)
 - Documenten linken aan transacties (factuur → uitgave) - alleen Penningmeester
 - Documenten zoeken en filteren - alle gebruikers
 - Alle gebruikers kunnen documenten inzien en downloaden (self-service)
-- Rol-gebaseerde upload rechten (Penningmeester + Voorzitter kunnen uploaden, Bewoners alleen lezen)
+- Rol-gebaseerde upload rechten (Bestuursleden kunnen uploaden, Bewoners alleen lezen)
 - Basis document viewer (PDF preview in platform)
 - Automatisch delen: Alle documenten zijn direct zichtbaar voor alle gebruikers (transparantie)
 
@@ -442,7 +442,7 @@ VVE's ontvangen **veel documenten** (facturen, contracten, notulen, vergaderstuk
 ### Succesindicatoren
 **Quantitative**:
 - ✅ 60%+ penningmeesters uploaden minimaal 5 documenten
-- ✅ 30%+ voorzitters uploaden minimaal 1 document (bijv. notulen)
+- ✅ 30%+ bestuursleden (secretaris, voorzitter, etc.) uploaden minimaal 1 document (bijv. notulen, correspondentie)
 - ✅ 40%+ bewoners openen minimaal 1 document per maand
 - ✅ <30 sec om document te uploaden en categoriseren
 - ✅ 50%+ van documenten wordt geopend door minimaal 1 bewoner (engagement)
@@ -451,6 +451,7 @@ VVE's ontvangen **veel documenten** (facturen, contracten, notulen, vergaderstuk
 - ✅ "Eindelijk alles op 1 plek, iedereen kan het zien" (bestuur feedback)
 - ✅ "Fijn dat ik niet meer hoef te vragen om documenten" (bewoner feedback)
 - ✅ "Bespaart me tijd in email verkeer" (penningmeester feedback)
+- ✅ "Secretaris kan nu zelf notulen uploaden" (bestuur feedback)
 - ✅ Document feature is in top 5 most used features
 
 ### Herleidbaarheid
@@ -460,15 +461,15 @@ VVE's ontvangen **veel documenten** (facturen, contracten, notulen, vergaderstuk
 
 ### Acceptance Criteria (High-Level)
 - [ ] Penningmeester kan documenten uploaden (drag & drop)
-- [ ] Voorzitter/Bestuur kan documenten uploaden (drag & drop)
-- [ ] Beide kunnen documenten categoriseren (type: factuur, contract, notulen, vergaderstuk, etc.)
+- [ ] Bestuursleden (secretaris, voorzitter, etc.) kunnen documenten uploaden (drag & drop)
+- [ ] Alle bestuursleden kunnen documenten categoriseren (type: factuur, contract, notulen, vergaderstuk, etc.)
 - [ ] Penningmeester kan documenten linken aan transactie
 - [ ] Alle gebruikers kunnen documenten zoeken en filteren (naam, type, datum, categorie)
 - [ ] Alle gebruikers kunnen documenten bekijken en downloaden (self-service)
 - [ ] Bewoners zien direct nieuwe documenten in hun dashboard (transparantie)
 - [ ] Systeem toont document preview (PDF viewer, werkt op mobile)
 - [ ] Penningmeester kan documenten verwijderen (met confirmation)
-- [ ] Document upload werkt goed op mobile (voor voorzitters en bewoners die onderweg documenten willen uploaden)
+- [ ] Document upload werkt goed op mobile (voor bestuursleden en bewoners die onderweg documenten willen uploaden)
 
 ---
 
@@ -581,31 +582,31 @@ Freemium business model vereist **smooth upgrade path** van gratis naar betaald.
 
 ---
 
-## EP-009: Voorzitter en Bewoners kunnen inloggen en platform gebruiken
+## EP-009: Bestuursleden en Bewoners kunnen inloggen en platform gebruiken
 
 ### Probleemomschrijving
-VVE's hebben **gebrek aan transparantie en samenwerking** omdat alleen de penningmeester toegang heeft tot financiële informatie en documenten. **Voorzitters moeten constant penningmeester om updates vragen**, en **bewoners blijven passief** omdat ze geen inzicht hebben in waar hun contributie naartoe gaat. Dit leidt tot **wantrouwen, miscommunicatie en lage betrokkenheid**.
+VVE's hebben **gebrek aan transparantie en samenwerking** omdat alleen de penningmeester toegang heeft tot financiële informatie en documenten. **Bestuursleden moeten constant penningmeester om updates vragen**, en **bewoners blijven passief** omdat ze geen inzicht hebben in waar hun contributie naartoe gaat. Dit leidt tot **wantrouwen, miscommunicatie en lage betrokkenheid**.
 
 **User pain points**:
-- **Voorzitter**: "Ik moet penningmeester constant mailen voor een financieel overzicht"
-- **Voorzitter**: "Ik kan niet zelf controleren of de cijfers kloppen"
+- **Bestuurslid (voorzitter)**: "Ik moet penningmeester constant mailen voor een financieel overzicht"
+- **Bestuurslid (secretaris)**: "Ik kan niet zelf controleren of de cijfers kloppen"
 - **Bewoner**: "Ik weet niet waar mijn contributie aan uitgegeven wordt"
 - **Bewoner**: "Ik moet altijd naar ALV komen om documenten te krijgen"
-- **Penningmeester**: "Ik krijg steeds dezelfde vragen van bewoners over hetzelfde"
+- **Penningmeester**: "Ik krijg steeds dezelfde vragen van bestuursleden en bewoners over hetzelfde"
 
 ### Doelstelling
-**Alle VVE leden** (voorzitter, bestuursleden, bewoners) kunnen **inloggen** en toegang krijgen tot relevante informatie op basis van hun rol, met **100% transparantie** en **rol-gebaseerde permissions**.
+**Alle VVE leden** (bestuursleden en bewoners) kunnen **inloggen** en toegang krijgen tot relevante informatie op basis van hun rol, met **100% transparantie** en **rol-gebaseerde permissions**.
 
 **Success target**:
-- **100% van VVE's** heeft minimaal 3 actieve gebruikers (penningmeester + voorzitter + bewoners)
+- **100% van VVE's** heeft minimaal 3 actieve gebruikers (penningmeester + andere bestuursleden + bewoners)
 - **30%+ bewoners** maken account aan en loggen in minimaal 1x per maand
-- **Voorzitters loggen minimaal 1x per week** in om financiën te checken
+- **Bestuursleden loggen minimaal 1x per week** in om financiën en documenten te checken
 
 ### In Scope
 - **User Management**:
   - Penningmeester kan gebruikers uitnodigen (email invite)
   - Gebruikers kunnen account aanmaken met uitnodigingscode
-  - Rollen toewijzen: Penningmeester (admin), Voorzitter/Bestuur (collaborator), Bewoner (read-only)
+  - Rollen toewijzen: Penningmeester (admin), Bestuurslid (collaborator), Bewoner (read-only)
   - Gebruikers activeren/deactiveren
   
 - **Permissions & Roles**:
@@ -613,7 +614,7 @@ VVE's hebben **gebrek aan transparantie en samenwerking** omdat alleen de pennin
     - Volledige toegang: alles zien, alles doen
     - Gebruikers beheren
     - Financiële transacties toevoegen/wijzigen
-  - **Voorzitter/Bestuur (Collaborator)**:
+  - **Bestuurslid (Collaborator)** - voorzitter, secretaris, algemeen lid:
     - Lezen: Alle financiële data, documenten, rapportages
     - Schrijven beperkt: Documenten uploaden, opmerkingen toevoegen
     - Geen financiële transacties wijzigen
@@ -624,7 +625,7 @@ VVE's hebben **gebrek aan transparantie en samenwerking** omdat alleen de pennin
     
 - **Different Dashboards**:
   - **Penningmeester dashboard**: Financieel focus (transacties, reconciliatie, taken)
-  - **Voorzitter dashboard**: Overzicht focus (saldi, recente activiteiten, documenten)
+  - **Bestuurslid dashboard**: Overzicht focus (saldi, recente activiteiten, documenten) - aangepast per rol (voorzitter ziet strategisch overzicht, secretaris ziet documenten/notulen)
   - **Bewoner dashboard**: Transparantie focus (waar gaat geld naartoe, documenten, eigen status)
   
 - **Privacy & Security**:
@@ -643,33 +644,33 @@ VVE's hebben **gebrek aan transparantie en samenwerking** omdat alleen de pennin
 **Quantitative**:
 - ✅ 100% van VVE's heeft ≥3 actieve gebruikers
 - ✅ 30%+ van bewoners maken account aan en loggen ≥1x/maand in
-- ✅ 80%+ van voorzitters loggen ≥1x/week in
+- ✅ 80%+ van bestuursleden loggen ≥1x/week in
 - ✅ <10% support tickets over permissions/access
 
 **Qualitative**:
 - ✅ "Eindelijk weet ik waar mijn geld naartoe gaat" (bewoner feedback)
-- ✅ "Ik kan nu zelf de financiën checken" (voorzitter feedback)
-- ✅ "Ik krijg minder repetitieve vragen van bewoners" (penningmeester feedback)
+- ✅ "Ik kan nu zelf de financiën checken" (bestuurslid feedback)
+- ✅ "Ik krijg minder repetitieve vragen van bestuursleden en bewoners" (penningmeester feedback)
 - ✅ Multi-user is top 1 differentiator vs concurrenten
 
 ### Herleidbaarheid
 - **Probleemstatement**: docs/product/discovery/01-probleemdefinitie-productrichting.md - Primair Probleem (v2.0)
-- **Nieuwe requirement**: Voorzitter + bewoners moeten kunnen inloggen
+- **Nieuwe requirement**: Bestuursleden + bewoners moeten kunnen inloggen
 - **Prioriteit**: P0 - Core value proposition van het platform
 
 ### Acceptance Criteria (High-Level)
-- [ ] Penningmeester kan gebruikers uitnodigen via email (met rol: voorzitter/bestuur/bewoner)
+- [ ] Penningmeester kan gebruikers uitnodigen via email (met rol: bestuurslid/bewoner)
 - [ ] Uitgenodigde gebruikers ontvangen email met link + uitnodigingscode
 - [ ] Gebruikers kunnen account aanmaken met email + wachtwoord (+ uitnodigingscode)
 - [ ] System wijst correct rol toe op basis van uitnodiging
 - [ ] **Penningmeester** ziet admin dashboard met alle financiële tools
-- [ ] **Voorzitter** ziet overzicht dashboard met saldi, recente transacties, documenten (read-only financial data)
-- [ ] **Voorzitter** kan documenten uploaden (bijv. notulen)
+- [ ] **Bestuurslid** ziet overzicht dashboard met saldi, recente transacties, documenten (read-only financial data)
+- [ ] **Bestuurslid** kan documenten uploaden (bijv. notulen, correspondentie)
 - [ ] **Bewoner** ziet transparantie dashboard met: waar geld naartoe gaat, eigen betalingsstatus, documenten
 - [ ] **Bewoner** kan eigen contactgegevens updaten
 - [ ] Bewoners kunnen NIET andere bewoners' financiële data zien
-- [ ] Audit log toont wie wat heeft gedaan (toegankelijk voor penningmeester en voorzitter)
-- [ ] Penningmeester kan gebruikers deactiveren (bijv. bij vertrek uit VVE)
+- [ ] Audit log toont wie wat heeft gedaan (toegankelijk voor bestuur)
+- [ ] Penningmeester kan gebruikers deactiveren (bijv. bij vertrek uit VVE of einde bestuurslidmaatschap)
 - [ ] Email notificaties voor nieuwe documenten, belangrijke updates (opt-in)
 
 ---
