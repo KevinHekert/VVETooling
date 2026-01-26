@@ -1,0 +1,31 @@
+# VVE Tooling Backend - Dependencies
+# Python 3.12 + FastAPI
+
+# Core Framework
+fastapi==0.115.11
+uvicorn[standard]==0.34.0
+pydantic-settings==2.7.1
+
+# Database
+sqlalchemy==2.0.40
+asyncpg==0.30.0
+alembic==1.14.1
+
+# Authentication
+python-jose[cryptography]==3.4.0
+passlib[bcrypt]==1.7.4
+pydantic[email]==2.10.6
+
+# AWS Integration
+boto3==1.37.3
+
+# Security
+python-multipart==0.0.20
+
+# Testing
+pytest==8.3.5
+pytest-asyncio==0.25.3
+httpx==0.28.1
+
+# Development
+python-dotenv==1.0.1
