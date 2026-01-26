@@ -361,10 +361,6 @@ export default function NewBudgetPage() {
               </tfoot>
             </table>
           </div>
-
-          <p className="mt-3 text-xs text-gray-500">
-            Performance: &lt;2s op datasets tot het MVP-volume
-          </p>
         </div>
 
         {/* Form actions */}
