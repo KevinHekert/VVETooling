@@ -97,6 +97,41 @@ docs: add screenshots for STORY-XXX
 - Added test output screenshot
 ```
 
+## Verplichte Implementatierapporten
+
+### Vereiste
+**Elke voltooide user story MOET een implementatierapport hebben.**
+
+### Locatie
+Rapporten worden opgeslagen in:
+```
+docs/backlog/implementation-reports/
+├── README.md
+├── TEMPLATE-implementatierapport.md
+├── STORY-001-implementatie.md
+├── STORY-002-implementatie.md
+└── ...
+```
+
+### Inhoud Implementatierapport
+Elk rapport moet bevatten:
+1. **Documentinformatie** - Story ID, datum, implementatie door, status
+2. **Acceptatiecriteria Status** - Tabel met elk criterium en status (✅/⚠️/❌)
+3. **Technische Implementatie** - Backend endpoints, frontend pagina's, bestanden
+4. **Tests** - Lijst van tests, coverage, resultaten
+5. **Screenshots** - Links naar alle relevante screenshots
+6. **UX/UI Compliance** - Tabel met UX vereisten en status
+7. **Bekende Beperkingen** - Openstaande issues of limitaties
+8. **Gerelateerde Commits** - Commit hashes met beschrijving
+
+### Naming Convention
+```
+STORY-XXX-implementatie.md
+```
+
+### Template
+Gebruik altijd de template: [TEMPLATE-implementatierapport.md](../implementation-reports/TEMPLATE-implementatierapport.md)
+
 ## Definition of Done - AI Ontwikkeling
 
 Een AI-gegenereerde feature is **Done** wanneer:
@@ -119,9 +154,17 @@ Een AI-gegenereerde feature is **Done** wanneer:
 - [ ] Error states en feedback gedocumenteerd met screenshots
 - [ ] README of relevante docs bijgewerkt
 
+### Implementatierapport
+- [ ] Implementatierapport aangemaakt in `docs/backlog/implementation-reports/`
+- [ ] Alle acceptatiecriteria gedocumenteerd met status
+- [ ] Technische implementatie beschreven
+- [ ] Screenshots gelinkt in rapport
+- [ ] Bekende beperkingen gedocumenteerd
+
 ### Verificatie
 - [ ] Handmatige verificatie van functionaliteit
 - [ ] Screenshots geverifieerd in repository
+- [ ] Implementatierapport geverifieerd in repository
 - [ ] PR beschrijving bevat links naar screenshots
 
 ## Voorbeeld Workflow
@@ -143,11 +186,13 @@ Een AI-gegenereerde feature is **Done** wanneer:
    ↓
 8. Sla screenshots op in docs/screenshots/features/STORY-XXX/
    ↓
-9. Commit code + tests + screenshots
+9. Maak implementatierapport (gebruik TEMPLATE)
    ↓
-10. Verifieer screenshots aanwezig in repository
+10. Commit code + tests + screenshots + implementatierapport
    ↓
-11. Update PR beschrijving met screenshot links
+11. Verifieer screenshots en rapport aanwezig in repository
+   ↓
+12. Update PR beschrijving met screenshot links
 ```
 
 ## Tools voor Screenshots
