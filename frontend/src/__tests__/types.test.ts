@@ -168,4 +168,92 @@ describe('TypeScript Types', () => {
       expect(doc.is_public).toBe(true);
     });
   });
+
+  describe('Budget Types (STORY-006)', () => {
+    it('should define valid BudgetItem type', () => {
+      const item: import('@/types').BudgetItem = {
+        id: '123e4567-e89b-12d3-a456-426614174000',
+        category: 'maintenance',
+        description: 'Onderhoud gebouw',
+        planned_amount: 5000.00,
+        notes: 'Jaarlijks onderhoud',
+      };
+      
+      expect(item.category).toBe('maintenance');
+      expect(item.planned_amount).toBe(5000.00);
+    });
+
+    it('should define valid Budget type', () => {
+      const budget: import('@/types').Budget = {
+        id: '123e4567-e89b-12d3-a456-426614174000',
+        vve_id: '123e4567-e89b-12d3-a456-426614174001',
+        year: 2026,
+        name: 'Begroting 2026',
+        description: 'Jaarlijkse begroting',
+        status: 'draft',
+        created_at: '2026-01-26T00:00:00Z',
+        updated_at: '2026-01-26T00:00:00Z',
+        items: [
+          {
+            id: '123e4567-e89b-12d3-a456-426614174002',
+            category: 'maintenance',
+            description: 'Onderhoud',
+            planned_amount: 5000.00,
+          },
+        ],
+      };
+      
+      expect(budget.year).toBe(2026);
+      expect(budget.status).toBe('draft');
+      expect(budget.items).toHaveLength(1);
+    });
+
+    it('should accept valid BudgetStatus values', () => {
+      const statuses: import('@/types').BudgetStatus[] = ['draft', 'approved', 'archived'];
+      
+      expect(statuses).toHaveLength(3);
+    });
+
+    it('should define valid BudgetSummary type', () => {
+      const summary: import('@/types').BudgetSummary = {
+        total_planned: 8500.00,
+        by_category: {
+          'maintenance': 5000.00,
+          'energy': 2000.00,
+          'insurance': 1500.00,
+        },
+        item_count: 3,
+      };
+      
+      expect(summary.total_planned).toBe(8500.00);
+      expect(summary.item_count).toBe(3);
+      expect(summary.by_category['maintenance']).toBe(5000.00);
+    });
+
+    it('should define valid BudgetCreate type', () => {
+      const budgetCreate: import('@/types').BudgetCreate = {
+        year: 2026,
+        name: 'Begroting 2026',
+        description: 'Test begroting',
+        status: 'draft',
+        items: [
+          {
+            category: 'maintenance',
+            description: 'Onderhoud',
+            planned_amount: 5000.00,
+          },
+          {
+            category: 'energy',
+            description: 'Energie',
+            planned_amount: 2000.00,
+            notes: 'Geschat',
+          },
+        ],
+      };
+      
+      expect(budgetCreate.year).toBe(2026);
+      expect(budgetCreate.items).toHaveLength(2);
+      expect(budgetCreate.items[1].notes).toBe('Geschat');
+    });
+  });
 });
