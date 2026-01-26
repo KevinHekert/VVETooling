@@ -416,6 +416,7 @@ class Document(Base):
     """Document storage for VVE (FEAT-011: Documentbeheer).
 
     Implements STORY-004: Bestuur uploadt document.
+    Implements STORY-018: Document versiebeheer en rol-specifiek delen.
     Storage limits per D-004.
     """
 
@@ -437,6 +438,16 @@ class Document(Base):
     is_public: Mapped[bool] = mapped_column(
         Boolean, default=False
     )  # Visible to all members
+    # Version control (STORY-018)
+    version: Mapped[int] = mapped_column(default=1)
+    parent_document_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("documents.id", ondelete="SET NULL")
+    )
+    is_current_version: Mapped[bool] = mapped_column(Boolean, default=True)
+    # Role-based visibility (STORY-018)
+    visible_to_roles: Mapped[str] = mapped_column(
+        String(100), default="bewoner,penningmeester,bestuurslid,beheerder"
+    )
     uploaded_by_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
     )
@@ -446,6 +457,12 @@ class Document(Base):
 
     # Relationships
     vve: Mapped["VVE"] = relationship("VVE", back_populates="documents")
+    versions: Mapped[list["Document"]] = relationship(
+        "Document",
+        backref="parent_document",
+        remote_side=[id],
+        foreign_keys=[parent_document_id],
+    )
 
     __table_args__ = (Index("ix_documents_vve_id", "vve_id"),)
 

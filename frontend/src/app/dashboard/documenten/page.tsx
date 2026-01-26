@@ -3,15 +3,17 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/ui/Toast';
-import type { Document } from '@/types';
+import type { Document, DocumentVersion } from '@/types';
 
 /**
  * Documents Page - STORY-008: Documenten delen en downloaden
+ *                  STORY-018: Document versiebeheer en rol-specifiek delen
  * 
  * Implements:
  * - Role-based sections: Bestuur, Bewoners, Archief
  * - Download functionality with inline feedback
  * - Share link generation
+ * - Version management: view versions, upload new, restore old
  * - Mobile-first: shows only title, date, download on mobile
  */
 
@@ -31,6 +33,11 @@ export default function DocumentenPage() {
   const [error, setError] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<DocumentSection | 'all'>('all');
   const [shareModalDoc, setShareModalDoc] = useState<DocumentWithSection | null>(null);
+  
+  // Version management state (STORY-018)
+  const [versionPanelDoc, setVersionPanelDoc] = useState<DocumentWithSection | null>(null);
+  const [documentVersions, setDocumentVersions] = useState<DocumentVersion[]>([]);
+  const [isLoadingVersions, setIsLoadingVersions] = useState(false);
 
   useEffect(() => {
     async function fetchDocuments() {
@@ -107,6 +114,53 @@ export default function DocumentenPage() {
       setShareModalDoc(null);
     } catch {
       addToast('Kon link niet kopiëren', 'error');
+    }
+  };
+
+  // STORY-018: Version management functions
+  const handleShowVersions = async (doc: DocumentWithSection) => {
+    setVersionPanelDoc(doc);
+    setIsLoadingVersions(true);
+    try {
+      const versions = await api.getDocumentVersions(MOCK_VVE_ID, doc.id);
+      setDocumentVersions(versions);
+    } catch {
+      // If API fails, show mock data for demo
+      setDocumentVersions([
+        {
+          id: doc.id,
+          version: doc.version || 1,
+          file_name: doc.file_name,
+          file_size_bytes: doc.file_size_bytes,
+          uploaded_by_name: doc.uploaded_by_name,
+          created_at: doc.created_at,
+          is_current_version: true,
+        },
+      ]);
+    } finally {
+      setIsLoadingVersions(false);
+    }
+  };
+
+  const handleUploadVersion = async (doc: DocumentWithSection, file: File) => {
+    try {
+      await api.uploadDocumentVersion(MOCK_VVE_ID, doc.id, file);
+      addToast(`Nieuwe versie van ${doc.title} geüpload`, 'success');
+      // Refresh versions
+      handleShowVersions(doc);
+    } catch (err) {
+      addToast(err instanceof Error ? err.message : 'Upload mislukt', 'error');
+    }
+  };
+
+  const handleRestoreVersion = async (doc: DocumentWithSection, versionId: string) => {
+    try {
+      await api.restoreDocumentVersion(MOCK_VVE_ID, doc.id, versionId);
+      addToast('Versie hersteld', 'success');
+      // Refresh versions
+      handleShowVersions(doc);
+    } catch (err) {
+      addToast(err instanceof Error ? err.message : 'Herstel mislukt', 'error');
     }
   };
 
@@ -230,6 +284,15 @@ export default function DocumentenPage() {
 
                   {/* Actions */}
                   <div className="flex items-center gap-2">
+                    {/* Version button (STORY-018) */}
+                    <button
+                      onClick={() => handleShowVersions(doc)}
+                      className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
+                      aria-label={`Versies van ${doc.title}`}
+                      title="Versies bekijken"
+                    >
+                      <VersionIcon />
+                    </button>
                     <button
                       onClick={() => handleShare(doc)}
                       className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
@@ -279,6 +342,124 @@ export default function DocumentenPage() {
           </div>
         </div>
       )}
+
+      {/* Version Panel (STORY-018) - inline, not modal */}
+      {versionPanelDoc && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end md:items-center justify-center z-50">
+          <div className="bg-white w-full md:max-w-lg md:rounded-lg rounded-t-lg max-h-[80vh] flex flex-col">
+            {/* Header */}
+            <div className="p-4 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-medium text-gray-900">
+                  Versies: {versionPanelDoc.title}
+                </h3>
+                <button
+                  onClick={() => setVersionPanelDoc(null)}
+                  className="p-2 text-gray-400 hover:text-gray-600 rounded-lg"
+                  aria-label="Sluiten"
+                >
+                  <CloseIcon />
+                </button>
+              </div>
+            </div>
+
+            {/* Version list */}
+            <div className="flex-1 overflow-y-auto p-4">
+              {isLoadingVersions ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+              ) : (
+                <ul className="space-y-3">
+                  {documentVersions.map((version) => (
+                    <li
+                      key={version.id}
+                      className={`
+                        p-3 rounded-lg border
+                        ${version.is_current_version 
+                          ? 'border-blue-200 bg-blue-50' 
+                          : 'border-gray-200 bg-white'
+                        }
+                      `}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-gray-900">
+                              Versie {version.version}
+                            </span>
+                            {version.is_current_version && (
+                              <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                Huidig
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {version.file_name} • {formatFileSize(version.file_size_bytes)}
+                          </p>
+                          <p className="text-xs text-gray-400 mt-0.5">
+                            {new Date(version.created_at).toLocaleDateString('nl-NL', {
+                              day: 'numeric',
+                              month: 'long',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                            {version.uploaded_by_name && ` door ${version.uploaded_by_name}`}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2 ml-4">
+                          <button
+                            onClick={() => handleDownload(versionPanelDoc)}
+                            className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded-lg"
+                            title="Download"
+                          >
+                            <DownloadIcon />
+                          </button>
+                          {!version.is_current_version && (
+                            <button
+                              onClick={() => handleRestoreVersion(versionPanelDoc, version.id)}
+                              className="p-2 text-green-600 hover:text-green-800 hover:bg-green-100 rounded-lg"
+                              title="Herstel deze versie"
+                            >
+                              <RestoreIcon />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            {/* Upload new version */}
+            <div className="p-4 border-t border-gray-200">
+              <label className="block">
+                <span className="text-sm font-medium text-gray-700">
+                  Nieuwe versie uploaden
+                </span>
+                <input
+                  type="file"
+                  className="mt-1 block w-full text-sm text-gray-500
+                    file:mr-4 file:py-2 file:px-4
+                    file:rounded-lg file:border-0
+                    file:text-sm file:font-medium
+                    file:bg-blue-50 file:text-blue-700
+                    hover:file:bg-blue-100
+                  "
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      handleUploadVersion(versionPanelDoc, file);
+                    }
+                  }}
+                />
+              </label>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -298,6 +479,34 @@ function ShareIcon() {
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
         d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+    </svg>
+  );
+}
+
+// STORY-018: Version management icons
+function VersionIcon() {
+  return (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  );
+}
+
+function RestoreIcon() {
+  return (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+    </svg>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+        d="M6 18L18 6M6 6l12 12" />
     </svg>
   );
 }

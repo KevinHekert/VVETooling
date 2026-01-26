@@ -231,6 +231,51 @@ class ApiClient {
     });
   }
 
+  // Document versions (STORY-018)
+  async getDocumentVersions(vveId: string, documentId: string) {
+    return this.fetch<import('@/types').DocumentVersion[]>(
+      `/vves/${vveId}/documents/${documentId}/versions`
+    );
+  }
+
+  async uploadDocumentVersion(
+    vveId: string,
+    documentId: string,
+    file: File
+  ): Promise<import('@/types').Document> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const token = typeof window !== 'undefined' 
+      ? localStorage.getItem('access_token') 
+      : null;
+
+    const response = await fetch(
+      `${this.baseUrl}/vves/${vveId}/documents/${documentId}/versions`,
+      {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: 'Versie upload mislukt' }));
+      throw new Error(error.detail);
+    }
+
+    return response.json();
+  }
+
+  async restoreDocumentVersion(vveId: string, documentId: string, versionId: string) {
+    return this.fetch<import('@/types').Document>(
+      `/vves/${vveId}/documents/${documentId}/versions/${versionId}/restore`,
+      {
+        method: 'POST',
+      }
+    );
+  }
+
   // Budgets (STORY-006)
   async getBudgets(vveId: string) {
     return this.fetch<import('@/types').Budget[]>(

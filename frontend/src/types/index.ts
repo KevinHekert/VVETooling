@@ -165,7 +165,7 @@ export interface BewonersStatus {
   next_due_date?: string;
 }
 
-// Document types (STORY-004)
+// Document types (STORY-004, STORY-018)
 export interface Document {
   id: string;
   vve_id: string;
@@ -179,6 +179,21 @@ export interface Document {
   uploaded_by_id?: string;
   uploaded_by_name?: string;
   created_at: string;
+  // Version fields (STORY-018)
+  version: number;
+  parent_document_id?: string;
+  is_current_version: boolean;
+  visible_to_roles: string;
+}
+
+export interface DocumentVersion {
+  id: string;
+  version: number;
+  file_name: string;
+  file_size_bytes: number;
+  uploaded_by_name?: string;
+  created_at: string;
+  is_current_version: boolean;
 }
 
 export interface DocumentUpload {

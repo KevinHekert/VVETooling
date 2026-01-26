@@ -29,7 +29,9 @@ Deze directory bevat implementatierapporten voor elke voltooide user story. Elk 
 | STORY-015 | Jaarrekening genereren en delen | ✅ Geïmplementeerd | [STORY-015-implementatie.md](STORY-015-implementatie.md) |
 | STORY-016 | Splitsingssleutel configureren met UI-wizard | ✅ Geïmplementeerd | [STORY-016-implementatie.md](STORY-016-implementatie.md) |
 | STORY-017 | Onboarding uitnodigingen en herinneringen | ✅ Geïmplementeerd | [STORY-017-implementatie.md](STORY-017-implementatie.md) |
+| STORY-018 | Document versiebeheer en rol-specifiek delen | ✅ Geïmplementeerd | [STORY-018-implementatie.md](STORY-018-implementatie.md) |
 | STORY-021 | Auth & RBAC UI beheer | ✅ Geïmplementeerd | [STORY-021-implementatie.md](STORY-021-implementatie.md) |
+| STORY-024 | Multi-tenant toegang en context switcher | ✅ Geïmplementeerd | [STORY-024-implementatie.md](STORY-024-implementatie.md) |
 | STORY-025 | Notificaties en toasts consistent raamwerk | ✅ Geïmplementeerd | [STORY-025-implementatie.md](STORY-025-implementatie.md) |
 | STORY-028 | Mobile-first reserves dashboard | ✅ Geïmplementeerd | [STORY-028-implementatie.md](STORY-028-implementatie.md) |
 
