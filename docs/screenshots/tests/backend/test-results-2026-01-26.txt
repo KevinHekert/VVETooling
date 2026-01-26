@@ -1,0 +1,47 @@
+Backend Test Run - 2026-01-26
+=============================
+
+VVE Tooling API Backend Tests
+
+Test Results:
+- Total: 20 tests
+- Passed: 20 ✓
+- Failed: 0
+- Duration: 1.51s
+
+Test Summary:
+------------
+
+tests/test_health.py (3 tests)
+  ✓ test_health_check
+  ✓ test_root_endpoint
+  ✓ test_openapi_schema
+
+tests/test_schemas.py - STORY-002 Splitsingssleutel Validation (5 tests)
+  ✓ test_valid_100_percent_total
+  ✓ test_invalid_under_100_percent
+  ✓ test_invalid_over_100_percent
+  ✓ test_bulk_update_rejects_non_100_percent
+  ✓ test_bulk_update_accepts_100_percent
+
+tests/test_security.py - Password & JWT (12 tests)
+  ✓ test_password_hash_creates_different_hash
+  ✓ test_verify_password_correct
+  ✓ test_verify_password_incorrect
+  ✓ test_create_access_token
+  ✓ test_create_refresh_token
+  ✓ test_decode_valid_token
+  ✓ test_decode_invalid_token
+  ✓ test_token_with_custom_expiry
+  ✓ test_beheerder_has_all_permissions
+  ✓ test_bewoner_limited_permissions
+  ✓ test_penningmeester_has_bewoner_permissions
+  ✓ test_bestuurslid_has_bewoner_permissions
+
+Coverage Areas:
+- Health endpoints
+- Security (password hashing, JWT tokens)
+- RBAC role permissions
+- Splitsingssleutel validation (STORY-002)
+
+All tests passed! ✓
