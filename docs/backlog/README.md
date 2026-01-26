@@ -67,6 +67,9 @@ Deze backlog is de single source of truth voor uitvoering van VVE Tooling MVP. A
   - [STORY-023 Audit logging filters en export](stories/STORY-023-audit-logging-filters-en-export.md)
   - [STORY-024 Multi-tenant toegang en context switcher](stories/STORY-024-multi-tenant-toegang-en-context.md)
   - [STORY-025 Notificaties en toasts consistent raamwerk](stories/STORY-025-notificaties-en-toasts.md)
+  - [STORY-026 Reserves scenario-planning en prognose](stories/STORY-026-reserves-scenario-planning.md)
+  - [STORY-027 Reserves herclassificatie en audit trail](stories/STORY-027-reserves-herclassificatie-en-audit.md)
+  - [STORY-028 Mobile-first reserves dashboard](stories/STORY-028-reserves-mobile-dashboard.md)
 - **Decision log**
   - [Open vragen](decision-log/01-open-vragen.md)
   - [Besluiten](decision-log/02-besluiten.md)
@@ -133,3 +136,6 @@ Deze backlog is de single source of truth voor uitvoering van VVE Tooling MVP. A
 | STORY-023 | docs/backlog/stories/STORY-023-audit-logging-filters-en-export.md, docs/backlog/features/FEAT-015-audit-logging.md, docs/backlog/features/FEAT-013-export-backup.md |
 | STORY-024 | docs/backlog/stories/STORY-024-multi-tenant-toegang-en-context.md, docs/architecture/decisions/ADR-003-multi-tenancy-implementation.md |
 | STORY-025 | docs/backlog/stories/STORY-025-notificaties-en-toasts.md, docs/ui/components/feedback-notifications.md, docs/architecture/constraints/01-randvoorwaarden-ux-development.md |
+| STORY-026 | docs/backlog/stories/STORY-026-reserves-scenario-planning.md, docs/backlog/features/FEAT-002-reserves-overzicht.md |
+| STORY-027 | docs/backlog/stories/STORY-027-reserves-herclassificatie-en-audit.md, docs/backlog/features/FEAT-002-reserves-overzicht.md, docs/backlog/features/FEAT-015-audit-logging.md |
+| STORY-028 | docs/backlog/stories/STORY-028-reserves-mobile-dashboard.md, docs/backlog/features/FEAT-002-reserves-overzicht.md, docs/ux/design/02-bewoner-flows.md |
