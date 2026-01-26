@@ -205,86 +205,158 @@ Penningmeesters kunnen **binnen 1-2 uur** een complete, VVE-conforme jaarrekenin
 
 ---
 
-## EP-004: Penningmeester kan snel en foutloos onboarden
+## EP-004: VVE kan snel en foutloos onboarden met alle gebruikers
 
 ### Probleemomschrijving
-Nieuwe penningmeesters hebben **geen tijd of geduld** om complexe software te leren. Ze willen **binnen 30 minuten** kunnen starten zonder training. Als onboarding te complex is, haken ze af en blijven ze Excel gebruiken.
+VVE's hebben **moeite om het platform te implementeren** als complete organisatie. Penningmeesters moeten niet alleen zelf leren werken met de software, maar ook **voorzitter en bewoners activeren** om het platform te gebruiken. Als de onboarding te complex is of te veel tijd kost, haken ze af en blijven ze bij Excel en WhatsApp.
 
 **User pain points**:
-- "Ik heb geen tijd om een handleiding te lezen"
-- "Ik wil gewoon snel kunnen beginnen"
-- "Ik weet niet hoe ik moet starten met een nieuw systeem"
-- "Ik heb geen technische achtergrond"
+- **Penningmeester**: "Ik heb geen tijd om een handleiding te lezen én ook nog anderen te helpen"
+- **Penningmeester**: "Hoe krijg ik voorzitter en bewoners ook aan boord?"
+- **Voorzitter**: "Ik wil snel kunnen zien waar we staan, zonder uitleg nodig te hebben"
+- **Bewoner**: "Ik heb geen technische achtergrond, moet dit simpel zijn"
+- **Algemeen**: "We willen als VVE snel kunnen starten zonder lange training"
 
 ### Doelstelling
-**80%+ penningmeesters** kunnen binnen **30 minuten** hun VVE volledig inrichten en eerste transacties toevoegen, **zonder hulp** van support.
+**80%+ VVE's** kunnen binnen **1 uur** volledig inrichten (VVE setup + gebruikers activeren) en **alle rollen** (penningmeester, voorzitter, bewoners) kunnen direct waarde halen uit het platform, **zonder hulp** van support.
+
+**Specifiek**:
+- Penningmeester: VVE inrichten en eerste transacties toevoegen (<30 min)
+- Voorzitter: Uitnodiging accepteren en dashboard zien (<10 min)
+- Bewoners: Account aanmaken en eigen status bekijken (<5 min)
 
 ### In Scope
+**VVE Setup (Penningmeester)**:
 - Onboarding wizard (stap-voor-stap VVE setup)
 - VVE basis info (naam, aantal appartementen, oprichtingsdatum)
 - Splitsingssleutel setup (simpele wizard)
 - Eigenaren toevoegen (bulk of 1-by-1)
 - Reserves aanmaken (templates: onderhoud, algemeen, speciaal)
 - Eerste transacties toevoegen (tutorial)
-- Help & tutorials (video's, tooltips)
+
+**Gebruikers Activeren (Penningmeester)**:
+- Voorzitter/bestuur uitnodigen (stap in onboarding wizard)
+- Bewoners uitnodigen (bulk email invite met uitnodigingscode)
+- Uitleg/templates voor uitnodiging emails
+- Uitnodigingsstatus tracking (wie heeft geaccepteerd?)
+
+**Onboarding voor Voorzitter/Bestuur**:
+- Welkom email met duidelijke uitleg wat ze kunnen doen
+- Korte tour van dashboard (tooltips, highlight key features)
+- Quick start guide specifiek voor voorzitter rol
+
+**Onboarding voor Bewoners**:
+- Simpele account aanmaak flow (email + wachtwoord + uitnodigingscode)
+- Welkom screen met uitleg: "Dit is jouw VVE dashboard"
+- Tour van wat ze kunnen zien (financiën, documenten, eigen status)
+- Mobile-first design (meeste bewoners op smartphone)
+
+**Help & Tutorials (Rol-specifiek)**:
+- Video tutorials per rol (penningmeester, voorzitter, bewoner)
+- Tooltips en inline help
+- FAQ sectie (rol-specifiek)
 - Progress indicator (% complete)
 
 ### Out of Scope
 - Data import van bestaande systeem (Nice-to-have, maar complex)
 - 1-on-1 onboarding calls (niet schaalbaar, alleen voor beta)
 - Accountant assisted setup (Roadmap)
+- In-person training sessions
+- Custom onboarding per VVE type (MVP = standaard flow voor alle VVE's)
 
 ### Succesindicatoren
-**Quantitative**:
-- ✅ 80%+ completion rate van onboarding wizard
-- ✅ <30 min gemiddelde tijd om VVE in te richten
+**Quantitative - VVE Setup**:
+- ✅ 80%+ completion rate van onboarding wizard (penningmeester)
+- ✅ <1 uur gemiddelde tijd om complete VVE in te richten (incl. gebruikers uitnodigen)
+- ✅ <30 min voor alleen VVE basis setup (zonder gebruikers)
 - ✅ <5% support tickets tijdens onboarding
-- ✅ >60% voegt transacties toe binnen 24u na signup
+
+**Quantitative - Gebruikers Activatie**:
+- ✅ Gemiddeld 3+ gebruikers uitgenodigd per VVE tijdens onboarding
+- ✅ 60%+ acceptance rate van uitnodigingen (binnen 7 dagen)
+- ✅ 70%+ voorzitters loggen in binnen 24u na uitnodiging
+- ✅ 30%+ bewoners loggen in binnen 7 dagen na uitnodiging
+
+**Quantitative - Time to Value**:
+- ✅ 60%+ penningmeesters voegen transacties toe binnen 24u na signup
+- ✅ 50%+ voorzitters checken dashboard binnen 48u
+- ✅ 20%+ bewoners bekijken hun status binnen 7 dagen
 
 **Qualitative**:
-- ✅ "Zo makkelijk om te starten!" (user feedback)
-- ✅ "Ik had geen hulp nodig" (user testimonials)
-- ✅ Onboarding is geen blocker voor adoptie
+- ✅ "Zo makkelijk om te starten, zelfs voor onze bewoners!" (penningmeester feedback)
+- ✅ "Ik had geen hulp nodig om te beginnen" (alle rollen)
+- ✅ "Fijn dat iedereen direct kan inloggen" (voorzitter feedback)
+- ✅ Onboarding is geen blocker voor adoptie (alle gebruikersgroepen)
 
 ### Herleidbaarheid
-- **Probleemstatement**: docs/product/discovery/01-probleemdefinitie-productrichting.md - Succesfactoren voor adoptie (simpel, weinig leercurve)
-- **UX Onderzoek**: docs/ux/discovery/01-ux-vraagstukken-validatie.md - Vraagstuk 1 (Wat is "simpel genoeg"?)
-- **Hypothese**: docs/ux/discovery/01-ux-vraagstukken-validatie.md - Hypothese 1 (Simpele onboarding drijft adoptie)
+- **Probleemstatement**: docs/product/discovery/01-probleemdefinitie-productrichting.md - Primair Probleem (multi-user platform, alle rollen moeten onboarden)
+- **Product Visie**: docs/product/strategy/01-productstrategie-keuzes.md - Multi-user platform (niet single-user tool)
+- **Succesfactoren**: docs/product/discovery/01-probleemdefinitie-productrichting.md - Succesfactoren voor adoptie (simpel voor alle rollen)
+- **UX Onderzoek**: docs/ux/discovery/01-ux-vraagstukken-validatie.md - Vraagstuk 1 (Wat is "simpel genoeg" voor diverse gebruikersgroepen?)
+- **Hypothese**: docs/ux/discovery/01-ux-vraagstukken-validatie.md - Hypothese 1 (Simpele onboarding voor alle rollen drijft adoptie)
 
 ### Acceptance Criteria (High-Level)
-- [ ] Nieuw penningmeester ziet onboarding wizard bij eerste login
-- [ ] Wizard heeft duidelijke stappen: VVE info → Splitsing → Eigenaren → Reserves → First transaction
+
+**Penningmeester Onboarding**:
+- [ ] Nieuwe penningmeester ziet onboarding wizard bij eerste login
+- [ ] Wizard heeft duidelijke stappen: VVE info → Splitsing → Eigenaren → Reserves → Gebruikers uitnodigen → First transaction
 - [ ] Wizard heeft progress indicator (stap X van Y)
 - [ ] Wizard heeft skip optie (kunnen later invullen)
+- [ ] Wizard bevat stap: "Nodig voorzitter en bewoners uit" met uitleg waarom dit belangrijk is
+- [ ] Penningmeester kan bulk email uitnodigingen versturen naar bewoners
+- [ ] Penningmeester ziet status van uitnodigingen (geaccepteerd/pending)
+
+**Voorzitter/Bestuur Onboarding**:
+- [ ] Voorzitter ontvangt duidelijke uitnodiging email met uitleg van hun rol
+- [ ] Voorzitter kan eenvoudig account aanmaken via uitnodigingslink
+- [ ] Voorzitter ziet welkom tour bij eerste login (5-10 seconden, key features)
+- [ ] Voorzitter ziet direct dashboard met financieel overzicht (geen lege state)
+- [ ] Help sectie heeft quick start guide voor voorzitter rol
+
+**Bewoner Onboarding**:
+- [ ] Bewoner ontvangt simpele, vriendelijke uitnodiging email ("Bekijk jouw VVE")
+- [ ] Bewoner kan account aanmaken met alleen email + wachtwoord + uitnodigingscode
+- [ ] Bewoner ziet welkom screen: "Dit is jouw VVE dashboard" (simpele uitleg)
+- [ ] Bewoner ziet direct hun eigen status (contributie, betalingen) - geen lege state
+- [ ] Bewoner onboarding is mobile-first (werkt perfect op smartphone)
+- [ ] Bewoner kan dashboard bookmarken op homescreen (PWA)
+
+**Algemeen**:
 - [ ] Wizard heeft tooltips en help (inline explanations)
-- [ ] Na wizard: penningmeester ziet dashboard met "what's next" acties
-- [ ] Help sectie heeft video tutorials voor common tasks
+- [ ] Na wizard: gebruikers zien rol-specifiek dashboard met "what's next" acties
+- [ ] Help sectie heeft video tutorials voor alle rollen (penningmeester, voorzitter, bewoner)
+- [ ] Alle onboarding flows hebben duidelijke exit/save points (kunnen pauzeren en later verder)
 
 ---
 
-## EP-005: Penningmeester heeft vertrouwen in veiligheid en compliance
+## EP-005: Alle gebruikers hebben vertrouwen in veiligheid en compliance
 
 ### Probleemomschrijving
-Penningmeesters beheren **gevoelige financiële data** van hun VVE en eigenaren. Ze hebben **angst voor datalekken, verlies of niet-compliance** met AVG. Dit kan een blocker zijn voor adoptie als vertrouwen niet is opgebouwd.
+VVE's beheren **gevoelige financiële data** van de organisatie en alle eigenaren. **Penningmeesters, voorzitters en bewoners** hebben allen **angst voor datalekken, verlies of niet-compliance** met AVG. Dit kan een blocker zijn voor adoptie als vertrouwen niet is opgebouwd, zeker omdat bewoners hun persoonlijke betalingsgegevens delen.
 
 **User pain points**:
-- "Kan ik jullie vertrouwen met onze financiële data?"
-- "Wat als jullie gehackt worden?"
-- "Is dit AVG compliant? Ik wil geen boete riskeren"
-- "Wat als jullie failliet gaan, waar is mijn data dan?"
+- **Penningmeester/Voorzitter**: "Kan ik jullie vertrouwen met onze financiële data?"
+- **Penningmeester/Voorzitter**: "Wat als jullie gehackt worden?"
+- **Penningmeester**: "Is dit AVG compliant? Ik wil geen boete riskeren"
+- **Bewoner**: "Kunnen andere bewoners mijn betalingsgegevens zien?"
+- **Bewoner**: "Wat gebeurt er met mijn persoonlijke data?"
+- **Algemeen**: "Wat als jullie failliet gaan, waar is mijn data dan?"
 
 ### Doelstelling
-**100% penningmeesters** hebben vertrouwen in veiligheid en compliance van VVE Tooling, met **zero security incidents** en **volledige AVG compliance**.
+**100% gebruikers** (penningmeesters, voorzitters en bewoners) hebben vertrouwen in veiligheid, privacy en compliance van VVE Tooling, met **zero security incidents** en **volledige AVG compliance**.
 
 ### In Scope
 - Bank-level encryptie (data in transit en at rest)
 - Nederlandse data center (AVG compliance)
 - 2-factor authentication (2FA)
-- Audit log (wie heeft wat gedaan)
+- Rol-gebaseerde toegangscontrole (permissions per gebruikersrol)
+- Privacy by design: Bewoners kunnen alleen eigen betalingsstatus zien, niet van anderen
+- Audit log (wie heeft wat gedaan, toegankelijk voor penningmeester en voorzitter)
 - Data export/backup (eigenaar van data)
-- Privacy policy & Terms of Service (transparant)
-- Security page (hoe we data beschermen)
+- Privacy policy & Terms of Service (transparant, begrijpelijk)
+- Security page (hoe we data beschermen, voor alle gebruikers)
 - AVG compliance verklaring
+- Duidelijke communicatie over wie wat kan zien (rol-specifiek)
 
 ### Out of Scope
 - ISO/SOC2 certificering (Nice-to-have, maar niet MVP requirement)
@@ -296,12 +368,14 @@ Penningmeesters beheren **gevoelige financiële data** van hun VVE en eigenaren.
 - ✅ 99.9%+ uptime
 - ✅ Zero security incidents (breaches, leaks)
 - ✅ 100% AVG compliant
-- ✅ <1% support tickets over security/privacy concerns
+- ✅ <1% support tickets over security/privacy concerns (alle gebruikersgroepen)
+- ✅ 0 complaints over privacy violations (bijv. bewoners die elkaars data kunnen zien)
 
 **Qualitative**:
-- ✅ "Ik voel me veilig met mijn data hier" (user feedback)
-- ✅ "Duidelijke uitleg over privacy" (user testimonials)
-- ✅ Security is geen blocker voor adoptie
+- ✅ "Ik voel me veilig met mijn data hier" (alle gebruikersgroepen)
+- ✅ "Duidelijke uitleg over privacy" (vooral belangrijk voor bewoners)
+- ✅ "Fijn dat andere bewoners mijn betalingen niet kunnen zien" (bewoner feedback)
+- ✅ Security is geen blocker voor adoptie (penningmeester, voorzitter, bewoner)
 - ✅ Trust & reliability in top 3 redenen om VVE Tooling te kiezen
 
 ### Herleidbaarheid
@@ -312,67 +386,87 @@ Penningmeesters beheren **gevoelige financiële data** van hun VVE en eigenaren.
 ### Acceptance Criteria (High-Level)
 - [ ] Data is encrypted in transit (HTTPS/TLS) en at rest (AES-256)
 - [ ] Data opslag is in Nederlandse data center (AVG compliant)
-- [ ] Penningmeester kan 2FA inschakelen (optioneel maar recommended)
-- [ ] Penningmeester kan data exporteren (Excel/CSV/PDF)
-- [ ] Penningmeester kan account verwijderen (incl. alle data)
-- [ ] Website heeft security page met uitleg over data bescherming
-- [ ] Privacy policy en ToS zijn duidelijk en transparant
-- [ ] Audit log toont belangrijke acties (wie heeft transacties toegevoegd/gewijzigd)
+- [ ] Alle gebruikers kunnen 2FA inschakelen (optioneel maar recommended)
+- [ ] Rol-gebaseerde permissions zijn correct geïmplementeerd (penningmeester/voorzitter/bewoner)
+- [ ] Bewoners kunnen ALLEEN eigen betalingsstatus zien, niet van anderen (privacy by design)
+- [ ] Penningmeester kan data exporteren (Excel/CSV/PDF) voor backup
+- [ ] Penningmeester kan VVE account verwijderen (incl. alle gebruikers en data)
+- [ ] Bewoners kunnen hun eigen account verwijderen
+- [ ] Website heeft security page met uitleg over data bescherming (voor alle gebruikers)
+- [ ] Privacy policy en ToS zijn duidelijk, transparant en begrijpelijk (geen juridisch jargon)
+- [ ] Privacy policy legt uit wie wat kan zien (rol-specifieke uitleg)
+- [ ] Audit log toont belangrijke acties (wie heeft wat gedaan, toegankelijk voor penningmeester en voorzitter)
+- [ ] Bewoners krijgen duidelijke uitleg bij signup over wat ze wel/niet kunnen zien
 
 ---
 
-## EP-006: Penningmeester kan documenten beheren en delen
+## EP-006: Bestuur en bewoners kunnen documenten inzien en delen
 
 ### Probleemomschrijving
-Penningmeesters ontvangen **veel documenten** (facturen, contracten, notulen, etc.) en hebben **geen centrale plek** om deze op te slaan en te delen met bestuur/eigenaren. Ze gebruiken nu Google Drive, email of fysieke archieven, wat **versnipperd en onoverzichtelijk** is.
+VVE's ontvangen **veel documenten** (facturen, contracten, notulen, vergaderstukken, etc.) en hebben **geen centrale plek** om deze op te slaan en te delen met bestuur en bewoners. Nu gebruiken ze Google Drive, email of fysieke archieven, wat **versnipperd en onoverzichtelijk** is. **Bewoners moeten steeds vragen** om documenten en **voorzitters kunnen niet zelfstandig** documenten uploaden of inzien.
 
 **User pain points**:
-- "Ik moet facturen zoeken in mijn email of WhatsApp"
-- "Eigenaren vragen om documenten die ik niet kan vinden"
-- "Ik heb geen overzicht van wat ik wel/niet heb opgeslagen"
-- "Delen met bestuur is omslachtig (email attachments)"
-
-**Note**: Dit is **P1 (Should Have)**, niet P0. Documenten zijn belangrijk maar niet blocker voor MVP. Kan in later sprint als tijd toelaat.
+- **Penningmeester**: "Ik moet facturen zoeken in mijn email of WhatsApp"
+- **Voorzitter**: "Ik kan notulen niet zelf uploaden, moet het naar penningmeester sturen"
+- **Bewoner**: "Ik moet steeds vragen om de jaarrekening of notulen"
+- **Bestuur**: "Delen met bewoners is omslachtig (email attachments naar 25 mensen)"
+- **Algemeen**: "Ik heb geen overzicht van wat er wel/niet is opgeslagen"
 
 ### Doelstelling
-Penningmeesters kunnen **binnen seconden** documenten uploaden, organiseren en delen met bestuur/eigenaren, met **100% overzicht** van alle VVE documenten.
+**Bestuur** (penningmeester en voorzitter) kan **binnen seconden** documenten uploaden en organiseren. **Alle gebruikers** (inclusief bewoners) kunnen **direct en zelfstandig** documenten inzien en downloaden, met **100% overzicht** van alle VVE documenten.
+
+**Specifiek**:
+- Penningmeester: Uploaden, organiseren, categoriseren
+- Voorzitter/Bestuur: Uploaden (bijv. notulen, correspondentie), inzien alles
+- Bewoners: Inzien en downloaden (self-service, geen vragen meer hoeven stellen)
 
 ### In Scope
-- Documenten uploaden (PDF, JPG, etc.)
-- Documenten categoriseren (factuur, contract, notulen, etc.)
-- Documenten linken aan transacties (factuur → uitgave)
-- Documenten zoeken en filteren
-- Documenten delen via link (read-only)
-- Basis document viewer (PDF preview)
+- Documenten uploaden (PDF, JPG, etc.) - Penningmeester en Voorzitter/Bestuur
+- Documenten categoriseren (factuur, contract, notulen, vergaderstukken, etc.)
+- Documenten linken aan transacties (factuur → uitgave) - alleen Penningmeester
+- Documenten zoeken en filteren - alle gebruikers
+- Alle gebruikers kunnen documenten inzien en downloaden (self-service)
+- Rol-gebaseerde upload rechten (Penningmeester + Voorzitter kunnen uploaden, Bewoners alleen lezen)
+- Basis document viewer (PDF preview in platform)
+- Automatisch delen: Alle documenten zijn direct zichtbaar voor alle gebruikers (transparantie)
 
 ### Out of Scope
 - Document signing (Roadmap)
 - OCR / data extraction (AI feature, Roadmap Fase 3)
 - Version control (Nice-to-have)
-- Permissions per document (MVP = share all or nothing)
+- Granulare permissions per document (MVP = documenten zijn zichtbaar voor alle gebruikers)
+- Document approval workflow (Roadmap)
 
 ### Succesindicatoren
 **Quantitative**:
 - ✅ 60%+ penningmeesters uploaden minimaal 5 documenten
-- ✅ 40%+ penningmeesters gebruiken document sharing feature
+- ✅ 30%+ voorzitters uploaden minimaal 1 document (bijv. notulen)
+- ✅ 40%+ bewoners openen minimaal 1 document per maand
 - ✅ <30 sec om document te uploaden en categoriseren
+- ✅ 50%+ van documenten wordt geopend door minimaal 1 bewoner (engagement)
 
 **Qualitative**:
-- ✅ "Eindelijk alles op 1 plek" (user feedback)
+- ✅ "Eindelijk alles op 1 plek, iedereen kan het zien" (bestuur feedback)
+- ✅ "Fijn dat ik niet meer hoef te vragen om documenten" (bewoner feedback)
+- ✅ "Bespaart me tijd in email verkeer" (penningmeester feedback)
 - ✅ Document feature is in top 5 most used features
 
 ### Herleidbaarheid
-- **Prioriteit**: docs/product/strategy/01-productstrategie-keuzes.md - Problem Priority Matrix (P1 - Should Have)
-- **Probleemstatement**: docs/product/discovery/01-probleemdefinitie-productrichting.md - In-scope MVP (facturen uploaden/opslaan)
+- **Prioriteit**: docs/product/strategy/01-productstrategie-keuzes.md - Keuze 1 (Transparantie als differentiator)
+- **Probleemstatement**: docs/product/discovery/01-probleemdefinitie-productrichting.md - Primair Probleem (transparantie en toegang voor alle rollen)
+- **Product Visie**: docs/product/strategy/01-productstrategie-keuzes.md - Vision Statement (transparantie en samenwerking)
 
 ### Acceptance Criteria (High-Level)
 - [ ] Penningmeester kan documenten uploaden (drag & drop)
-- [ ] Penningmeester kan documenten categoriseren (type: factuur, contract, etc.)
+- [ ] Voorzitter/Bestuur kan documenten uploaden (drag & drop)
+- [ ] Beide kunnen documenten categoriseren (type: factuur, contract, notulen, vergaderstuk, etc.)
 - [ ] Penningmeester kan documenten linken aan transactie
-- [ ] Penningmeester kan documenten zoeken (naam, type, datum)
-- [ ] Penningmeester kan documenten delen via link (read-only)
-- [ ] Penningmeester kan documenten verwijderen
-- [ ] Systeem toont document preview (PDF viewer)
+- [ ] Alle gebruikers kunnen documenten zoeken en filteren (naam, type, datum, categorie)
+- [ ] Alle gebruikers kunnen documenten bekijken en downloaden (self-service)
+- [ ] Bewoners zien direct nieuwe documenten in hun dashboard (transparantie)
+- [ ] Systeem toont document preview (PDF viewer, werkt op mobile)
+- [ ] Penningmeester kan documenten verwijderen (met confirmation)
+- [ ] Document upload werkt goed op mobile (voor voorzitters en bewoners die onderweg documenten willen uploaden)
 
 ---
 
