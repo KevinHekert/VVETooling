@@ -4,7 +4,7 @@
 Feedbackcomponenten informeren de gebruiker zonder de workflow te onderbreken. Meldingen zijn subtiel, tijdelijk en contextueel waar mogelijk.
 
 **UX-kader referenties**
-- Design System: [Toast Notifications](../../ux/design/01-design-system.md#38-toast-notifications)
+- Design System: [Toast Notifications](../../ux/design/01-design-system.md) (sectie 3.8)
 - Constraints: [UX-05 Accessibility](../../architecture/constraints/01-randvoorwaarden-ux-development.md#constraint-ux-05-accessibility-minimale-niveau)
 
 ## Componenten

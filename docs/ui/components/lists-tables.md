@@ -4,7 +4,7 @@
 Lijsten en tabellen presenteren data in overzichtelijke vorm. Ze volgen het design system en bevatten duidelijk gedefinieerde states voor laden, leeg en fout.
 
 **UX-kader referenties**
-- Design System: [Tables](../../ux/design/01-design-system.md#37-tables-desktop---beheerder)
+- Design System: [Tables](../../ux/design/01-design-system.md) (sectie 3.7)
 - Constraints: [UX-04 Performance](../../architecture/constraints/01-randvoorwaarden-ux-development.md#constraint-ux-04-performance-budget)
 
 ## Componenten
@@ -33,7 +33,7 @@ Lijsten en tabellen presenteren data in overzichtelijke vorm. Ze volgen het desi
 
 ## Gebruik
 **Do's**
-- Gebruik semantische tabelmarkup (<table>, <thead>, <tbody>).
+- Gebruik semantische tabelmarkup (`<table>`, `<thead>`, `<tbody>`).
 - Laat kolomtitels duidelijk en sorteerbaar indien relevant.
 - Houd row height ≥ 48px.
 - Gebruik hover state bij clickable rows.

@@ -4,7 +4,7 @@
 Buttons zijn primair bedoeld om acties te starten. De component volgt het bestaande design system (kleur, spacing, typografie) en ondersteunt duidelijke feedback zonder de UI te verstoren.
 
 **UX-kader referenties**
-- Design System: [Buttons](../../ux/design/01-design-system.md#31-buttons)
+- Design System: [Buttons](../../ux/design/01-design-system.md) (sectie 3.1)
 - Constraints: [UX-05 Accessibility](../../architecture/constraints/01-randvoorwaarden-ux-development.md#constraint-ux-05-accessibility-minimale-niveau)
 
 ## Varianten

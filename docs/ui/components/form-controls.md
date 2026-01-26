@@ -4,7 +4,7 @@
 Formuliercomponenten verzamelen gebruikersinput. Ze volgen het design system en zijn ontworpen voor toegankelijkheid en voorspelbare validatie feedback.
 
 **UX-kader referenties**
-- Design System: [Form Inputs](../../ux/design/01-design-system.md#32-form-inputs)
+- Design System: [Form Inputs](../../ux/design/01-design-system.md) (sectie 3.2)
 - Constraints: [UX-05 Accessibility](../../architecture/constraints/01-randvoorwaarden-ux-development.md#constraint-ux-05-accessibility-minimale-niveau)
 
 ## Componenten
