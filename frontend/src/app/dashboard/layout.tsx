@@ -41,6 +41,7 @@ const NAV_ITEMS: NavItem[] = [
   
   // Beheerder only
   { label: 'Audit Log', href: '/dashboard/beheerder/audit', icon: '📋', roles: ['beheerder'] },
+  { label: 'Splitsingssleutel', href: '/instellingen/splitsingssleutel', icon: '🔑', roles: ['beheerder'] },
   { label: 'Instellingen', href: '/instellingen/onboarding', icon: '⚙️', roles: ['beheerder'] },
 ];
 
