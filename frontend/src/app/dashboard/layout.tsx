@@ -32,6 +32,8 @@ const NAV_ITEMS: NavItem[] = [
   // Penningmeester/Beheerder items
   { label: 'Transacties', href: '/dashboard/penningmeester/transactions', icon: '💰', roles: ['penningmeester', 'beheerder'] },
   { label: 'Begrotingen', href: '/dashboard/penningmeester/budgets', icon: '📊', roles: ['penningmeester', 'beheerder'] },
+  { label: 'Reserves', href: '/dashboard/penningmeester/reserves', icon: '🏦', roles: ['penningmeester', 'beheerder'] },
+  { label: 'Contributies', href: '/dashboard/penningmeester/contributions', icon: '💵', roles: ['penningmeester', 'beheerder'] },
   
   // All roles - Documenten
   { label: 'Documenten', href: '/dashboard/documenten', icon: '📁', roles: ['bewoner', 'bestuurslid', 'penningmeester', 'beheerder'] },
