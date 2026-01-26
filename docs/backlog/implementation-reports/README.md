@@ -17,6 +17,7 @@ Deze directory bevat implementatierapporten voor elke voltooide user story. Elk 
 | STORY-003 | Bewoner ziet eigen status | ✅ Geïmplementeerd | [STORY-003-implementatie.md](STORY-003-implementatie.md) |
 | STORY-004 | Bestuur uploadt document | ✅ Backend | [STORY-004-implementatie.md](STORY-004-implementatie.md) |
 | STORY-005 | Rol-gebaseerd inloggen | ✅ Geïmplementeerd | [STORY-005-implementatie.md](STORY-005-implementatie.md) |
+| STORY-006 | Begroting opstellen en exporteren | ✅ Geïmplementeerd | [STORY-006-implementatie.md](STORY-006-implementatie.md) |
 
 ## Template
 Gebruik de [template](TEMPLATE-implementatierapport.md) voor nieuwe rapporten.

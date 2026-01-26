@@ -230,6 +230,72 @@ class ApiClient {
       method: 'DELETE',
     });
   }
+
+  // Budgets (STORY-006)
+  async getBudgets(vveId: string) {
+    return this.fetch<import('@/types').Budget[]>(
+      `/vves/${vveId}/budgets`
+    );
+  }
+
+  async getBudget(vveId: string, budgetId: string) {
+    return this.fetch<import('@/types').Budget>(
+      `/vves/${vveId}/budgets/${budgetId}`
+    );
+  }
+
+  async createBudget(vveId: string, data: import('@/types').BudgetCreate) {
+    return this.fetch<import('@/types').Budget>(
+      `/vves/${vveId}/budgets`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async updateBudget(vveId: string, budgetId: string, data: import('@/types').BudgetUpdate) {
+    return this.fetch<import('@/types').Budget>(
+      `/vves/${vveId}/budgets/${budgetId}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async deleteBudget(vveId: string, budgetId: string) {
+    return this.fetch(`/vves/${vveId}/budgets/${budgetId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getBudgetSummary(vveId: string, budgetId: string) {
+    return this.fetch<import('@/types').BudgetSummary>(
+      `/vves/${vveId}/budgets/${budgetId}/summary`
+    );
+  }
+
+  async exportBudgetPdf(vveId: string, budgetId: string): Promise<Blob> {
+    const token = typeof window !== 'undefined' 
+      ? localStorage.getItem('access_token') 
+      : null;
+
+    const response = await fetch(
+      `${this.baseUrl}/vves/${vveId}/budgets/${budgetId}/export/pdf`,
+      {
+        method: 'GET',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: 'Export mislukt' }));
+      throw new Error(error.detail);
+    }
+
+    return response.blob();
+  }
 }
 
 export const api = new ApiClient(API_BASE_URL);

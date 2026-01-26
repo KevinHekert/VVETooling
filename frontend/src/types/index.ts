@@ -199,6 +199,58 @@ export interface StorageUsage {
   is_near_limit: boolean;
 }
 
+// Budget types (STORY-006)
+export type BudgetStatus = 'draft' | 'approved' | 'archived';
+
+export interface BudgetItem {
+  id: string;
+  category: TransactionCategory;
+  description: string;
+  planned_amount: number;
+  notes?: string;
+}
+
+export interface BudgetItemCreate {
+  category: TransactionCategory;
+  description: string;
+  planned_amount: number;
+  notes?: string;
+}
+
+export interface Budget {
+  id: string;
+  vve_id: string;
+  year: number;
+  name: string;
+  description?: string;
+  status: BudgetStatus;
+  created_by_id?: string;
+  created_at: string;
+  updated_at: string;
+  items: BudgetItem[];
+}
+
+export interface BudgetCreate {
+  year: number;
+  name: string;
+  description?: string;
+  status?: BudgetStatus;
+  items: BudgetItemCreate[];
+}
+
+export interface BudgetUpdate {
+  name?: string;
+  description?: string;
+  status?: BudgetStatus;
+  items?: BudgetItemCreate[];
+}
+
+export interface BudgetSummary {
+  total_planned: number;
+  by_category: Record<string, number>;
+  item_count: number;
+}
+
 // API Response types
 export interface ApiError {
   detail: string;
