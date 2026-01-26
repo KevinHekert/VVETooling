@@ -82,32 +82,181 @@ Dit document beschrijft de geselecteerde technologie stack voor VVE Tooling MVP 
 
 **Evaluatie:**
 
-| Criterium | Node.js | Python | C#/.NET | Java | Go |
-|-----------|---------|--------|---------|------|-----|
+#### Basis Criteria
+
+| Criterium | Node.js/TS | Python | C#/.NET | Java | Go |
+|-----------|------------|--------|---------|------|-----|
 | EU Hosting | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Performance | ✅ Excellent | ⚠️ Good | ✅ Excellent | ✅ Excellent | ✅ Excellent |
 | Team Recruitment | ✅ Zeer breed | ✅ Zeer breed | ✅ Breed | ✅ Breed | ⚠️ Smaller |
 | Ecosystem Rijkheid | ✅ Zeer rijk (npm) | ✅ Zeer rijk (pip) | ✅ Rijk (NuGet) | ✅ Rijk (Maven) | ⚠️ Growing |
-| Full-Stack TS | ✅ Ja | ❌ Nee | ❌ Nee | ❌ Nee | ❌ Nee |
-| **GitHub Copilot** | ✅ Excellent | ✅ Excellent | ✅ Good | ✅ Good | ⚠️ Good |
-| Async I/O | ✅ Native | ⚠️ asyncio | ✅ async/await | ⚠️ Complex | ✅ Goroutines |
-| Learning Curve | ✅ Laag | ✅ Laag | ⚠️ Medium | ⚠️ Medium-High | ⚠️ Medium |
-| Startup Cost | ✅ Laag | ✅ Laag | ⚠️ Medium | ❌ Hoog | ✅ Laag |
+| Full-Stack | ✅ Ja (TypeScript) | ❌ Nee | ❌ Nee | ❌ Nee | ❌ Nee |
+| **GitHub Copilot** | ✅ 9.5/10 | ✅ 9/10 | ⚠️ 7.5/10 | ⚠️ 7/10 | ⚠️ 7/10 |
+| Async I/O | ✅ Native event loop | ⚠️ asyncio | ✅ async/await | ⚠️ Complex | ✅ Goroutines |
+
+#### Developer Experience & Productivity Criteria
+
+| Criterium | Node.js/TS | Python | C#/.NET | Java | Go |
+|-----------|------------|--------|---------|------|-----|
+| **Leercurve nieuwe developers** | ✅ Zeer laag | ✅ Zeer laag | ⚠️ Medium | ⚠️ Medium-High | ⚠️ Medium |
+| **Time-to-productivity** | ✅ 1-2 weken | ✅ 1-2 weken | ⚠️ 3-4 weken | ❌ 4-6 weken | ⚠️ 2-3 weken |
+| **Leesbaarheid zonder IDE** | ✅ Goed (TS types helpen) | ✅ Excellent (expliciete syntax) | ⚠️ Verbos | ❌ Zeer verbos | ✅ Goed (simpel) |
+| **Cognitieve belasting** | ✅ Laag (simpele syntax) | ✅ Zeer laag | ⚠️ Medium (OOP overhead) | ❌ Hoog (verbosity) | ✅ Laag (minimalistisch) |
+| **Boilerplate voor simpele features** | ✅ Minimaal | ✅ Minimaal | ⚠️ Medium | ❌ Veel | ✅ Minimaal |
+| **Time-to-value nieuwe features** | ✅ Snel (prototyping) | ✅ Zeer snel | ⚠️ Medium | ❌ Traag | ⚠️ Medium |
+| **Setup & tooling complexiteit** | ✅ Simpel (npm) | ✅ Zeer simpel (pip) | ⚠️ Complex (MSBuild) | ❌ Zeer complex (Maven/Gradle) | ✅ Simpel (go mod) |
+| **Business logic duidelijkheid** | ✅ Goed | ✅ Excellent | ⚠️ Soms verborgen in OOP | ⚠️ Vaak verborgen | ✅ Goed |
+| **Backend/integratie geschiktheid** | ✅ Excellent (async) | ✅ Excellent | ✅ Excellent | ✅ Excellent | ✅ Excellent |
+| **Test schrijven/lezen** | ✅ Eenvoudig (Jest) | ✅ Zeer eenvoudig (pytest) | ⚠️ Medium | ⚠️ Medium | ✅ Eenvoudig |
+| **Prototyping snelheid** | ✅ Zeer snel | ✅ Zeer snel | ⚠️ Medium | ❌ Traag | ⚠️ Medium |
+| **Flexibiliteit bij veranderingen** | ✅ Hoog (dynamisch) | ✅ Zeer hoog | ⚠️ Medium (sterk getypeerd) | ⚠️ Laag (rigid) | ⚠️ Medium |
+| **Onderhoudbaarheid bij teamwisselingen** | ✅ Goed (TS types helpen) | ⚠️ Vereist discipline (types optioneel) | ✅ Excellent (compiler checks) | ✅ Excellent | ✅ Goed |
+| **Kennisoverdracht binnen team** | ✅ Makkelijk | ✅ Zeer makkelijk | ⚠️ Vereist OOP kennis | ⚠️ Steile curve | ✅ Makkelijk |
+| **Scripts & tooling** | ✅ Excellent (JS overal) | ✅ Excellent | ⚠️ PowerShell/C# hybrid | ⚠️ Geen goede scripting | ✅ Goed |
+| **Frictie app vs scripts** | ✅ Geen (zelfde taal) | ✅ Geen (zelfde taal) | ⚠️ Twee talen vaak | ⚠️ Twee talen vaak | ⚠️ Soms andere tools |
+| **Data/automatisering ecosystem** | ✅ Goed (node scripts) | ✅ Excellent (pandas, etc) | ⚠️ Medium | ⚠️ Medium | ⚠️ Growing |
+| **Foutmeldingen duidelijkheid** | ⚠️ Kan cryptisch zijn | ✅ Zeer duidelijk | ✅ Goed | ⚠️ Soms verbos | ✅ Excellent |
+| **Debugging snelheid** | ✅ Goed | ✅ Excellent | ✅ Excellent (Visual Studio) | ⚠️ Medium | ✅ Goed |
+| **Langetermijn ontwikkelkosten** | ✅ Laag (snelle features) | ✅ Laag | ⚠️ Medium-Hoog | ❌ Hoog (verbosity) | ✅ Laag |
+| **Langetermijn onderhoudskosten** | ⚠️ Vereist discipline (TS strict) | ⚠️ Vereist discipline (types) | ✅ Laag (compiler helpt) | ✅ Laag | ✅ Laag |
+
+#### Scoring Samenvatting
+
+| Aspect | Node.js/TS | Python | C#/.NET | Java | Go |
+|--------|------------|--------|---------|------|-----|
+| **Developer Velocity** | 🥇 9/10 | 🥇 9/10 | 🥉 6/10 | ❌ 4/10 | 🥈 7/10 |
+| **Leercurve & Onboarding** | 🥇 9/10 | 🥇 10/10 | 🥉 6/10 | ❌ 4/10 | 🥈 7/10 |
+| **Onderhoudbaarheid** | 🥈 8/10 | 🥉 7/10 | 🥇 9/10 | 🥇 9/10 | 🥈 8/10 |
+| **Flexibiliteit** | 🥇 9/10 | 🥇 10/10 | 🥉 6/10 | ❌ 4/10 | 🥉 6/10 |
+| **Ecosysteem Maturity** | 🥇 10/10 | 🥇 10/10 | 🥈 8/10 | 🥈 8/10 | 🥉 6/10 |
+| **TOTAAL GEWOGEN** | **🥇 9.0/10** | **🥇 9.2/10** | **🥉 7.0/10** | **❌ 5.8/10** | **🥈 6.8/10** |
 
 **Beslissing: Node.js 20 + TypeScript 5**
 
-**Rationale:**
-1. **Full-Stack TypeScript**: Dezelfde taal voor frontend en backend = verhoogde developer productiviteit
-2. **GitHub Copilot Excellence**: TypeScript + Node.js combinatie heeft excellent Copilot support:
-   - Enorme trainingsdata (JavaScript is meest populaire taal op GitHub)
-   - TypeScript types geven Copilot excellent context voor accurate suggestions
-   - Shared types tussen frontend/backend → consistent Copilot suggestions
-   - React + Node.js is één van de meest getrainde stacks in Copilot
-3. **Excellent async I/O**: Perfect voor API-heavy applicaties met veel concurrent requests
-4. **Breed recruitment pool**: JavaScript/TypeScript developers zijn meest beschikbaar in Nederlandse markt
-5. **Rijk ecosystem**: npm heeft grootste package repository wereldwijd
-6. **Fast startup times**: Belangrijk voor development ervaring en CI/CD
-7. **Proven at scale**: Netflix, LinkedIn, PayPal gebruiken Node.js voor mission-critical systems
+**Uitgebreide Rationale:**
+
+**1. Developer Velocity & Productivity (Score: 9/10)**
+- **Time-to-productivity**: Nieuwe developers zijn binnen 1-2 weken productief
+- **Boilerplate minimaal**: Simpele CRUD endpoints in <50 regels code
+- **Prototyping speed**: MVP features kunnen in dagen gebouwd worden, niet weken
+- **GitHub Copilot excellence**: 9.5/10 score (70-80% sneller bij boilerplate code)
+- **Example**: REST endpoint met validatie, auth en database access in 30-40 regels
+
+**2. Leercurve & Onboarding (Score: 9/10)**
+- **JavaScript ubiquiteit**: Vrijwel elke developer kent JavaScript basics
+- **TypeScript leercurve**: 1-2 dagen voor TypeScript syntax als JS bekend is
+- **Leesbaarheid**: Code is leesbaar zonder IDE (types geven context)
+- **Cognitieve belasting**: Laag - geen complexe OOP hierarchies of design patterns vereist
+- **Full-stack voordeel**: Developers kunnen aan beide kanten van stack werken
+
+**3. Onderhoudbaarheid (Score: 8/10)**
+- **TypeScript type safety**: Compiler catcht breaking changes bij refactoring
+- **Expliciete contracts**: Interfaces maken API contracts duidelijk
+- **Teamwisselingen**: Types documenteren verwachtingen, nieuwe developers kunnen snel meekomen
+- **Caveat**: Vereist discipline om strict TypeScript te handhaven (mitigatie: ESLint rules)
+- **Code quality**: Linting + Prettier zorgen voor consistente code style
+
+**4. Flexibiliteit & Iteratiesnelheid (Score: 9/10)**
+- **Veranderende requirements**: Makkelijk om structuur aan te passen
+- **Prototyping**: Snel van idee naar werkend prototype
+- **Incremental typing**: Kan starten met `any` types en later verfijnen
+- **Refactoring**: TypeScript compiler helpt bij grote refactorings
+- **Trade-off**: Minder rigide dan Java/C#, maar stricter dan plain JavaScript
+
+**5. Business Logic Duidelijkheid (Score: 9/10)**
+- **Geen OOP overhead**: Functionele stijl houdt business logic centraal
+- **Expliciete flows**: async/await maakt asynchrone code leesbaar als synchrone code
+- **Example VVE berekening**:
+  ```typescript
+  async function calculateMonthlyContribution(
+    vveId: string,
+    apartmentId: string
+  ): Promise<Decimal> {
+    const apartment = await getApartment(vveId, apartmentId);
+    const totalCosts = await getMonthlyTotalCosts(vveId);
+    return totalCosts.multiply(apartment.splitKey);
+  }
+  // Leesbaar, begrijpelijk, testbaar
+  ```
+
+**6. Testing (Score: 9/10)**
+- **Jest ecosystem**: De facto standard, enorme community
+- **Test schrijven**: Simpel en intuitief
+- **Mocking**: Easy mocking met jest.fn(), jest.spyOn()
+- **Coverage**: Goede integration met Istanbul voor code coverage
+- **Example**:
+  ```typescript
+  describe('calculateContribution', () => {
+    test('should calculate correct contribution', async () => {
+      const result = await calculateContribution('vve-1', 'apt-1');
+      expect(result).toBe(new Decimal('1500.00'));
+    });
+  });
+  ```
+
+**7. Tooling & Setup (Score: 9/10)**
+- **npm**: Simpel package management (`npm install`, `npm run`)
+- **Setup**: `package.json` + `tsconfig.json` + `.eslintrc` en je bent klaar
+- **Build**: `tsc` compileert TypeScript naar JavaScript (snel)
+- **Hot reload**: nodemon of ts-node-dev voor development
+- **Scripts**: Alle scripts in `package.json`, geen aparte build tool nodig
+
+**8. Scripts & Automation (Score: 10/10)**
+- **Zelfde taal**: Scripts kunnen zelfde utilities gebruiken als applicatie code
+- **Node scripts**: Excellent voor automation (database migrations, seed data, etc.)
+- **No friction**: Geen context switch tussen applicatie taal en script taal
+- **Example**: Database seed script gebruikt zelfde Prisma models als applicatie
+
+**9. Debugging & Troubleshooting (Score: 8/10)**
+- **Stack traces**: Goed leesbaar (met source maps voor TypeScript)
+- **DevTools**: Chrome DevTools voor Node.js debugging (excellent)
+- **Logging**: Winston/Pino voor structured logging
+- **Error messages**: TypeScript compiler errors zijn meestal duidelijk
+- **Caveat**: Async errors kunnen soms moeilijk te tracen zijn (maar beter dan callback hell)
+
+**10. Langetermijn Kosten (Score: 8/10)**
+- **Ontwikkelkosten LAAG**: Snelle feature development = minder uren = lagere kosten
+- **Onderhoudskosten MEDIUM**: Vereist discipline voor code quality
+  - Met TypeScript strict + ESLint: LAAG
+  - Zonder discipline: MEDIUM-HOOG (JavaScript chaos)
+- **Recruitment kosten LAAG**: Grote pool van beschikbare developers
+- **Training kosten LAAG**: Korte onboarding tijd
+
+**Python Vergelijking - Waarom TypeScript/Node.js?**
+
+Python scoort **hoger** op:
+- **Leesbaarheid zonder IDE**: 10/10 vs 8/10 (Python's expliciete syntax wint)
+- **Leercurve absolute beginners**: 10/10 vs 9/10 (Python is "easiest first language")
+- **Data/analytics ecosystem**: 10/10 vs 7/10 (pandas, numpy, scipy ongeëvenaard)
+- **Debugging**: 9/10 vs 8/10 (stack traces zijn duidelijker)
+
+TypeScript/Node.js scoort **hoger** op:
+- **Full-stack consistency**: 10/10 vs 0/10 (frontend is TypeScript anyway)
+- **GitHub Copilot**: 9.5/10 vs 9/10 (type sharing advantage)
+- **Async I/O**: 9/10 vs 7/10 (native event loop vs asyncio)
+- **Scripts & automation sync**: 10/10 vs 8/10 (zelfde taal, geen context switch)
+- **Frontend developers kunnen backend doen**: 10/10 vs 0/10
+
+**Totaal gewogen score:**
+- **Node.js/TypeScript**: 9.0/10
+- **Python**: 9.2/10
+
+**Waarom kiezen we TypeScript ondanks lagere score?**
+
+**De full-stack voordeel weegt zwaarder dan 0.2 punt verschil:**
+1. **Team efficiency**: Frontend developers kunnen backend features bouwen
+2. **Code sharing**: Validation logic, types, utilities gedeeld tussen FE/BE
+3. **Recruitment**: 1 skill set (TypeScript) ipv 2 (Python + TypeScript)
+4. **Context switching**: Developers blijven in dezelfde mental model
+5. **Copilot synergy**: AI leert van zowel FE als BE code in zelfde taal
+
+**Wanneer zou Python beter zijn?**
+- **Roadmap is zwaar data/analytics**: Als Fase 2-3 ML/AI features bevat
+- **Team heeft Python expertise maar geen JS**: Bestaand team > nieuwe stack
+- **Backend-only applicatie**: Geen frontend = geen full-stack voordeel
+- **Data pipelines domineren**: ETL, data processing, scientific computing
+
+**Voor VVE Tooling (web app, CRUD, API's, rapportages)**: TypeScript is de juiste keuze ✅
 
 **Python vs Node.js/TypeScript - GitHub Copilot Vergelijking:**
 
@@ -141,7 +290,7 @@ Python heeft voordeel door:
 
 ---
 
-### 2.3 Diepgaande Analyse: GitHub Copilot Compatibility
+### 2.2 Diepgaande Analyse: GitHub Copilot Compatibility
 
 **Context:**
 GitHub Copilot is een AI-powered code completion tool die significant developer productivity kan verhogen (20-55% sneller coderen volgens GitHub studies). Voor een MVP met 3-6 maanden timeline is maximale Copilot compatibility een belangrijk criterium.
@@ -288,10 +437,58 @@ Als toekomstige roadmap **zwaar** leunt op:
 - Data analytics (ML/AI features)
 - Scientific computing
 - Integration met Python-based tools (accounting software)
+- Data pipelines en ETL workloads
 
 Dan zou Python + FastAPI sterke candidate zijn, ondanks frontend disconnect.
 
 **Voor VVE Tooling MVP: TypeScript blijft de juiste keuze** ✅
+
+---
+
+### 2.3 Developer Experience Impact op MVP Timeline
+
+**Realistische impact van developer experience keuze op 26-week MVP:**
+
+| Aspect | Impact TypeScript | Impact Python | Verschil |
+|--------|------------------|---------------|----------|
+| **Onboarding nieuwe developers** | 1-2 weken | 1-2 weken | Gelijkwaardig |
+| **Full-stack developers inzetten** | ✅ Mogelijk | ❌ Niet mogelijk | **+2 weken efficiency** |
+| **Code reviews (minder context switch)** | ✅ Sneller | ⚠️ Twee talen | **+1 week efficiency** |
+| **Debugging production issues** | ⚠️ Goed | ✅ Excellent | -0.5 week |
+| **Prototyping nieuwe features** | ✅ Zeer snel | ✅ Zeer snel | Gelijkwaardig |
+| **Test schrijven en onderhouden** | ✅ Eenvoudig | ✅ Zeer eenvoudig | Gelijkwaardig |
+| **Refactoring grote changes** | ✅ Type-safe | ⚠️ Runtime errors | **+1 week efficiency** |
+| **Scripts & automation** | ✅ Zelfde stack | ✅ Excellent | Gelijkwaardig |
+
+**Netto impact op MVP timeline:**
+- **TypeScript voordeel**: +4 weken efficiency (full-stack, code reviews, refactoring)
+- **Python voordeel**: +0.5 week (debugging)
+- **Netto TypeScript voordeel**: **+3.5 weken** over 26-week project
+
+**Combined met GitHub Copilot voordeel:**
+- Copilot besparing: 4-8 weken (conservatief)
+- Full-stack voordeel: 3.5 weken
+- **Totale efficiency gain**: **7.5-11.5 weken**
+- **Effectieve MVP tijd**: **14.5-18.5 weken** (3.5-4.5 maanden)
+
+**Business impact:**
+```
+Baseline (zonder TypeScript/Copilot):  26 weken × €12K = €312K
+Met TypeScript full-stack:              22.5 weken × €12K = €270K
+Met TypeScript + Copilot:               16.75 weken × €12K = €201K
+Totale besparing:                       €111K (36% cost reduction)
+```
+
+**Caveat**: Deze gains zijn **optimistisch** en vereisen:
+1. Team dat TypeScript goed kent
+2. Effectief gebruik van Copilot (training nodig)
+3. Goede code review practices
+4. Strikte TypeScript configuratie
+
+**Conservatieve schatting**:
+- Verwachte gains: 50-70% van bovenstaande
+- Realistische besparing: **€55-77K** (18-25% cost reduction)
+- Effectieve MVP tijd: **18-20 weken** (4-5 maanden)
 
 ---
 
@@ -316,7 +513,7 @@ Dan zou Python + FastAPI sterke candidate zijn, ondanks frontend disconnect.
 
 ---
 
-### 2.3 Web Framework: Express.js 4
+### 2.5 Web Framework: Express.js 4
 
 **Alternatieven overwogen:**
 - Fastify (performance-focused)
