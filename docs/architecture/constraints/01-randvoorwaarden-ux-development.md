@@ -650,7 +650,7 @@ Alle technology keuzes moeten gedocumenteerd worden met rationale (Architecture 
 
 **NO-04: Frontend-Only Security**
 - Rationale: Security through obscurity is not security
-- Backend moet ALTIJD authorizatie enforceн
+- Backend moet ALTIJD authorizatie enforcen
 
 **NO-05: HTTP Traffic (Alleen HTTPS)**
 - Rationale: Encryption in transit is verplicht
@@ -699,7 +699,7 @@ Alle technology keuzes moeten gedocumenteerd worden met rationale (Architecture 
 
 **OPEN-02: API Style (REST vs. GraphQL)**
 - Beslissing: Backend Lead
-- Rationale: Beide kunnen werk, trade-offs verschillen
+- Rationale: Beide kunnen werken, trade-offs verschillen
 - Voorwaarde: Moet API-first principle respecteren
 
 **OPEN-03: Authentication Provider (Custom vs. Managed)**

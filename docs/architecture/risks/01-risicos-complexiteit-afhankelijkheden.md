@@ -432,16 +432,17 @@ Platform is afhankelijk van third-party services (payment provider, email servic
 
 **Geschatte timeline impact door complexiteit:**
 
-**Base MVP (single-user, basic features):** 3 maanden
+**Base MVP (single-user, basic features):** 3 maanden (12 weken)
 **+Multi-tenancy/RBAC:** +4-6 weken
 **+VVE-specifieke features:** +2-4 weken
 **+Multi-device responsive:** +2-3 weken
 **+Security/Compliance (AVG, bank-level):** +2-3 weken
 **+Testing/QA:** +2-4 weken
 
-**Totaal geschat:** 4.5-6.5 maanden voor MVP
+**Totaal toevoegingen:** +12-20 weken (3-5 maanden)
+**Totaal geschat:** 6-8 maanden voor MVP
 
-Dit is in lijn met PM schatting van 3-6 maanden, maar aan hogere kant (realistisch 5-6 maanden).
+Dit is aan de hogere kant van PM schatting van 3-6 maanden. Realistisch is 5-6 maanden met ervaren team en scherpe scope discipline, of 7-8 maanden met minder ervaring of scope creep.
 
 **Bronverwijzing:** `docs/product/strategy/01-productstrategie-keuzes.md` §5 Roadmap
 
