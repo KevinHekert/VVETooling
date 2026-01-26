@@ -47,6 +47,29 @@ Deze backlog is de single source of truth voor uitvoering van VVE Tooling MVP. A
   - [STORY-003 Bewoner ziet eigen status](stories/STORY-003-bewoner-ziet-eigen-status.md)
   - [STORY-004 Bestuur uploadt document](stories/STORY-004-bestuur-upload-document.md)
   - [STORY-005 Rol-gebaseerd inloggen](stories/STORY-005-inloggen-rol-gebaseerd.md)
+  - [STORY-006 Begroting opstellen en exporteren](stories/STORY-006-begroting-opstellen.md)
+  - [STORY-007 Onboarding wizard voor meerdere rollen](stories/STORY-007-onboarding-wizard-multi-role.md)
+  - [STORY-008 Documenten delen en downloaden](stories/STORY-008-documenten-delen-en-downloaden.md)
+  - [STORY-009 Rol-specifiek dashboard raamwerk](stories/STORY-009-rolspecifiek-dashboard-raamwerk.md)
+  - [STORY-010 Audit logging zichtbaar in UI](stories/STORY-010-audit-logging-ui.md)
+  - [STORY-011 Transacties importeren en valideren](stories/STORY-011-transactie-importeren.md)
+  - [STORY-012 Transactie-overzicht met filters en widgets](stories/STORY-012-transactie-overzichten-en-filters.md)
+  - [STORY-013 Reserves overzicht en allocatie](stories/STORY-013-reserves-overzicht-en-allocatie.md)
+  - [STORY-014 Contributie berekenen en status delen](stories/STORY-014-contributie-berekenen-en-status.md)
+  - [STORY-015 Jaarrekening genereren en delen](stories/STORY-015-jaarrekening-genereren-en-delen.md)
+  - [STORY-016 Splitsingssleutel configureren met UI-wizard](stories/STORY-016-splitsingssleutel-configureren-ui.md)
+  - [STORY-017 Onboarding uitnodigingen en herinneringen](stories/STORY-017-onboarding-uitnodigingen.md)
+  - [STORY-018 Document versiebeheer en rol-specifiek delen](stories/STORY-018-documentversiebeheer-en-rollen.md)
+  - [STORY-019 Document download-links en notificaties](stories/STORY-019-document-download-links-en-notificaties.md)
+  - [STORY-020 Pricing- en abonnementenbeheer UI](stories/STORY-020-pricing-en-abonnementen-ui.md)
+  - [STORY-021 Auth & RBAC UI beheer](stories/STORY-021-auth-rbac-ui.md)
+  - [STORY-022 Export en back-up UI](stories/STORY-022-export-backup-ui.md)
+  - [STORY-023 Audit logging filters en export](stories/STORY-023-audit-logging-filters-en-export.md)
+  - [STORY-024 Multi-tenant toegang en context switcher](stories/STORY-024-multi-tenant-toegang-en-context.md)
+  - [STORY-025 Notificaties en toasts consistent raamwerk](stories/STORY-025-notificaties-en-toasts.md)
+  - [STORY-026 Reserves scenario-planning en prognose](stories/STORY-026-reserves-scenario-planning.md)
+  - [STORY-027 Reserves herclassificatie en audit trail](stories/STORY-027-reserves-herclassificatie-en-audit.md)
+  - [STORY-028 Mobile-first reserves dashboard](stories/STORY-028-reserves-mobile-dashboard.md)
 - **Decision log**
   - [Open vragen](decision-log/01-open-vragen.md)
   - [Besluiten](decision-log/02-besluiten.md)
@@ -93,3 +116,26 @@ Deze backlog is de single source of truth voor uitvoering van VVE Tooling MVP. A
 | STORY-003 | docs/backlog/stories/STORY-003-bewoner-ziet-eigen-status.md, docs/ux/design/02-bewoner-flows.md |
 | STORY-004 | docs/backlog/stories/STORY-004-bestuur-upload-document.md, docs/ui/components/feedback-notifications.md |
 | STORY-005 | docs/backlog/stories/STORY-005-inloggen-rol-gebaseerd.md, docs/ux/design/02-bewoner-flows.md |
+| STORY-006 | docs/backlog/stories/STORY-006-begroting-opstellen.md, docs/ui/components/lists-tables.md |
+| STORY-007 | docs/backlog/stories/STORY-007-onboarding-wizard-multi-role.md, docs/ux/design/03-beheerder-flows.md, docs/ux/design/04-bestuur-flows.md, docs/ux/design/02-bewoner-flows.md |
+| STORY-008 | docs/backlog/stories/STORY-008-documenten-delen-en-downloaden.md, docs/ui/components/feedback-notifications.md |
+| STORY-009 | docs/backlog/stories/STORY-009-rolspecifiek-dashboard-raamwerk.md, docs/ux/design/02-bewoner-flows.md, docs/ux/design/03-beheerder-flows.md, docs/ux/design/04-bestuur-flows.md, docs/architecture/constraints/01-randvoorwaarden-ux-development.md |
+| STORY-010 | docs/backlog/stories/STORY-010-audit-logging-ui.md, docs/ui/components/lists-tables.md |
+| STORY-011 | docs/backlog/stories/STORY-011-transactie-importeren.md, docs/ui/components/lists-tables.md, docs/ui/components/feedback-notifications.md |
+| STORY-012 | docs/backlog/stories/STORY-012-transactie-overzichten-en-filters.md, docs/backlog/features/FEAT-001-transactiebeheer.md, docs/ui/components/lists-tables.md |
+| STORY-013 | docs/backlog/stories/STORY-013-reserves-overzicht-en-allocatie.md, docs/backlog/features/FEAT-002-reserves-overzicht.md, docs/ui/components/lists-tables.md |
+| STORY-014 | docs/backlog/stories/STORY-014-contributie-berekenen-en-status.md, docs/backlog/features/FEAT-004-contributieberekening.md, docs/ux/design/02-bewoner-flows.md |
+| STORY-015 | docs/backlog/stories/STORY-015-jaarrekening-genereren-en-delen.md, docs/backlog/features/FEAT-005-jaarrekening-rapportage.md, docs/ui/components/lists-tables.md |
+| STORY-016 | docs/backlog/stories/STORY-016-splitsingssleutel-configureren-ui.md, docs/backlog/features/FEAT-003-splitsingssleutel.md, docs/ui/components/form-controls.md |
+| STORY-017 | docs/backlog/stories/STORY-017-onboarding-uitnodigingen.md, docs/backlog/features/FEAT-007-onboarding-wizard.md, docs/backlog/features/FEAT-008-uitnodigen-gebruikers.md |
+| STORY-018 | docs/backlog/stories/STORY-018-documentversiebeheer-en-rollen.md, docs/backlog/features/FEAT-011-documentbeheer.md, docs/backlog/features/FEAT-015-audit-logging.md |
+| STORY-019 | docs/backlog/stories/STORY-019-document-download-links-en-notificaties.md, docs/backlog/features/FEAT-012-documenten-downloaden.md, docs/ui/components/feedback-notifications.md |
+| STORY-020 | docs/backlog/stories/STORY-020-pricing-en-abonnementen-ui.md, docs/backlog/features/FEAT-014-pricing-billing.md, docs/product/strategy/01-productstrategie-keuzes.md |
+| STORY-021 | docs/backlog/stories/STORY-021-auth-rbac-ui.md, docs/backlog/features/FEAT-010-auth-rbac.md, docs/architecture/decisions/ADR-001-authentication-authorization.md |
+| STORY-022 | docs/backlog/stories/STORY-022-export-backup-ui.md, docs/backlog/features/FEAT-013-export-backup.md, docs/backlog/features/FEAT-015-audit-logging.md |
+| STORY-023 | docs/backlog/stories/STORY-023-audit-logging-filters-en-export.md, docs/backlog/features/FEAT-015-audit-logging.md, docs/backlog/features/FEAT-013-export-backup.md |
+| STORY-024 | docs/backlog/stories/STORY-024-multi-tenant-toegang-en-context.md, docs/architecture/decisions/ADR-003-multi-tenancy-implementation.md |
+| STORY-025 | docs/backlog/stories/STORY-025-notificaties-en-toasts.md, docs/ui/components/feedback-notifications.md, docs/architecture/constraints/01-randvoorwaarden-ux-development.md |
+| STORY-026 | docs/backlog/stories/STORY-026-reserves-scenario-planning.md, docs/backlog/features/FEAT-002-reserves-overzicht.md |
+| STORY-027 | docs/backlog/stories/STORY-027-reserves-herclassificatie-en-audit.md, docs/backlog/features/FEAT-002-reserves-overzicht.md, docs/backlog/features/FEAT-015-audit-logging.md |
+| STORY-028 | docs/backlog/stories/STORY-028-reserves-mobile-dashboard.md, docs/backlog/features/FEAT-002-reserves-overzicht.md, docs/ux/design/02-bewoner-flows.md |
