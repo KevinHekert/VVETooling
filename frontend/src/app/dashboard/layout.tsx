@@ -28,6 +28,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   // Bewoner items
   { label: 'Mijn Status', href: '/dashboard/bewoner', icon: '🏠', roles: ['bewoner', 'bestuurslid', 'penningmeester', 'beheerder'] },
+  { label: 'Mijn Reserves', href: '/dashboard/bewoner/reserves', icon: '🏦', roles: ['bewoner', 'bestuurslid'] },
   
   // Penningmeester/Beheerder items
   { label: 'Transacties', href: '/dashboard/penningmeester/transactions', icon: '💰', roles: ['penningmeester', 'beheerder'] },
@@ -41,6 +42,8 @@ const NAV_ITEMS: NavItem[] = [
   
   // Beheerder only
   { label: 'Audit Log', href: '/dashboard/beheerder/audit', icon: '📋', roles: ['beheerder'] },
+  { label: 'Splitsingssleutel', href: '/instellingen/splitsingssleutel', icon: '🔑', roles: ['beheerder'] },
+  { label: 'Rollen & Rechten', href: '/instellingen/rollen', icon: '👥', roles: ['beheerder'] },
   { label: 'Instellingen', href: '/instellingen/onboarding', icon: '⚙️', roles: ['beheerder'] },
 ];
 
