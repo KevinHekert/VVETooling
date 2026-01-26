@@ -9,7 +9,6 @@ import type {
   TransactionCategory,
   Transaction,
   Unit,
-  SplitsingssleutelEntry,
   SplitsingssleutelValidation,
   Contribution,
   ContributionStatus,
