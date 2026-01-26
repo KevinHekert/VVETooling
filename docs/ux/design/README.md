@@ -22,6 +22,13 @@ Deze map bevat de volledige UX design documentatie voor VVE Tooling MVP. Alle on
 - Accessibility guidelines (WCAG 2.0 A minimum)
 - Performance budget richtlijnen
 
+### 1b. [UI Componenten](../../ui/components/README.md)
+**Doel:** Herbruikbare UI-elementen met states, gedrag en gebruiksrichtlijnen
+
+- Formulieronderdelen, knoppen, tabellen
+- Feedback- en meldingscomponenten
+- Do's / don'ts per component
+
 ### 2. [Core User Flows - Bewoner](02-bewoner-flows.md)
 **Doel:** Mobile-first UX concepten voor bewoners (read-only rol)
 
