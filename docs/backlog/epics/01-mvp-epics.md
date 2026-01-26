@@ -32,7 +32,7 @@ Dit document definieert **Epics** voor VVE Tooling MVP. Elke epic is:
 | EP-001 | Penningmeester kan VVE financieel overzicht beheren | P0 | To Do | MVP Q2 |
 | EP-002 | Penningmeester kan VVE-specifieke splitsingen beheren | P0 | To Do | MVP Q2 |
 | EP-003 | Penningmeester kan jaarrekening en begroting maken | P0 | To Do | MVP Q2 |
-| EP-004 | VVE kan snel en foutloos onboarden (multi-user) | P0 | To Do | MVP Q2 |
+| EP-004 | VVE kan snel en foutloos onboarden met alle gebruikers | P0 | To Do | MVP Q2 |
 | EP-005 | Alle gebruikers hebben vertrouwen in veiligheid en compliance | P0 | To Do | MVP Q2 |
 | EP-006 | Bestuur en bewoners kunnen documenten inzien en delen | P0 | To Do | MVP Q2 |
 | EP-007 | VVE kan data exporteren en back-uppen | P1 | To Do | MVP Q2/Q3 |
