@@ -1,0 +1,74 @@
+"""Audit Log Pydantic schemas.
+
+Implements FEAT-015 (Audit Logging) and STORY-010 (Audit logging zichtbaar in UI).
+"""
+
+from datetime import datetime
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict, Field
+
+
+class AuditLogBase(BaseModel):
+    """Base schema for audit log."""
+    
+    action: str = Field(..., description="Type of action performed")
+    entity_type: str = Field(..., description="Type of entity affected")
+    entity_id: str | None = Field(None, description="ID of the affected entity")
+
+
+class AuditLogCreate(AuditLogBase):
+    """Schema for creating an audit log entry."""
+    
+    vve_id: UUID | None = None
+    user_id: UUID | None = None
+    old_values: str | None = None
+    new_values: str | None = None
+    ip_address: str | None = None
+    user_agent: str | None = None
+    is_financial: bool = False
+
+
+class AuditLogResponse(BaseModel):
+    """Schema for audit log response."""
+    
+    model_config = ConfigDict(from_attributes=True)
+    
+    id: UUID
+    vve_id: UUID | None
+    user_id: UUID | None
+    user_name: str | None = None
+    action: str
+    entity_type: str
+    entity_id: str | None
+    old_values: str | None = None
+    new_values: str | None = None
+    ip_address: str | None = None
+    is_financial: bool
+    created_at: datetime
+    
+    # Computed fields for display
+    @property
+    def result(self) -> str:
+        """Return success indicator (for UI display)."""
+        return "success"  # All logged actions are successful
+
+
+class AuditLogListResponse(BaseModel):
+    """Paginated list of audit logs."""
+    
+    items: list[AuditLogResponse]
+    total: int
+    page: int
+    size: int
+
+
+class AuditLogFilters(BaseModel):
+    """Filters for audit log queries."""
+    
+    action: str | None = None
+    entity_type: str | None = None
+    user_id: UUID | None = None
+    start_date: datetime | None = None
+    end_date: datetime | None = None
+    is_financial: bool | None = None
