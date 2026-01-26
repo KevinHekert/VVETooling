@@ -125,7 +125,9 @@ export default function DocumentenPage() {
       const versions = await api.getDocumentVersions(MOCK_VVE_ID, doc.id);
       setDocumentVersions(versions);
     } catch {
-      // If API fails, show mock data for demo
+      // DEV/DEMO ONLY: Show current document as single version when API is unavailable.
+      // In production, this should show an error message to the user instead.
+      // TODO: Replace with proper error handling when backend is fully integrated.
       setDocumentVersions([
         {
           id: doc.id,

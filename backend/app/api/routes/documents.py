@@ -450,10 +450,14 @@ async def upload_new_version(
     s3_key = f"vves/{vve_id}/documents/{uuid.uuid4()}/{file.filename}"
 
     # Determine root document ID and new version number
+    # NOTE: Version increment is not atomic. For production use with high concurrency,
+    # consider using database-level sequences or SELECT FOR UPDATE locking.
     root_id = current_doc.parent_document_id or current_doc.id
     new_version = current_doc.version + 1
 
     # Mark current version as not current
+    # NOTE: In high-concurrency scenarios, use transaction isolation to prevent
+    # multiple documents being marked as current simultaneously.
     current_doc.is_current_version = False
 
     # Create new version

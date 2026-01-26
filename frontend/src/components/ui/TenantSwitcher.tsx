@@ -13,6 +13,9 @@ import type { VVEMembership } from '@/types';
  * - Geen modals, gebruik inline/slide-over interacties
  */
 
+// Duration for switch feedback notification (in milliseconds)
+const SWITCH_FEEDBACK_DURATION_MS = 2000;
+
 interface TenantSwitcherProps {
   memberships: VVEMembership[];
   currentVveId: string;
@@ -35,7 +38,7 @@ export function TenantSwitcher({
     if (vveId !== currentVveId) {
       onTenantChange(vveId);
       setShowSwitchFeedback(true);
-      setTimeout(() => setShowSwitchFeedback(false), 2000);
+      setTimeout(() => setShowSwitchFeedback(false), SWITCH_FEEDBACK_DURATION_MS);
     }
     setIsOpen(false);
   };
