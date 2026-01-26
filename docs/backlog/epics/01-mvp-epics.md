@@ -1,10 +1,11 @@
 # Epics & Backlog - VVE Tooling MVP
 
 ## Documentinformatie
-- **Datum**: 2026-01-26
+- **Datum**: 2026-01-26 (Updated: 2026-01-26)
 - **Eigenaar**: Product Management
 - **Status**: Final
-- **Versie**: 1.0
+- **Versie**: 2.0
+- **Changelog**: v2.0 - Multi-user platform requirement (EP-009 toegevoegd, alle epics ge-update)
 
 ## Bronverwijzingen
 Dit document is gebaseerd op:
@@ -29,11 +30,12 @@ Dit document definieert **Epics** voor VVE Tooling MVP. Elke epic is:
 | EP-001 | Penningmeester kan VVE financieel overzicht beheren | P0 | To Do | MVP Q2 |
 | EP-002 | Penningmeester kan VVE-specifieke splitsingen beheren | P0 | To Do | MVP Q2 |
 | EP-003 | Penningmeester kan jaarrekening en begroting maken | P0 | To Do | MVP Q2 |
-| EP-004 | Penningmeester kan snel en foutloos onboarden | P0 | To Do | MVP Q2 |
-| EP-005 | Penningmeester heeft vertrouwen in veiligheid en compliance | P0 | To Do | MVP Q2 |
-| EP-006 | Penningmeester kan documenten beheren en delen | P1 | To Do | MVP Q2/Q3 |
-| EP-007 | Penningmeester kan VVE data exporteren en back-uppen | P1 | To Do | MVP Q3 |
-| EP-008 | VVE kan upgraden van gratis naar betaald tier | P0 | To Do | MVP Q2 |
+| EP-004 | VVE kan snel en foutloos onboarden (multi-user) | P0 | To Do | MVP Q2 |
+| EP-005 | Alle gebruikers hebben vertrouwen in veiligheid en compliance | P0 | To Do | MVP Q2 |
+| EP-006 | Bestuur en bewoners kunnen documenten inzien en delen | P0 | To Do | MVP Q2 |
+| EP-007 | VVE kan data exporteren en back-uppen | P1 | To Do | MVP Q2/Q3 |
+| EP-008 | VVE kan betalen voor platform (flat fee) | P0 | To Do | MVP Q2 |
+| **EP-009** | **Voorzitter en Bewoners kunnen inloggen en platform gebruiken** | **P0** | **To Do** | **MVP Q2** |
 
 ---
 
@@ -483,30 +485,124 @@ Freemium business model vereist **smooth upgrade path** van gratis naar betaald.
 
 ---
 
+## EP-009: Voorzitter en Bewoners kunnen inloggen en platform gebruiken
+
+### Probleemomschrijving
+VVE's hebben **gebrek aan transparantie en samenwerking** omdat alleen de penningmeester toegang heeft tot financiële informatie en documenten. **Voorzitters moeten constant penningmeester om updates vragen**, en **bewoners blijven passief** omdat ze geen inzicht hebben in waar hun contributie naartoe gaat. Dit leidt tot **wantrouwen, miscommunicatie en lage betrokkenheid**.
+
+**User pain points**:
+- **Voorzitter**: "Ik moet penningmeester constant mailen voor een financieel overzicht"
+- **Voorzitter**: "Ik kan niet zelf controleren of de cijfers kloppen"
+- **Bewoner**: "Ik weet niet waar mijn contributie aan uitgegeven wordt"
+- **Bewoner**: "Ik moet altijd naar ALV komen om documenten te krijgen"
+- **Penningmeester**: "Ik krijg steeds dezelfde vragen van bewoners over hetzelfde"
+
+### Doelstelling
+**Alle VVE leden** (voorzitter, bestuursleden, bewoners) kunnen **inloggen** en toegang krijgen tot relevante informatie op basis van hun rol, met **100% transparantie** en **rol-gebaseerde permissions**.
+
+**Success target**:
+- **100% van VVE's** heeft minimaal 3 actieve gebruikers (penningmeester + voorzitter + bewoners)
+- **30%+ bewoners** maken account aan en loggen in minimaal 1x per maand
+- **Voorzitters loggen minimaal 1x per week** in om financiën te checken
+
+### In Scope
+- **User Management**:
+  - Penningmeester kan gebruikers uitnodigen (email invite)
+  - Gebruikers kunnen account aanmaken met uitnodigingscode
+  - Rollen toewijzen: Penningmeester (admin), Voorzitter/Bestuur (collaborator), Bewoner (read-only)
+  - Gebruikers activeren/deactiveren
+  
+- **Permissions & Roles**:
+  - **Penningmeester (Admin)**:
+    - Volledige toegang: alles zien, alles doen
+    - Gebruikers beheren
+    - Financiële transacties toevoegen/wijzigen
+  - **Voorzitter/Bestuur (Collaborator)**:
+    - Lezen: Alle financiële data, documenten, rapportages
+    - Schrijven beperkt: Documenten uploaden, opmerkingen toevoegen
+    - Geen financiële transacties wijzigen
+  - **Bewoner (Read-Only)**:
+    - Lezen: Financiële overzichten (niet details van individuele transacties), documenten, rapportages
+    - Eigen profiel: Contactgegevens updaten, eigen betalingsstatus zien
+    - Geen access tot andere bewoners' gegevens
+    
+- **Different Dashboards**:
+  - **Penningmeester dashboard**: Financieel focus (transacties, reconciliatie, taken)
+  - **Voorzitter dashboard**: Overzicht focus (saldi, recente activiteiten, documenten)
+  - **Bewoner dashboard**: Transparantie focus (waar gaat geld naartoe, documenten, eigen status)
+  
+- **Privacy & Security**:
+  - Bewoners kunnen alleen eigen betalingsstatus zien (niet van anderen)
+  - Audit log: Wie heeft wat gedaan (bestuur kan zien)
+  - Email notificaties voor belangrijke events (configureerbaar per user)
+
+### Out of Scope
+- Advanced permissions (custom roles, granular permissions) - Roadmap
+- Delegation (bijv. penningmeester tijdelijk toegang geven aan iemand anders) - Roadmap
+- SSO / Social login (Google, Facebook) - Roadmap
+- In-app messaging tussen gebruikers - Roadmap Fase 2
+- Polls/Voting - Roadmap Fase 2
+
+### Succesindicatoren
+**Quantitative**:
+- ✅ 100% van VVE's heeft ≥3 actieve gebruikers
+- ✅ 30%+ van bewoners maken account aan en loggen ≥1x/maand in
+- ✅ 80%+ van voorzitters loggen ≥1x/week in
+- ✅ <10% support tickets over permissions/access
+
+**Qualitative**:
+- ✅ "Eindelijk weet ik waar mijn geld naartoe gaat" (bewoner feedback)
+- ✅ "Ik kan nu zelf de financiën checken" (voorzitter feedback)
+- ✅ "Ik krijg minder repetitieve vragen van bewoners" (penningmeester feedback)
+- ✅ Multi-user is top 1 differentiator vs concurrenten
+
+### Herleidbaarheid
+- **Probleemstatement**: docs/product/discovery/01-probleemdefinitie-productrichting.md - Primair Probleem (v2.0)
+- **Nieuwe requirement**: Voorzitter + bewoners moeten kunnen inloggen
+- **Prioriteit**: P0 - Core value proposition van het platform
+
+### Acceptance Criteria (High-Level)
+- [ ] Penningmeester kan gebruikers uitnodigen via email (met rol: voorzitter/bestuur/bewoner)
+- [ ] Uitgenodigde gebruikers ontvangen email met link + uitnodigingscode
+- [ ] Gebruikers kunnen account aanmaken met email + wachtwoord (+ uitnodigingscode)
+- [ ] System wijst correct rol toe op basis van uitnodiging
+- [ ] **Penningmeester** ziet admin dashboard met alle financiële tools
+- [ ] **Voorzitter** ziet overzicht dashboard met saldi, recente transacties, documenten (read-only financial data)
+- [ ] **Voorzitter** kan documenten uploaden (bijv. notulen)
+- [ ] **Bewoner** ziet transparantie dashboard met: waar geld naartoe gaat, eigen betalingsstatus, documenten
+- [ ] **Bewoner** kan eigen contactgegevens updaten
+- [ ] Bewoners kunnen NIET andere bewoners' financiële data zien
+- [ ] Audit log toont wie wat heeft gedaan (toegankelijk voor penningmeester en voorzitter)
+- [ ] Penningmeester kan gebruikers deactiveren (bijv. bij vertrek uit VVE)
+- [ ] Email notificaties voor nieuwe documenten, belangrijke updates (opt-in)
+
+---
+
 ## Prioritisering & Roadmap
 
 ### MVP Critical Path (Must Have voor Launch)
 1. **EP-001**: Financieel overzicht - Core value proposition
 2. **EP-002**: Splitsingen - VVE-specific differentiator
 3. **EP-003**: Jaarrekening - High-impact, annual pain point
-4. **EP-004**: Onboarding - Adoption enabler
+4. **EP-004**: Onboarding (multi-user) - Adoption enabler
 5. **EP-005**: Security & Compliance - Trust builder
-6. **EP-008**: Upgrade flow - Revenue enabler
+6. **EP-006**: Documenten - Transparency enabler (upgraded to P0)
+7. **EP-008**: Payment (flat fee) - Revenue enabler
+8. **EP-009**: Multi-user & Permissions - **Core differentiator, transparency driver**
 
-**Estimated timeline**: 3-4 maanden (Q2 2026)
+**Estimated timeline**: 4-6 maanden (Q2-Q3 2026) - Multi-user adds complexity
 
 ### MVP Nice-to-Have (Launch if Time Allows)
-7. **EP-006**: Documenten - Helpful but not blocker
-8. **EP-007**: Data export - Trust building
+9. **EP-007**: Data export - Trust building
 
-**Estimated timeline**: +1-2 maanden (Q3 2026)
+**Estimated timeline**: +1 maand (Q3 2026)
 
 ### Post-MVP (Roadmap Fase 2)
 - Bank integraties (automatisch transacties ophalen)
-- Native mobile apps (iOS/Android)
-- Multi-user (bestuur toegang)
-- Eigenaren portal
-- Communicatie features (email/WhatsApp integratie)
+- Native mobile apps (iOS/Android) - vooral voor bewoners
+- In-app messaging (chat tussen bewoners en bestuur)
+- Polls/Voting (online stemmen)
+- WhatsApp integraties
 - Onderhoud planning
 - Contract management
 
@@ -529,12 +625,15 @@ Freemium business model vereist **smooth upgrade path** van gratis naar betaald.
 
 ## Conclusie
 
-Deze **8 Epics** vormen de basis van VVE Tooling MVP. Ze zijn:
+Deze **9 Epics** vormen de basis van VVE Tooling MVP. Ze zijn:
 - ✅ **Problem-focused**: Geformuleerd vanuit gebruikers pijnpunten
 - ✅ **Herleidbaar**: Linked naar discovery en strategy docs
 - ✅ **Meetbaar**: Duidelijke succesindicatoren
 - ✅ **Scoped**: Realistic voor 3-6 maanden development
+- ✅ **Multi-user**: Platform voor hele VVE (penningmeester + voorzitter + bewoners)
 
-**Critical path** (EP-001 t/m EP-005, EP-008) is **must-have** voor MVP launch. EP-006 en EP-007 zijn **nice-to-have** en kunnen later als tijd toelaat.
+**Critical path** (EP-001 t/m EP-006, EP-008, EP-009) is **must-have** voor MVP launch. EP-007 is **nice-to-have** en kan later.
 
-Met deze epics bouwen we een **minimal maar viable product** dat het core probleem (financiële admin voor penningmeesters) oplost met VVE-specifieke differentiatie.
+**Belangrijkste wijziging vs origineel**: **EP-009 (Multi-user)** is toegevoegd als P0 epic. Dit verandert het product van "tool voor penningmeester" naar "platform voor hele VVE". Dit heeft grote impact op UX, permissions, pricing en value proposition.
+
+Met deze epics bouwen we een **collaboratief, transparant platform** dat het core probleem (gebrek aan overzicht en samenwerking in VVE) oplost met multi-user access en VVE-specifieke differentiatie.
