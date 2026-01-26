@@ -30,8 +30,8 @@ Architectuur team identificeerde onzekerheid of Excel import functionaliteit in 
 **Analysekader**:
 - **Impact op ontwikkeltijd**: +2-4 weken development
 - **Gebruikerswaarde**: Hoog (vermijdt handmatige data-entry voor bestaande penningmeesters)
-- **Alternative**: Handmatige data entry tijdens trial periode
-- **Risk**: Data quality issues, variabiliteit in Excel formats
+- **Alternatief**: Handmatige data entry tijdens trial periode
+- **Risico**: Data quality issues, variabiliteit in Excel formats
 
 **BESLUIT**: **NIET in MVP scope** ❌
 
@@ -61,7 +61,7 @@ Privacy vs. transparantie trade-off. Kunnen bewoners NAW-gegevens (naam, adres, 
 **Analysekader**:
 - **Pro transparantie**: Bewoners kunnen contact opnemen voor samenwerking
 - **Pro privacy**: AVG compliance, niet iedereen wil gegevens delen
-- **Legal**: AVG "legitimate interest" vs "consent required"
+- **Juridisch**: AVG "gerechtvaardigd belang" vs "toestemming vereist"
 
 **BESLUIT**: **Beperkte zichtbaarheid met opt-in** ✅
 
@@ -84,7 +84,7 @@ Privacy vs. transparantie trade-off. Kunnen bewoners NAW-gegevens (naam, adres, 
 **Rationale**:
 - Naam + appartement is minimaal nodig voor transparantie en herkenbaarheid
 - Opt-in model respecteert privacy terwijl samenwerking mogelijk blijft
-- AVG "legitimate interest" doctrine: VVE leden moeten elkaar kunnen identificeren
+- AVG "gerechtvaardigd belang" doctrine: VVE leden moeten elkaar kunnen identificeren
 - Penningmeester/Bestuur heeft "need to know" voor administratie
 
 **Impact**:
@@ -151,8 +151,8 @@ Wat moet exact gelogd worden? Alleen financiële transacties of ook niet-financi
 Hoeveel storage ruimte krijgt elke VVE voor documenten (facturen, vergadernotulen, contracten)?
 
 **Analysekader**:
-- **Cost**: Cloud storage (S3/Azure Blob) ~€0.02/GB/maand
-- **Usage pattern**: Geschat 50-200 documenten per VVE per jaar, 50-500KB per document
+- **Kosten**: Cloud storage (S3/Azure Blob) ~€0.02/GB/maand
+- **Gebruikspatroon**: Geschat 50-200 documenten per VVE per jaar, 50-500KB per document
 - **Pricing**: Flat fee model zonder extra kosten voor storage
 
 **BESLUIT**: **Tiered storage limits** ✅
@@ -410,9 +410,9 @@ Product Manager gaat uit van 30%+ bewoner activatie (bewoners die account aanmak
 Responsive web applicatie is voldoende voor bewoners (mobile-first design). Native iOS/Android apps zijn niet nodig voor MVP.
 
 **Validatie**:
-- **Market trend**: PWA's (Progressive Web Apps) worden steeds beter
-- **User expectation**: Depends on doelgroep (25-75 jaar breed spectrum)
-- **Competition**: Tobias/VvE Admin hebben geen native apps
+- **Markttrend**: PWA's (Progressive Web Apps) worden steeds beter
+- **Gebruikersverwachting**: Afhankelijk van doelgroep (25-75 jaar breed spectrum)
+- **Concurrentie**: Tobias/VvE Admin hebben geen native apps
 - **Use case**: Bewoners gebruiken app voornamelijk voor "check status" (eenvoudig), niet voor complex data entry
 
 **BESLUIT**: **GEACCEPTEERD** met excellente PWA implementatie ✅
