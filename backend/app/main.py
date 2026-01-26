@@ -7,7 +7,7 @@ Based on architecture documentation and ADRs.
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import auth, transactions, units, contributions, documents
+from app.api.routes import auth, transactions, units, contributions, documents, budgets
 from app.core.config import get_settings
 
 settings = get_settings()
@@ -56,6 +56,7 @@ def create_app() -> FastAPI:
     app.include_router(units.router, prefix=api_prefix)
     app.include_router(contributions.router, prefix=api_prefix)
     app.include_router(documents.router, prefix=api_prefix)
+    app.include_router(budgets.router, prefix=api_prefix)
 
     @app.get("/health", tags=["system"])
     async def health_check() -> dict[str, str]:

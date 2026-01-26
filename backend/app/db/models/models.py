@@ -341,6 +341,72 @@ class Contribution(Base):
     )
 
 
+class Budget(Base):
+    """Budget for VVE (FEAT-006: Begroting).
+    
+    Implements STORY-006: Begroting opstellen en exporteren.
+    """
+    
+    __tablename__ = "budgets"
+    
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    vve_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("vves.id", ondelete="CASCADE"), nullable=False
+    )
+    year: Mapped[int] = mapped_column(nullable=False)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(20), default="draft")  # draft, approved, archived
+    created_by_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+    
+    # Relationships
+    items: Mapped[list["BudgetItem"]] = relationship(
+        "BudgetItem", back_populates="budget", cascade="all, delete-orphan"
+    )
+    
+    __table_args__ = (
+        UniqueConstraint("vve_id", "year", name="uq_vve_budget_year"),
+        Index("ix_budgets_vve_id", "vve_id"),
+    )
+
+
+class BudgetItem(Base):
+    """Individual budget item (FEAT-006: Begroting).
+    
+    Implements STORY-006: Begroting opstellen en exporteren.
+    """
+    
+    __tablename__ = "budget_items"
+    
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    budget_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("budgets.id", ondelete="CASCADE"), nullable=False
+    )
+    category: Mapped[TransactionCategory] = mapped_column(
+        SQLEnum(TransactionCategory), nullable=False
+    )
+    description: Mapped[str] = mapped_column(String(255), nullable=False)
+    planned_amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    notes: Mapped[str | None] = mapped_column(Text)
+    
+    # Relationships
+    budget: Mapped["Budget"] = relationship("Budget", back_populates="items")
+    
+    __table_args__ = (Index("ix_budget_items_budget_id", "budget_id"),)
+
+
 # ============================================================================
 # Document Models (EPIC-006: Documenten delen)
 # ============================================================================
