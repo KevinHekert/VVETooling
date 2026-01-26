@@ -138,7 +138,7 @@ Alle architecturale documenten zijn volledig herleidbaar naar PM documentatie:
 ## Gekozen Technology Stack ✨ **NIEUW**
 
 **Volledige stack:**
-- **Backend**: Node.js 20 + TypeScript 5 + Express.js 4
+- **Backend**: Python 3.12 + FastAPI
 - **Frontend**: React 18 + Next.js 14 + TypeScript 5 + Tailwind CSS
 - **Database**: PostgreSQL 15 (AWS RDS Multi-AZ)
 - **Cloud**: AWS eu-central-1 Frankfurt (ECS Fargate)

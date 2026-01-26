@@ -43,10 +43,10 @@ Deze directory bevat alle Architecture Decision Records (ADR's) voor VVE Tooling
 
 | Component | Technology | Rationale |
 |-----------|-----------|-----------|
-| **Backend Runtime** | Node.js 20 LTS | Async I/O, large ecosystem, recruitment pool |
-| **Backend Language** | TypeScript 5.x | Type safety, developer productivity |
-| **Backend Framework** | Express.js 4.x | Mature, flexible, lightweight |
-| **ORM** | Prisma 5.x | Type-safe, excellent DevX, migrations |
+| **Backend Runtime** | Python 3.12 | Excellent DX, native Decimal, proven for financial apps |
+| **Backend Language** | Python 3.12 | Superior DX (9.2/10), readability, debugging |
+| **Backend Framework** | FastAPI | Modern, async, type hints, excellent DevX |
+| **ORM** | SQLAlchemy 2.x | Battle-tested, async support, type-safe with Pydantic |
 | **Frontend Framework** | Next.js 14.x | SSR, performance, image optimization |
 | **Frontend Library** | React 18.x | Largest recruitment pool, mature ecosystem |
 | **Frontend Language** | TypeScript 5.x | Type safety, shared types met backend |
@@ -161,8 +161,8 @@ Zie [PM-implications-summary.md](PM-implications-summary.md) voor volledige cost
 ## Team Requirements
 
 **Development Team (MVP):**
-- 1× Technical Lead (Node.js/TypeScript expert)
-- 2× Backend Developers (Node.js + PostgreSQL)
+- 1× Technical Lead (Python/FastAPI expert)
+- 2× Backend Developers (Python + PostgreSQL)
 - 2× Frontend Developers (React + Next.js)
 - 1× DevOps Engineer (AWS + Terraform)
 - 1× QA Engineer (Automated testing)

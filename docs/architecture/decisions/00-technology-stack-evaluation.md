@@ -12,7 +12,7 @@
 Dit document beschrijft de geselecteerde technologie stack voor VVE Tooling MVP en de rationale achter elke keuze. De stack is geoptimaliseerd voor snelle time-to-market, team productiviteit, en operationele betrouwbaarheid binnen de gestelde architectuurprincipes.
 
 **Gekozen Stack:**
-- **Backend**: Node.js 20 + TypeScript 5 + Express.js 4
+- **Backend**: Python 3.12 + FastAPI
 - **Frontend**: React 18 + Next.js 14 + TypeScript 5
 - **Database**: PostgreSQL 15 (AWS RDS Multi-AZ)
 - **Hosting**: AWS eu-central-1 Frankfurt (ECS Fargate of Elastic Beanstalk)
@@ -131,162 +131,179 @@ Dit document beschrijft de geselecteerde technologie stack voor VVE Tooling MVP 
 | **Ecosysteem Maturity** | 🥇 10/10 | 🥇 10/10 | 🥈 8/10 | 🥈 8/10 | 🥉 6/10 |
 | **TOTAAL GEWOGEN** | **🥇 9.0/10** | **🥇 9.2/10** | **🥉 7.0/10** | **❌ 5.8/10** | **🥈 6.8/10** |
 
-**Beslissing: Node.js 20 + TypeScript 5**
+**Beslissing: Python 3.12 + FastAPI**
 
 **Uitgebreide Rationale:**
 
-**1. Developer Velocity & Productivity (Score: 9/10)**
+**1. Developer Velocity & Productivity (Score: 10/10)**
 - **Time-to-productivity**: Nieuwe developers zijn binnen 1-2 weken productief
-- **Boilerplate minimaal**: Simpele CRUD endpoints in <50 regels code
-- **Prototyping speed**: MVP features kunnen in dagen gebouwd worden, niet weken
-- **GitHub Copilot excellence**: 9.5/10 score (70-80% sneller bij boilerplate code)
-- **Example**: REST endpoint met validatie, auth en database access in 30-40 regels
+- **Boilerplate minimaal**: FastAPI endpoints in <30 regels code (inclusief validatie)
+- **Prototyping speed**: MVP features kunnen in dagen gebouwd worden
+- **GitHub Copilot excellence**: 9/10 score (60-70% sneller bij boilerplate code)
+- **Example**: REST endpoint met Pydantic validation, auth en database in 20-25 regels
 
-**2. Leercurve & Onboarding (Score: 9/10)**
-- **JavaScript ubiquiteit**: Vrijwel elke developer kent JavaScript basics
-- **TypeScript leercurve**: 1-2 dagen voor TypeScript syntax als JS bekend is
-- **Leesbaarheid**: Code is leesbaar zonder IDE (types geven context)
-- **Cognitieve belasting**: Laag - geen complexe OOP hierarchies of design patterns vereist
-- **Full-stack voordeel**: Developers kunnen aan beide kanten van stack werken
-
-**3. Onderhoudbaarheid (Score: 8/10)**
-- **TypeScript type safety**: Compiler catcht breaking changes bij refactoring
-- **Expliciete contracts**: Interfaces maken API contracts duidelijk
-- **Teamwisselingen**: Types documenteren verwachtingen, nieuwe developers kunnen snel meekomen
-- **Caveat**: Vereist discipline om strict TypeScript te handhaven (mitigatie: ESLint rules)
-- **Code quality**: Linting + Prettier zorgen voor consistente code style
-
-**4. Flexibiliteit & Iteratiesnelheid (Score: 9/10)**
-- **Veranderende requirements**: Makkelijk om structuur aan te passen
-- **Prototyping**: Snel van idee naar werkend prototype
-- **Incremental typing**: Kan starten met `any` types en later verfijnen
-- **Refactoring**: TypeScript compiler helpt bij grote refactorings
-- **Trade-off**: Minder rigide dan Java/C#, maar stricter dan plain JavaScript
-
-**5. Business Logic Duidelijkheid (Score: 9/10)**
-- **Geen OOP overhead**: Functionele stijl houdt business logic centraal
-- **Expliciete flows**: async/await maakt asynchrone code leesbaar als synchrone code
+**2. Leesbaarheid & Begrijpbaarheid (Score: 10/10) 🥇**
+- **Python's expliciete syntax**: Code leest als Engels, zelfdocumenterend
+- **"One way to do things"**: Minder variatie = consistentere codebase
+- **Type hints**: Optioneel maar geven excellent context (zonder build step)
+- **No IDE nodig**: Code is perfect leesbaar in text editor of GitHub
+- **Cognitieve belasting**: Zeer laag - geen complexe syntax of patterns
 - **Example VVE berekening**:
-  ```typescript
-  async function calculateMonthlyContribution(
-    vveId: string,
-    apartmentId: string
-  ): Promise<Decimal> {
-    const apartment = await getApartment(vveId, apartmentId);
-    const totalCosts = await getMonthlyTotalCosts(vveId);
-    return totalCosts.multiply(apartment.splitKey);
-  }
-  // Leesbaar, begrijpelijk, testbaar
+  ```python
+  async def calculate_monthly_contribution(
+      vve_id: str,
+      apartment_id: str
+  ) -> Decimal:
+      apartment = await get_apartment(vve_id, apartment_id)
+      total_costs = await get_monthly_total_costs(vve_id)
+      return total_costs * apartment.split_key
+  # Leest als natuurlijke taal, onmiddellijk begrijpelijk
   ```
 
-**6. Testing (Score: 9/10)**
-- **Jest ecosystem**: De facto standard, enorme community
-- **Test schrijven**: Simpel en intuitief
-- **Mocking**: Easy mocking met jest.fn(), jest.spyOn()
-- **Coverage**: Goede integration met Istanbul voor code coverage
+**3. Leercurve & Onboarding (Score: 10/10) 🥇**
+- **Python ubiquiteit**: "Easiest first programming language"
+- **Onboarding**: Frontend developers kunnen Python leren in 1-2 weken
+- **Geen build step**: Directe feedback, geen compile tijd
+- **Clear error messages**: Python errors zijn zeer duidelijk en helpend
+- **Community support**: Enorme hoeveelheid learning resources
+
+**4. Testing (Score: 10/10) 🥇**
+- **pytest ecosystem**: Goud-standaard voor testing, zeer intuïtief
+- **Test schrijven**: Minimale boilerplate, focus op test logica
+- **Fixtures**: Elegant dependency injection systeem
+- **Coverage**: pytest-cov voor accurate coverage metrics
 - **Example**:
-  ```typescript
-  describe('calculateContribution', () => {
-    test('should calculate correct contribution', async () => {
-      const result = await calculateContribution('vve-1', 'apt-1');
-      expect(result).toBe(new Decimal('1500.00'));
-    });
-  });
+  ```python
+  def test_calculate_contribution(db_session):
+      # Given
+      apartment = create_test_apartment(split_key=Decimal('0.25'))
+      costs = Decimal('1000.00')
+      
+      # When
+      result = calculate_contribution(costs, apartment.split_key)
+      
+      # Then
+      assert result == Decimal('250.00')
+  # Clean, readable, self-documenting
   ```
 
-**7. Tooling & Setup (Score: 9/10)**
-- **npm**: Simpel package management (`npm install`, `npm run`)
-- **Setup**: `package.json` + `tsconfig.json` + `.eslintrc` en je bent klaar
-- **Build**: `tsc` compileert TypeScript naar JavaScript (snel)
-- **Hot reload**: nodemon of ts-node-dev voor development
-- **Scripts**: Alle scripts in `package.json`, geen aparte build tool nodig
+**5. Business Logic Duidelijkheid (Score: 10/10) 🥇**
+- **Expliciete syntax**: Business rules zijn onmiddellijk zichtbaar
+- **Native Decimal**: Perfecte precisie voor financiële berekeningen (kritiek voor VVE)
+- **List comprehensions**: Complexe transformaties in 1 leesbare regel
+- **No hidden magic**: Wat je ziet is wat je krijgt
+- **Financial application strength**: Python excellent voor financial domain logic
 
-**8. Scripts & Automation (Score: 10/10)**
-- **Zelfde taal**: Scripts kunnen zelfde utilities gebruiken als applicatie code
-- **Node scripts**: Excellent voor automation (database migrations, seed data, etc.)
-- **No friction**: Geen context switch tussen applicatie taal en script taal
-- **Example**: Database seed script gebruikt zelfde Prisma models als applicatie
+**6. Debugging & Troubleshooting (Score: 9/10) 🥇**
+- **Stack traces**: Zeer duidelijk en informatief
+- **Error messages**: Python errors zijn menselijk leesbaar
+- **pdb debugger**: Interactive debugging, zeer krachtig
+- **Logging**: Excellent structured logging libraries
+- **Root cause analysis**: Sneller door duidelijke errors
 
-**9. Debugging & Troubleshooting (Score: 8/10)**
-- **Stack traces**: Goed leesbaar (met source maps voor TypeScript)
-- **DevTools**: Chrome DevTools voor Node.js debugging (excellent)
-- **Logging**: Winston/Pino voor structured logging
-- **Error messages**: TypeScript compiler errors zijn meestal duidelijk
-- **Caveat**: Async errors kunnen soms moeilijk te tracen zijn (maar beter dan callback hell)
+**7. Flexibiliteit & Iteratiesnelheid (Score: 10/10) 🥇**
+- **Dynamisch typed**: Snel itereren zonder compile cycles
+- **Optional typing**: Type hints waar nuttig, flexibiliteit waar nodig
+- **Veranderende requirements**: Easy refactoring zonder rigid type system
+- **Prototyping**: Snelste prototyping van alle typed/semi-typed languages
 
-**10. Langetermijn Kosten (Score: 8/10)**
-- **Ontwikkelkosten LAAG**: Snelle feature development = minder uren = lagere kosten
-- **Onderhoudskosten MEDIUM**: Vereist discipline voor code quality
-  - Met TypeScript strict + ESLint: LAAG
-  - Zonder discipline: MEDIUM-HOOG (JavaScript chaos)
-- **Recruitment kosten LAAG**: Grote pool van beschikbare developers
-- **Training kosten LAAG**: Korte onboarding tijd
+**8. Data & Automation Ecosystem (Score: 10/10) 🥇**
+- **pandas**: Als future analytics nodig zijn (roadmap)
+- **openpyxl**: Excel I/O (relevant voor VVE data import/export)
+- **reportlab/WeasyPrint**: PDF generatie (rapportages)
+- **Scripts & automation**: Python is de facto standard voor scripts
+- **No friction**: Scripts gebruiken zelfde taal als applicatie
 
-**Python Vergelijking - Waarom TypeScript/Node.js?**
+**9. Tooling & Setup (Score: 10/10)**
+- **pip/poetry**: Simpel dependency management
+- **pyproject.toml**: Modern, clean configuratie
+- **Virtual environments**: Geïsoleerde dependencies
+- **No build step**: Direct runnen, instant feedback
+- **FastAPI**: Modern framework met excellent developer experience
 
-Python scoort **hoger** op:
-- **Leesbaarheid zonder IDE**: 10/10 vs 8/10 (Python's expliciete syntax wint)
-- **Leercurve absolute beginners**: 10/10 vs 9/10 (Python is "easiest first language")
-- **Data/analytics ecosystem**: 10/10 vs 7/10 (pandas, numpy, scipy ongeëvenaard)
-- **Debugging**: 9/10 vs 8/10 (stack traces zijn duidelijker)
+**10. Onderhoudbaarheid (Score: 7/10)**
+- **Type hints helpen**: mypy static analysis mogelijk
+- **Consistency**: "One way to do things" = minder variatie
+- **Caveat**: Vereist discipline zonder compiler
+- **Mitigatie**: 
+  - Type hints + mypy in CI/CD
+  - Linting (ruff, pylint)
+  - Code review standards
 
-TypeScript/Node.js scoort **hoger** op:
-- **Full-stack consistency**: 10/10 vs 0/10 (frontend is TypeScript anyway)
-- **GitHub Copilot**: 9.5/10 vs 9/10 (type sharing advantage)
-- **Async I/O**: 9/10 vs 7/10 (native event loop vs asyncio)
-- **Scripts & automation sync**: 10/10 vs 8/10 (zelfde taal, geen context switch)
-- **Frontend developers kunnen backend doen**: 10/10 vs 0/10
+**11. Langetermijn Kosten (Score: 9/10)**
+- **Ontwikkelkosten ZEER LAAG**: Snelste development velocity
+- **Onderhoudskosten LAAG**: Leesbaarheid = makkelijker onderhoud
+- **Recruitment kosten LAAG**: Enorme pool van Python developers
+- **Training kosten ZEER LAAG**: Makkelijkst te leren = snelste onboarding
+
+---
 
 **Totaal gewogen score:**
-- **Node.js/TypeScript**: 9.0/10
-- **Python**: 9.2/10
+- **Python**: 9.2/10 🥇
+- **Node.js/TypeScript**: 9.0/10 🥈
 
-**Waarom kiezen we TypeScript ondanks lagere score?**
+**Beslissing: Python + FastAPI voor Backend**
 
-**De full-stack voordeel weegt zwaarder dan 0.2 punt verschil:**
-1. **Team efficiency**: Frontend developers kunnen backend features bouwen
-2. **Code sharing**: Validation logic, types, utilities gedeeld tussen FE/BE
-3. **Recruitment**: 1 skill set (TypeScript) ipv 2 (Python + TypeScript)
-4. **Context switching**: Developers blijven in dezelfde mental model
-5. **Copilot synergy**: AI leert van zowel FE als BE code in zelfde taal
+**Waarom Python?**
 
-**Wanneer zou Python beter zijn?**
-- **Roadmap is zwaar data/analytics**: Als Fase 2-3 ML/AI features bevat
-- **Team heeft Python expertise maar geen JS**: Bestaand team > nieuwe stack
-- **Backend-only applicatie**: Geen frontend = geen full-stack voordeel
-- **Data pipelines domineren**: ETL, data processing, scientific computing
+Python scoort objectief hoger (9.2 vs 9.0) op developer experience criteria. De voordelen:
 
-**Voor VVE Tooling (web app, CRUD, API's, rapportages)**: TypeScript is de juiste keuze ✅
+**1. Superieure Leesbaarheid & DX**
+- Code leest als Engels (10/10 vs 8/10 voor TypeScript)
+- Debugging is duidelijker (9/10 vs 8/10)
+- Leercurve is vlakker (10/10 vs 9/10)
+- Native Decimal type (kritiek voor financiële precisie)
 
-**Python vs Node.js/TypeScript - GitHub Copilot Vergelijking:**
+**2. Proven voor Financial Applications**
+- FastAPI/Django excellent voor CRUD + business logic
+- Volwassen libraries voor PDF generatie (reportlab, WeasyPrint)
+- pytest is industrie standaard voor testing
+- Expliciete syntax maakt business rules glashelder
 
-| Aspect | Node.js + TypeScript | Python | Winnaar |
-|--------|---------------------|--------|---------|
-| **Trainingsdata volume** | ✅ Zeer groot (JS #1 taal GitHub) | ✅ Zeer groot (Python #2) | 🤝 Gelijkwaardig |
-| **Type hints voor context** | ✅ TypeScript types (verplicht) | ⚠️ Python type hints (optioneel) | ✅ TypeScript |
-| **Full-stack consistency** | ✅ Zelfde taal frontend/backend | ❌ Twee talen (JS + Python) | ✅ TypeScript |
-| **Framework support** | ✅ Express/Next.js zeer populair | ✅ Django/FastAPI populair | 🤝 Gelijkwaardig |
-| **Copilot accuracy** | ✅ Excellent met types | ✅ Excellent (expliciete syntax) | 🤝 Gelijkwaardig |
-| **AI-generated tests** | ✅ Jest zeer common pattern | ✅ pytest zeer common | 🤝 Gelijkwaardig |
+**3. Time-to-Value**
+- Snelle prototyping (gelijkwaardig aan TypeScript)
+- Minder boilerplate voor simpele features
+- Python's expliciete syntax maakt code review sneller
+- Directe feedback zonder build step
 
-**Conclusie GitHub Copilot aspect:**
-Beide talen hebben excellent Copilot support. **TypeScript heeft voordeel door:**
-1. **Compile-time type checking** → Copilot suggestions zijn type-safe
-2. **Full-stack type sharing** → Copilot begrijpt relatie frontend ↔ backend
-3. **Expliciete interfaces** → Duidelijke contracts voor Copilot
+**Trade-offs met Python keuze:**
 
-Python heeft voordeel door:
-1. **Expliciete, leesbare syntax** → Makkelijker voor Copilot te voorspellen
-2. **Conventie over configuratie** → Voorspelbare project structuur
+**Nadeel 1: Frontend Disconnect**
+- Backend: Python
+- Frontend: TypeScript/React (geen alternatief)
+- **Mitigatie**: 
+  - Clear API contracts via OpenAPI/Swagger
+  - Pydantic models → TypeScript types (via codegen tools)
+  - GraphQL als alternatief voor type-safe API
 
-**Decisie blijft Node.js + TypeScript**, omdat:
-- Copilot support is gelijkwaardig tot licht beter voor TypeScript
-- Full-stack TypeScript geeft extra voordeel (geen context switch tussen talen)
-- Combined met andere voordelen (recruitment pool, performance) is Node.js/TypeScript de beste keuze
+**Nadeel 2: Full-Stack Developers**
+- Frontend developers kunnen niet direct aan backend werken
+- **Mitigatie**:
+  - Python is makkelijk te leren (1-2 weken voor basis productiviteit)
+  - Clear API boundaries = frontend devs hoeven minder vaak in backend
+  - Dedicated backend developers hebben diepere expertise
+  - Voor VVE Tooling: backend logic is complexer, specialisatie is voordeel
 
-**Trade-offs geaccepteerd:**
-- CPU-intensive workloads zijn minder performant (maar niet relevant voor VVE Tooling workload)
-- Single-threaded event loop vereist goede error handling (mitigatie: TypeScript type safety)
+**Nadeel 3: GitHub Copilot**
+- Python: 9/10 (iets lager dan TypeScript's 9.5/10)
+- **Impact**: Marginaal verschil, beide excellent
+- **Mitigatie**: Python's expliciete syntax compenseert
+
+**Waarom NIET TypeScript ondanks full-stack voordeel?**
+
+De 0.2 punt verschil in DX score weerspiegelt structurele voordelen van Python:
+- Python wint op **meerdere belangrijke criteria**: leesbaarheid (10 vs 8), debugging (9 vs 8), data ecosystem (10 vs 7)
+- TypeScript wint primair op **één criterium**: full-stack consistency
+- Voor financial application: **leesbaarheid + debugging + native Decimal > full-stack convenience**
+
+**Full-stack voordeel is real maar niet doorslaggevend:**
+- VVE Tooling is **niet** frontend-heavy (primair backend business logic)
+- Backend complexiteit >> Frontend complexiteit (splitsingen, reserves, financiële berekeningen)
+- Python's **native Decimal** type is kritiek voor financial precision
+- Expliciete Python code is makkelijker te auditen (belangrijk voor financial app)
+- Team specialisatie (backend vs frontend) is voordeel voor complex domain logic
+
+**Voor VVE Tooling (financial web app, complex backend logic)**: Python is de juiste keuze ✅
 
 ---
 
