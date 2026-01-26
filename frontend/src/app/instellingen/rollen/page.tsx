@@ -160,7 +160,7 @@ export default function RollenEnRechtenPage() {
   // Toggle permission for a role
   const togglePermission = useCallback(async (roleId: string, permissionId: string) => {
     const role = roles.find(r => r.id === roleId);
-    if (!role || role.is_system && roleId === 'beheerder') {
+    if (!role || (role.is_system && roleId === 'beheerder')) {
       addToast('Beheerder rol kan niet worden gewijzigd', 'warning');
       return;
     }

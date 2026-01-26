@@ -669,7 +669,7 @@ export default function SplitsingssleutelWizardPage() {
                     {formData.units.every(u => u.share_percentage > 0) ? '✓' : '⚠'}
                   </span>
                   <div>
-                    <div className="text-sm font-medium text-gray-900">Alle eenheden hebben een aandeel &gt; 0%</div>
+                    <div className="text-sm font-medium text-gray-900">Alle eenheden hebben een aandeel {'>'} 0%</div>
                     <div className="text-xs text-gray-500">
                       {formData.units.filter(u => u.share_percentage === 0).length === 0 
                         ? 'Alle aandelen ingevuld' 

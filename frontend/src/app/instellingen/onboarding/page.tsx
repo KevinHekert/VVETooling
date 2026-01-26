@@ -153,7 +153,7 @@ export default function OnboardingWizardPage() {
   };
 
   const addInvitation = () => {
-    const newId = `inv-${Date.now()}`;
+    const newId = `inv-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     setFormData((prev) => ({
       ...prev,
       invitations: [
