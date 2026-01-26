@@ -1,4 +1,4 @@
-# Architecture Decision Records (ADR's) - VVE Tooling
+# Architecture Decision Records (ADRs) - VVE Tooling
 
 ## Overzicht
 

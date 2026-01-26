@@ -167,17 +167,18 @@ ALTER TABLE documents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE reports ENABLE ROW LEVEL SECURITY;
 
 -- Create RLS Policy (applies to all operations: SELECT, INSERT, UPDATE, DELETE)
+-- BELANGRIJK: Gebruik 'false' parameter voor fail-secure behavior
 CREATE POLICY tenant_isolation_policy ON transactions
-  USING (tenant_id = current_setting('app.current_tenant_id', true)::uuid);
+  USING (tenant_id = current_setting('app.current_tenant_id', false)::uuid);
 
 CREATE POLICY tenant_isolation_policy ON apartments
-  USING (tenant_id = current_setting('app.current_tenant_id', true)::uuid);
+  USING (tenant_id = current_setting('app.current_tenant_id', false)::uuid);
 
 CREATE POLICY tenant_isolation_policy ON documents
-  USING (tenant_id = current_setting('app.current_tenant_id', true)::uuid);
+  USING (tenant_id = current_setting('app.current_tenant_id', false)::uuid);
 
 CREATE POLICY tenant_isolation_policy ON reports
-  USING (tenant_id = current_setting('app.current_tenant_id', true)::uuid);
+  USING (tenant_id = current_setting('app.current_tenant_id', false)::uuid);
 ```
 
 **How RLS Works:**
