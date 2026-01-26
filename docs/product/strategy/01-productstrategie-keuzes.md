@@ -1,10 +1,11 @@
 # Productstrategie & Keuzes - VVE Tooling
 
 ## Documentinformatie
-- **Datum**: 2026-01-26
+- **Datum**: 2026-01-26 (Updated: 2026-01-26)
 - **Eigenaar**: Product Management
 - **Status**: Final
-- **Versie**: 1.0
+- **Versie**: 2.0
+- **Changelog**: v2.0 - Multi-user platform (penningmeester-first gewijzigd naar VVE-platform)
 
 ## Bronverwijzingen
 Dit document is gebaseerd op:
@@ -16,98 +17,137 @@ Dit document is gebaseerd op:
 
 ### Vision Statement
 
-> **VVE Tooling maakt VVE financieel beheer toegankelijk en betrouwbaar voor iedereen.**
+> **VVE Tooling brengt transparantie en samenwerking naar zelfbeheer VVE's.**
 >
-> We geloven dat elke penningmeester, ongeacht ervaring of VVE-grootte, toegang moet hebben tot professionele, VVE-specifieke software die complexiteit versimpelt zonder kwaliteit te compromissen. 
+> We geloven dat elke VVE-lid - van penningmeester tot bewoner - **toegang moet hebben tot informatie** en **kan samenwerken** aan een gezonde VVE. Door moderne technologie en gebruiksvriendelijk multi-user design te combineren met diepgaande VVE-kennis, creëren we het eerste platform waar **iedereen kan inloggen** en **ziet wat er gebeurt**.
 >
-> Door moderne technologie en gebruiksvriendelijk design te combineren met diepgaande VVE-kennis, empoweren we vrijwilligers om hun VVE financieel gezond te houden, zonder dat dit ten koste gaat van hun vrije tijd of gemoedsrust.
+> Van penningmeester die efficiënt werkt, tot voorzitter die overzicht heeft, tot bewoner die weet waar zijn contributie naartoe gaat - **VVE Tooling maakt VVE beheer transparant en collaboratief**.
 
 ### Mission (3-Jaars Horizon)
 
 **Jaar 1 (2026)**:  
-De **#1 financiële administratie tool voor zelfbeheer VVE's** worden door 500+ penningmeesters te empoweren met simpele, betaalbare, VVE-specifieke software.
+Het **transparantste, meest collaboratieve VVE platform** bouwen waar 500+ VVE's (met 2.000+ actieve gebruikers) bestuur en bewoners **samen** hun VVE beheren.
 
 **Jaar 2 (2027)**:  
-**Marktleider in moderne VVE tooling** worden met 2.000+ penningmeesters én eerste beheerder klanten, en daarmee het nieuwe standaard platform worden voor VVE beheer.
+**Marktleider in moderne VVE tooling** worden met 2.000+ VVE's, native mobile apps, en het hoogste bewoner-engagement in de industrie.
 
 **Jaar 3 (2028)**:  
-**Het meest innovatieve VVE platform** zijn met AI-powered features en compliance tools die 5.000+ VVE's gebruiken, en daarmee de digitale transformatie van de VVE sector leiden.
+**Het standaard platform** zijn voor zelfbeheer VVE's met 5.000+ VVE's, AI-powered features, en 30%+ van de Nederlandse zelfbeheer VVE markt.
 
 ### Core Values
 
-1. **Gebruiker Eerst**  
-   We bouwen voor penningmeesters, niet voor onszelf. Elke feature moet aantoonbare waarde leveren voor eindgebruikers.
+1. **Transparantie Eerst**  
+   Iedereen in de VVE moet kunnen zien wat er gebeurt. Geen black boxes, geen verborgen informatie.
 
-2. **Simpliciteit zonder Compromissen**  
-   Simpel betekent niet basic. We versimpelen complexe VVE-processen, maar behouden alle nodige functionaliteit.
+2. **Samenwerking mogelijk maken**  
+   Multi-user is geen feature, het is de kern. Penningmeester, voorzitter en bewoners werken samen.
 
-3. **Betrouwbaarheid boven Alles**  
+3. **Simpliciteit zonder Compromissen**  
+   Simpel voor passieve bewoners, krachtig voor actieve penningmeesters. Iedereen krijgt wat ze nodig hebben.
+
+4. **Betrouwbaarheid boven Alles**  
    VVE financiën zijn serieus. We bouwen met bank-level security, 99.9% uptime en zero-tolerance voor data loss.
-
-4. **Transparantie & Herleidbaarheid**  
-   Alle beslissingen zijn gedocumenteerd en traceerbaar. We delen openlijk wat we bouwen en waarom.
 
 5. **Iteratief & Evidence-Based**  
    We valideren aannames, leren van gebruikers en itereren snel. No ego, alleen data en gebruikersfeedback.
 
 ## 2. Strategische Keuzes & Onderbouwing
 
-### Keuze 1: Penningmeester-First (niet Beheerders)
+### Keuze 1: Multi-User Platform (niet Single-User Tool)
 
-**Besluit**: We starten met vrijwillige penningmeesters als primaire doelgroep, niet professionele beheerders.
+**Besluit**: We bouwen een multi-user platform voor de **hele VVE** (penningmeester + voorzitter/bestuur + bewoners), niet alleen een tool voor de penningmeester.
 
 **Rationale**:
-- ✅ **Groter onbediend segment**: 60-70% van markt (90.000+ VVE's) vs 30-40% (60.000 VVE's)
-- ✅ **Minder concurrentie**: Tobias/VvE Admin focussen op beheerders
-- ✅ **Simpelere MVP**: Penningmeesters hebben eenvoudiger requirements dan beheerders
-- ✅ **Sneller time-to-market**: MVP in 3-6 maanden vs 12+ voor beheerders platform
-- ✅ **Betere product-market fit kans**: Duidelijke pain points, minder alternatieven
-- ✅ **Fundament voor uitbreiding**: Penningmeester platform is basis voor beheerders platform later
+- ✅ **Transparantie als differentiator**: Geen andere VVE tool geeft bewoners toegang
+- ✅ **Grotere value proposition**: Hele VVE profiteert, niet alleen penningmeester
+- ✅ **Hogere betalingsbereidheid**: VVE betaalt €15-35/maand voor volledige platform vs €5-10 voor penningmeester-only tool
+- ✅ **Bewoner engagement**: Actieve bewoners = gezonde VVE's, betere retentie
+- ✅ **Viral growth**: Meer users per VVE = meer mond-tot-mond marketing
+- ✅ **Toekomst-proof**: Fundamentele architecture voor volledige VVE collaboration platform
 
 **Trade-offs**:
-- ❌ **Lower ARPU**: €5-15/maand vs €10-25/maand bij beheerders
-- ❌ **Kleinere deal sizes**: 1 VVE per klant vs 20-200 VVE's per klant
-- ❌ **Meer klanten nodig**: Voor zelfde revenue
+- ❌ **Complexer MVP**: Multi-user, permissions, verschillende dashboards = meer development tijd
+- ❌ **Langere time-to-market**: 4-6 maanden vs 3-4 maanden voor single-user
+- ❌ **Bewoner activatie risico**: Passieve bewoners loggen misschien niet in
+- ❌ **Privacy complexity**: Moet goed nadenken over wie wat kan zien
 
 **Mitigatie**:
-- Freemium model compenseert met volume (veel gratis users → conversie)
-- Platform architectuur schaalt naar beheerders later
-- Community/network effects bij penningmeesters (referrals)
+- Progressive rollout: Start met penningmeester + voorzitter, bewoners later in MVP
+- Mobile-first UX voor bewoners (werkt op smartphone)
+- Onboarding wizard helpt penningmeester om users uit te nodigen
+- Privacy by design: Bewoners zien alleen eigen betalingsstatus
+
+**Alternatief overwogen**: Single-user (alleen penningmeester)
+- **Rejected because**: Missed opportunity voor echte differentiation, lagere value proposition, kleiner markt potentieel
+
+**Bronverwijzing**: Nieuwe requirement van stakeholder
+
+---
+
+### Keuze 2: Zelfbeheer VVE-First (niet Professionele Beheerders)
+
+**Rationale**:
+**Rationale**:
+- ✅ **Groter onbediend segment**: 60-70% van markt vs 30-40%
+- ✅ **Minder concurrentie**: Tobias/VvE Admin focussen op professionele beheerders
+- ✅ **Multi-user is natural fit**: Zelfbeheer VVE's hebben bestuur + bewoners die betrokken zijn
+- ✅ **Transparantie value**: Grootste pain point bij zelfbeheer is gebrek aan transparantie
+- ✅ **Fundament voor uitbreiding**: Zelfbeheer platform kan later uitbreiden naar beheerders
+
+**Trade-offs**:
+- ❌ **Lower ARPU per deal**: €15-35/maand per VVE vs €10-25/maand per VVE * 50-200 VVE's bij beheerders
+- ❌ **Meer klanten nodig**: Voor zelfde revenue
+- ❌ **Diverse user base**: Zelfbeheer VVE's variëren meer in sophistication
+
+**Mitigatie**:
+- Flat fee pricing compenseert met volume
+- Platform architecture schaalt naar beheerders later (multi-VVE = roadmap Fase 2)
+- Community/network effects bij zelfbeheer VVE's
 
 **Bronverwijzing**: docs/marktonderzoek/13-markt-kansen.md - Penningmeester platform #1 prioriteit
 
 ---
 
-### Keuze 2: Freemium Business Model
+### Keuze 3: Flat Fee Pricing (niet Freemium of Per-User)
 
-**Besluit**: We hanteren een freemium model (gratis tot 10 appartementen, betaald daarboven).
+**Besluit**: We hanteren **flat fee pricing per VVE** (€15-35/maand op basis van VVE grootte), **niet freemium** en **niet per-user pricing**.
 
 **Rationale**:
-- ✅ **Lage adoptie drempel**: Kleine VVE's kunnen gratis starten
-- ✅ **Viral potential**: Meer users → meer mond-tot-mond
-- ✅ **Product-led growth**: Product verkoopt zichzelf
-- ✅ **Larger funnel**: Meer trial users → meer conversie kansen
-- ✅ **Markt validatie**: Free users valideren product voor betaalde growth
+- ✅ **Multi-user friendly**: Unlimited users per VVE = geen barrier voor bewoners/bestuur toe te voegen
+- ✅ **Fair & transparent**: Prijs gebaseerd op VVE grootte (aantal appartementen), niet aantal users
+- ✅ **Voorspelbaar**: VVE weet exact wat ze betalen, geen surprise bills
+- ✅ **Hogere ARPU**: €15-35/maand vs €5-15 bij freemium (waar meeste gratis blijven)
+- ✅ **Minder support load**: Geen gratis tier = betaalde users die meer waarde zien
+- ✅ **Trial validates value**: 30 dagen gratis trial is voldoende om waarde te bewijzen
+
+**Pricing tiers**:
+- €15/maand: Tot 25 appartementen, unlimited users
+- €25/maand: 25-50 appartementen, unlimited users
+- €35/maand: 50+ appartementen, unlimited users
+- 30 dagen gratis trial (volledige toegang)
 
 **Trade-offs**:
-- ❌ **Lage initiële revenue**: Veel free users, weinig betaald
-- ❌ **Support kosten**: Ook free users vragen support
-- ❌ **Conversie uitdaging**: Moet goede free→paid trigger zijn
+- ❌ **Higher barrier to entry**: Geen permanent gratis tier
+- ❌ **Conversie pressure**: Trial moet snel value laten zien
+- ❌ **Kleinere funnel**: Minder trial signups dan met freemium
 
 **Mitigatie**:
-- Duidelijke free tier limiet (10 appartementen = ~60% van VVE's eligible voor free)
-- Premium features (rapportages, export, priority support) achter paywall
-- Monitor conversie rates (target: >25%) en adjust pricing/features
-- Self-service support (help docs, video's) om support kosten laag te houden
+- 30 dagen trial is voldoende om één maand administratie te doen + jaarrekening voor te bereiden
+- Onboarding wizard zorgt voor quick time-to-value
+- Credit card upfront (maar niet charged during trial) = commitment but fair
+- Can cancel anytime = low risk
 
-**Alternatief overwogen**: Direct betaald model (zoals Tobias)
-- **Rejected because**: Te hoge drempel voor penningmeesters, langzamere adoptie
+**Alternatief overwogen**: Freemium model
+- **Rejected because**: Multi-user platform is te waardevol voor permanent gratis tier, support costs te hoog
 
-**Bronverwijzing**: docs/marktonderzoek/13-markt-kansen.md - Pricing model sectie
+**Alternatief overwogen**: Per-user pricing
+- **Rejected because**: Barrier voor bewoners toevoegen, complex te communiceren, not aligned met VVE budget model
+
+**Bronverwijzing**: Gebaseerd op nieuwe multi-user requirement + industry best practices (Slack, Notion gebruiken ook flat-fee voor small teams)
 
 ---
 
-### Keuze 3: Web-First, Native Apps Later
+### Keuze 8: Web-First, Native Apps Later
 
 **Besluit**: MVP is responsive web app. Native iOS/Android apps komen in Fase 2 (Jaar 1 Q3-Q4).
 
@@ -116,10 +156,13 @@ De **#1 financiële administratie tool voor zelfbeheer VVE's** worden door 500+ 
 - ✅ **Cost efficient**: Kleiner team, minder maintenance
 - ✅ **Easier iteration**: Web deploys instant, apps door review proces
 - ✅ **80/20 rule**: Responsive web dekt 80% van mobile use cases
-- ✅ **Desktop is primary**: Penningmeesters doen zware werk op laptop
+- ✅ **Desktop for penningmeester**: Penningmeesters doen zware werk op laptop
+- ✅ **Mobile-first design for bewoners**: Responsive web werkt goed op smartphone (bookmark op homescreen)
 
 **Trade-offs**:
-- ❌ **Suboptimale mobile UX**: Web kan niet alle native features (push, offline, etc.)
+- ❌ **Suboptimale mobile UX voor bewoners**: Web kan niet alle native features (push notifications, offline, etc.)
+- ❌ **Perceived value**: Sommige bewoners verwachten "echte app"
+- ❌ **App store discovery**: Missen SEO van app stores
 - ❌ **Perceived value**: Sommige users verwachten "echte app"
 - ❌ **App store discovery**: Missen SEO van app stores
 
@@ -136,7 +179,7 @@ De **#1 financiële administratie tool voor zelfbeheer VVE's** worden door 500+ 
 
 ---
 
-### Keuze 4: Scherpe MVP Scope (Financieel + VVE-Specifiek Only)
+### Keuze 8: Scherpe MVP Scope (Financieel + VVE-Specifiek Only)
 
 **Besluit**: MVP bevat ALLEEN financiële administratie + VVE-specifieke features. Geen onderhoud, contracten, communicatie, vergaderingen.
 
@@ -173,7 +216,7 @@ De **#1 financiële administratie tool voor zelfbeheer VVE's** worden door 500+ 
 
 ---
 
-### Keuze 5: Nederland-First, Internationale Expansie Later
+### Keuze 8: Nederland-First, Internationale Expansie Later
 
 **Besluit**: MVP is volledig Nederlands (taal, compliance, features). Geen multi-language of internationale features.
 
@@ -199,7 +242,7 @@ De **#1 financiële administratie tool voor zelfbeheer VVE's** worden door 500+ 
 
 ---
 
-### Keuze 6: Hosted SaaS, Geen On-Premise
+### Keuze 8: Hosted SaaS, Geen On-Premise
 
 **Besluit**: Alleen cloud-hosted SaaS model. Geen on-premise of self-hosted optie.
 
@@ -225,7 +268,7 @@ De **#1 financiële administratie tool voor zelfbeheer VVE's** worden door 500+ 
 
 ---
 
-### Keuze 7: Direct-to-Consumer GTM, Sales Later
+### Keuze 8: Direct-to-Consumer GTM, Sales Later
 
 **Besluit**: Product-led growth (self-service signup) is primaire GTM. Geen sales team voor MVP.
 
