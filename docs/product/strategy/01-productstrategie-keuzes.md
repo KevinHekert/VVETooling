@@ -55,7 +55,7 @@ Het **transparantste, meest collaboratieve VVE platform** bouwen waar 500+ VVE's
 
 ### Keuze 1: Multi-User Platform (niet Single-User Tool)
 
-**Besluit**: We bouwen een multi-user platform voor de **hele VVE** (penningmeester + voorzitter/bestuur + bewoners), niet alleen een tool voor de penningmeester.
+**Besluit**: We bouwen een multi-user platform voor de **hele VVE** (penningmeester + bestuursleden + bewoners), niet alleen een tool voor de penningmeester.
 
 **Rationale**:
 - ✅ **Transparantie als differentiator**: Geen andere VVE tool geeft bewoners toegang

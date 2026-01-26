@@ -341,7 +341,7 @@ VVE Tooling is een **multi-user platform** voor de **hele VVE**, niet alleen de 
 #### Core Features (Must-Have)
 
 **1. Multi-User & Permissions**
-   - ✅ **Rollen & Rechten**: Penningmeester (admin), Voorzitter/Bestuur (collaborator), Bewoners (read-only)
+   - ✅ **Rollen & Rechten**: Penningmeester (admin), Bestuurslid (collaborator), Bewoners (read-only)
    - ✅ **User management**: Gebruikers uitnodigen, rollen toewijzen, deactiveren
    - ✅ **Login systeem**: Email + wachtwoord, optioneel 2FA
    - ✅ **Bewoner self-service**: Bewoners kunnen zelf account aanmaken met uitnodigingscode
