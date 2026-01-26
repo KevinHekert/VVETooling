@@ -46,12 +46,7 @@ class AuditLogResponse(BaseModel):
     ip_address: str | None = None
     is_financial: bool
     created_at: datetime
-    
-    # Computed fields for display
-    @property
-    def result(self) -> str:
-        """Return success indicator (for UI display)."""
-        return "success"  # All logged actions are successful
+    result: str = "success"  # Status of the action (success/failed)
 
 
 class AuditLogListResponse(BaseModel):

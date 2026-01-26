@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ProgressIndicator } from '@/components/ui/ProgressIndicator';
 import { useToast } from '@/components/ui/Toast';
@@ -204,10 +204,13 @@ export default function OnboardingWizardPage() {
     }));
   };
 
-  // Calculate total share percentage for validation
-  const totalSharePercentage = formData.units.reduce(
-    (sum, unit) => sum + (Number(unit.share_percentage) || 0),
-    0
+  // Calculate total share percentage for validation - memoized to avoid recalculation
+  const totalSharePercentage = React.useMemo(() => 
+    formData.units.reduce(
+      (sum, unit) => sum + (Number(unit.share_percentage) || 0),
+      0
+    ),
+    [formData.units]
   );
 
   return (
