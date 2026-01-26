@@ -251,6 +251,31 @@ export interface BudgetSummary {
   item_count: number;
 }
 
+// Audit Log types (STORY-010)
+export interface AuditLog {
+  id: string;
+  vve_id: string | null;
+  user_id: string | null;
+  user_name?: string;
+  action: string;
+  entity_type: string;
+  entity_id: string | null;
+  old_values?: string;
+  new_values?: string;
+  ip_address?: string;
+  is_financial: boolean;
+  created_at: string;
+}
+
+export interface AuditLogFilters {
+  action?: string;
+  entity_type?: string;
+  user_id?: string;
+  start_date?: string;
+  end_date?: string;
+  is_financial?: boolean;
+}
+
 // API Response types
 export interface ApiError {
   detail: string;
