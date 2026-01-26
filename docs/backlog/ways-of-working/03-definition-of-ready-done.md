@@ -4,7 +4,7 @@
 - **Datum**: 2026-01-26
 - **Eigenaar**: Product Owner
 - **Status**: Final
-- **Versie**: 1.0
+- **Versie**: 1.1
 
 ## Definition of Ready (DoR)
 Een backlog-item is **Ready** wanneer:
@@ -22,3 +22,18 @@ Een backlog-item is **Done** wanneer:
 - Security & privacy constraints zijn toegepast (multi-tenancy, RBAC, AVG).
 - Documentatie is bijgewerkt waar nodig.
 - Open vragen zijn gesloten of gemotiveerd uitgezonderd.
+
+### Testing Requirements ✨
+- [ ] Unit tests geschreven en passing
+- [ ] Integration tests geschreven (waar relevant)
+- [ ] Test coverage ≥ 80% voor nieuwe code
+- [ ] Screenshot van test output gecommit naar `docs/screenshots/tests/`
+
+### Screenshot Requirements ✨
+- [ ] UI screenshots gecommit naar `docs/screenshots/features/<STORY-ID>/`
+- [ ] Desktop en mobile viewports gedocumenteerd (waar relevant)
+- [ ] Error states en feedback messages gescreenshot
+- [ ] Screenshots geverifieerd aanwezig in repository
+
+## Zie Ook
+- [AI Development Guidelines](05-ai-development-guidelines.md) - Volledige testing en screenshot richtlijnen

@@ -9,6 +9,12 @@ Deze backlog is de single source of truth voor uitvoering van VVE Tooling MVP. A
   - [Prioritering](ways-of-working/02-prioritering.md)
   - [Definition of Ready/Done](ways-of-working/03-definition-of-ready-done.md)
   - [Decision-log aanpak](ways-of-working/04-decision-log-aanpak.md)
+  - [AI Development Guidelines](ways-of-working/05-ai-development-guidelines.md) ✨ **NIEUW**
+- **Implementatierapporten** ✨ **NIEUW**
+  - [Overzicht](implementation-reports/README.md) - Alle implementatierapporten
+  - [Template](implementation-reports/TEMPLATE-implementatierapport.md) - Template voor nieuwe rapporten
+- **Screenshots & Visuele Documentatie**
+  - [Screenshots Directory](../screenshots/README.md) - Alle UI screenshots en test output
 - **Epics**
   - [EPIC-001 Financieel overzicht beheren](epics/EPIC-001-financieel-overzicht-beheren.md)
   - [EPIC-002 Splitsingen beheren](epics/EPIC-002-splitsingen-beheren.md)

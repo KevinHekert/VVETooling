@@ -1,0 +1,235 @@
+/**
+ * API Client for VVE Tooling Backend
+ * Handles authentication and API requests
+ */
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+
+interface FetchOptions extends RequestInit {
+  token?: string;
+}
+
+class ApiClient {
+  private baseUrl: string;
+
+  constructor(baseUrl: string) {
+    this.baseUrl = baseUrl;
+  }
+
+  private async fetch<T>(
+    endpoint: string,
+    options: FetchOptions = {}
+  ): Promise<T> {
+    const { token, ...fetchOptions } = options;
+    
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    // Merge existing headers if present
+    if (options.headers) {
+      const existingHeaders = options.headers as Record<string, string>;
+      Object.assign(headers, existingHeaders);
+    }
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    } else {
+      // Try to get token from localStorage
+      const storedToken = typeof window !== 'undefined' 
+        ? localStorage.getItem('access_token') 
+        : null;
+      if (storedToken) {
+        headers['Authorization'] = `Bearer ${storedToken}`;
+      }
+    }
+
+    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      ...fetchOptions,
+      headers,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: 'Een fout is opgetreden' }));
+      throw new Error(error.detail || `HTTP ${response.status}`);
+    }
+
+    // Handle 204 No Content
+    if (response.status === 204) {
+      return {} as T;
+    }
+
+    return response.json();
+  }
+
+  // Authentication endpoints
+  async login(email: string, password: string) {
+    return this.fetch<{
+      access_token: string;
+      refresh_token: string;
+      token_type: string;
+      expires_in: number;
+    }>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    });
+  }
+
+  async register(data: {
+    email: string;
+    password: string;
+    first_name: string;
+    last_name: string;
+    phone?: string;
+  }) {
+    return this.fetch('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getMe() {
+    return this.fetch<import('@/types').User>('/auth/me');
+  }
+
+  async refreshToken(refreshToken: string) {
+    return this.fetch<{
+      access_token: string;
+      refresh_token: string;
+      token_type: string;
+      expires_in: number;
+    }>('/auth/refresh', {
+      method: 'POST',
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+  }
+
+  // Transactions (STORY-001)
+  async getTransactions(vveId: string, params?: { skip?: number; limit?: number; category?: string }) {
+    const query = new URLSearchParams();
+    if (params?.skip) query.set('skip', String(params.skip));
+    if (params?.limit) query.set('limit', String(params.limit));
+    if (params?.category) query.set('category', params.category);
+    
+    const queryStr = query.toString() ? `?${query.toString()}` : '';
+    return this.fetch<import('@/types').Transaction[]>(
+      `/vves/${vveId}/transactions${queryStr}`
+    );
+  }
+
+  async createTransaction(vveId: string, data: import('@/types').TransactionCreate) {
+    return this.fetch<import('@/types').Transaction>(
+      `/vves/${vveId}/transactions`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async getTransactionSummary(vveId: string, year?: number) {
+    const query = year ? `?year=${year}` : '';
+    return this.fetch<import('@/types').TransactionSummary>(
+      `/vves/${vveId}/transactions/summary${query}`
+    );
+  }
+
+  // Units / Splitsingssleutel (STORY-002)
+  async getUnits(vveId: string) {
+    return this.fetch<import('@/types').Unit[]>(`/vves/${vveId}/units`);
+  }
+
+  async getSplitsingssleutel(vveId: string) {
+    return this.fetch<import('@/types').SplitsingssleutelValidation>(
+      `/vves/${vveId}/units/splitsingssleutel`
+    );
+  }
+
+  async updateSplitsingssleutel(
+    vveId: string,
+    updates: import('@/types').SplitsingssleutelEntry[]
+  ) {
+    return this.fetch<import('@/types').SplitsingssleutelValidation>(
+      `/vves/${vveId}/units/splitsingssleutel`,
+      {
+        method: 'PUT',
+        body: JSON.stringify({ updates }),
+      }
+    );
+  }
+
+  // Contributions (STORY-003)
+  async getBewonersStatus(vveId?: string) {
+    const query = vveId ? `?vve_id=${vveId}` : '';
+    return this.fetch<import('@/types').BewonersStatus>(
+      `/bewoner/status${query}`
+    );
+  }
+
+  async getContributions(vveId: string, params?: {
+    year?: number;
+    month?: number;
+    unit_id?: string;
+  }) {
+    const query = new URLSearchParams();
+    if (params?.year) query.set('year', String(params.year));
+    if (params?.month) query.set('month', String(params.month));
+    if (params?.unit_id) query.set('unit_id', params.unit_id);
+    
+    const queryStr = query.toString() ? `?${query.toString()}` : '';
+    return this.fetch<import('@/types').Contribution[]>(
+      `/vves/${vveId}/contributions${queryStr}`
+    );
+  }
+
+  // Documents (STORY-004)
+  async getDocuments(vveId: string, params?: { category?: string }) {
+    const query = params?.category ? `?category=${params.category}` : '';
+    return this.fetch<import('@/types').Document[]>(
+      `/vves/${vveId}/documents${query}`
+    );
+  }
+
+  async uploadDocument(
+    vveId: string,
+    data: import('@/types').DocumentUpload
+  ): Promise<import('@/types').Document> {
+    const formData = new FormData();
+    formData.append('file', data.file);
+    formData.append('title', data.title);
+    if (data.description) formData.append('description', data.description);
+    if (data.category) formData.append('category', data.category);
+    if (data.is_public !== undefined) formData.append('is_public', String(data.is_public));
+
+    const token = typeof window !== 'undefined' 
+      ? localStorage.getItem('access_token') 
+      : null;
+
+    const response = await fetch(`${this.baseUrl}/vves/${vveId}/documents`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: 'Upload mislukt' }));
+      throw new Error(error.detail);
+    }
+
+    return response.json();
+  }
+
+  async getStorageUsage(vveId: string) {
+    return this.fetch<import('@/types').StorageUsage>(
+      `/vves/${vveId}/documents/storage`
+    );
+  }
+
+  async deleteDocument(vveId: string, documentId: string) {
+    return this.fetch(`/vves/${vveId}/documents/${documentId}`, {
+      method: 'DELETE',
+    });
+  }
+}
+
+export const api = new ApiClient(API_BASE_URL);
