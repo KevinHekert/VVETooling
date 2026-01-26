@@ -28,6 +28,7 @@ Deze directory bevat implementatierapporten voor elke voltooide user story. Elk 
 | STORY-014 | Contributie berekenen en status delen | ✅ Geïmplementeerd | [STORY-014-implementatie.md](STORY-014-implementatie.md) |
 | STORY-015 | Jaarrekening genereren en delen | ✅ Geïmplementeerd | [STORY-015-implementatie.md](STORY-015-implementatie.md) |
 | STORY-016 | Splitsingssleutel configureren met UI-wizard | ✅ Geïmplementeerd | [STORY-016-implementatie.md](STORY-016-implementatie.md) |
+| STORY-017 | Onboarding uitnodigingen en herinneringen | ✅ Geïmplementeerd | [STORY-017-implementatie.md](STORY-017-implementatie.md) |
 | STORY-025 | Notificaties en toasts consistent raamwerk | ✅ Geïmplementeerd | [STORY-025-implementatie.md](STORY-025-implementatie.md) |
 
 ## Template
