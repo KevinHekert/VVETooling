@@ -297,6 +297,8 @@ export type TicketCategory = 'maintenance' | 'noise' | 'safety' | 'cleaning' | '
 export type TicketPriority = 'low' | 'medium' | 'high' | 'urgent';
 // STORY-044: Supplier collaboration status
 export type SupplierStatus = 'scheduled' | 'in_progress' | 'completed';
+// STORY-038: SLA status type
+export type SlaStatus = 'on_track' | 'at_risk' | 'breached';
 
 export interface Ticket {
   id: string;
@@ -321,6 +323,13 @@ export interface Ticket {
   supplier_status_updated_at?: string;
   supplier_status_updated_by_id?: string;
   supplier_status_updated_by_name?: string;
+  // STORY-038: SLA fields
+  sla_due_date?: string;
+  sla_response_hours?: number;
+  sla_breached?: boolean;
+  sla_breached_at?: string;
+  sla_status?: SlaStatus;
+  sla_remaining_hours?: number;
   attachments: TicketAttachment[];
   timeline: TicketTimelineEntry[];
 }
@@ -340,6 +349,9 @@ export interface TicketUpdate {
   location?: string;
   status?: TicketStatus;
   priority?: TicketPriority;
+  // STORY-038: SLA fields
+  sla_due_date?: string;
+  sla_response_hours?: number;
 }
 
 export type TicketAttachmentStatus = 'pending' | 'timely' | 'late' | 'accepted' | 'rejected';

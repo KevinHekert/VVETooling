@@ -15,11 +15,12 @@ import type {
   TicketAttachmentStatus,
   SupplierStatus,
   Supplier,
-  TicketSupplierStatusUpdate
+  TicketSupplierStatusUpdate,
+  SlaStatus
 } from '@/types';
 
 /**
- * Bestuur/Beheerder Ticket Detail Page - STORY-031, STORY-044
+ * Bestuur/Beheerder Ticket Detail Page - STORY-031, STORY-044, STORY-038
  * 
  * Shows ticket details with management capabilities:
  * - View full ticket details, timeline, attachments
@@ -27,6 +28,7 @@ import type {
  * - Add internal notes (not visible to bewoner)
  * - Accept/reject attachments
  * - STORY-044: Update supplier status
+ * - STORY-038: SLA tracking and management
  */
 
 const STATUS_LABELS: Record<TicketStatus, { label: string; color: string }> = {
@@ -43,6 +45,13 @@ const SUPPLIER_STATUS_LABELS: Record<SupplierStatus, { label: string; color: str
   scheduled: { label: 'Ingepland', color: 'bg-purple-100 text-purple-700' },
   in_progress: { label: 'Bezig', color: 'bg-yellow-100 text-yellow-700' },
   completed: { label: 'Afgerond', color: 'bg-green-100 text-green-700' },
+};
+
+// STORY-038: SLA status labels
+const SLA_STATUS_LABELS: Record<string, { label: string; color: string }> = {
+  on_track: { label: 'Op schema', color: 'bg-green-100 text-green-700' },
+  at_risk: { label: 'Risico', color: 'bg-yellow-100 text-yellow-700' },
+  breached: { label: 'Overschreden', color: 'bg-red-100 text-red-700' },
 };
 
 const ATTACHMENT_STATUS_LABELS: Record<TicketAttachmentStatus, { label: string; color: string }> = {
@@ -704,6 +713,88 @@ export default function BeheerderTicketDetailPage() {
               >
                 {isUpdatingSupplierStatus ? 'Bijwerken...' : 'Leveranciersstatus Bijwerken'}
               </button>
+            </div>
+          </div>
+
+          {/* STORY-038: SLA Status */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-sm font-medium text-gray-700 mb-3">⏱️ SLA Status</h3>
+            
+            {/* Current SLA status display */}
+            {ticket.sla_due_date ? (
+              <div className="mb-4">
+                <div className="flex items-center gap-2 mb-2">
+                  {ticket.sla_status && SLA_STATUS_LABELS[ticket.sla_status] && (
+                    <span
+                      className={`
+                        inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                        ${SLA_STATUS_LABELS[ticket.sla_status].color}
+                      `}
+                    >
+                      {SLA_STATUS_LABELS[ticket.sla_status].label}
+                    </span>
+                  )}
+                  {ticket.sla_breached && (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">
+                      ⚠️ SLA Overschreden
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm text-gray-600">
+                  Deadline: <strong>{new Date(ticket.sla_due_date).toLocaleDateString('nl-NL', {
+                    day: 'numeric',
+                    month: 'short',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}</strong>
+                </p>
+                {ticket.sla_remaining_hours !== undefined && ticket.sla_remaining_hours > 0 && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Nog {ticket.sla_remaining_hours} uur resterend
+                  </p>
+                )}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 mb-4">Geen SLA ingesteld</p>
+            )}
+
+            {/* SLA settings (simple inline form) */}
+            <div className="pt-3 border-t">
+              <label className="block text-xs font-medium text-gray-500 mb-1">
+                Responstermijn (uren)
+              </label>
+              <div className="flex gap-2">
+                <select
+                  className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm"
+                  defaultValue={ticket.sla_response_hours || ''}
+                  onChange={async (e) => {
+                    const hours = parseInt(e.target.value);
+                    if (!hours) return;
+                    try {
+                      const updateData: TicketUpdate = { 
+                        sla_response_hours: hours,
+                        sla_due_date: new Date(
+                          new Date(ticket.created_at).getTime() + hours * 60 * 60 * 1000
+                        ).toISOString()
+                      };
+                      const updatedTicket = await api.updateTicket(vveId, ticketId, updateData);
+                      setTicket(updatedTicket);
+                      setSuccessMessage('SLA bijgewerkt');
+                      setTimeout(() => setSuccessMessage(null), 3000);
+                    } catch (err) {
+                      setError(err instanceof Error ? err.message : 'Kon SLA niet bijwerken');
+                    }
+                  }}
+                >
+                  <option value="">-- Selecteer --</option>
+                  <option value="24">24 uur (1 dag)</option>
+                  <option value="48">48 uur (2 dagen)</option>
+                  <option value="72">72 uur (3 dagen)</option>
+                  <option value="120">120 uur (5 dagen)</option>
+                  <option value="168">168 uur (1 week)</option>
+                  <option value="336">336 uur (2 weken)</option>
+                </select>
+              </div>
             </div>
           </div>
 
