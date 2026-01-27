@@ -25,6 +25,7 @@ Deze backlog is de single source of truth voor uitvoering van VVE Tooling MVP. A
   - [EPIC-007 Data export & backup](epics/EPIC-007-data-export-backup.md)
   - [EPIC-008 Betaling & abonnement](epics/EPIC-008-betaling-en-abonnement.md)
   - [EPIC-009 Multi-user toegang & rollen](epics/EPIC-009-multi-user-toegang.md)
+  - [EPIC-010 Serviceverzoeken & leveranciers](epics/EPIC-010-serviceverzoeken-en-leveranciers.md)
 - **Features**
   - [FEAT-001 Transactiebeheer](features/FEAT-001-transactiebeheer.md)
   - [FEAT-002 Reserves & saldo-overzicht](features/FEAT-002-reserves-overzicht.md)
@@ -41,6 +42,10 @@ Deze backlog is de single source of truth voor uitvoering van VVE Tooling MVP. A
   - [FEAT-013 Export & backup](features/FEAT-013-export-backup.md)
   - [FEAT-014 Pricing & billing](features/FEAT-014-pricing-billing.md)
   - [FEAT-015 Audit logging](features/FEAT-015-audit-logging.md)
+  - [FEAT-016 Bewoner tickets & klachten](features/FEAT-016-bewoner-tickets-en-klachten.md)
+  - [FEAT-017 Leveranciers & onderhoudsopvolging](features/FEAT-017-leveranciers-en-onderhoud.md)
+  - [FEAT-018 Reservefonds prognoses](features/FEAT-018-reservefonds-prognoses.md)
+  - [FEAT-019 Splitsingsakte versiebeheer](features/FEAT-019-splitsingsakte-versiebeheer.md)
 - **Stories**
   - [STORY-001 Transactie toevoegen](stories/STORY-001-transactie-toevoegen.md)
   - [STORY-002 Splitsingssleutel valideren](stories/STORY-002-splitsingssleutel-valideren.md)
@@ -70,6 +75,12 @@ Deze backlog is de single source of truth voor uitvoering van VVE Tooling MVP. A
   - [STORY-026 Reserves scenario-planning en prognose](stories/STORY-026-reserves-scenario-planning.md)
   - [STORY-027 Reserves herclassificatie en audit trail](stories/STORY-027-reserves-herclassificatie-en-audit.md)
   - [STORY-028 Mobile-first reserves dashboard](stories/STORY-028-reserves-mobile-dashboard.md)
+  - [STORY-029 Bewoner ticket wizard en tijdlijn](stories/STORY-029-bewoner-ticket-wizard-en-tijdlijn.md)
+  - [STORY-030 Ticket bewijsstukken (bonnen en facturen)](stories/STORY-030-ticket-bewijsstukken-bonnen-facturen.md)
+  - [STORY-031 Bestuur ticket inzicht en behandeling](stories/STORY-031-bestuur-ticket-inzicht-en-behandeling.md)
+  - [STORY-032 Splitsingsakte versie en aanvullingen](stories/STORY-032-splitsingsakte-versie-en-aanvullingen.md)
+  - [STORY-033 Reservefonds prognose dashboard](stories/STORY-033-reservefonds-prognose-dashboard.md)
+  - [STORY-034 Leveranciers koppelen aan tickets](stories/STORY-034-leveranciers-koppelen-aan-tickets.md)
 - **Decision log**
   - [Open vragen](decision-log/01-open-vragen.md)
   - [Besluiten](decision-log/02-besluiten.md)
@@ -96,6 +107,7 @@ Deze backlog is de single source of truth voor uitvoering van VVE Tooling MVP. A
 | EPIC-007 | docs/backlog/epics/01-mvp-epics.md (EP-007), docs/architecture/decisions/ADR-005-observability-logging.md |
 | EPIC-008 | docs/backlog/epics/01-mvp-epics.md (EP-008), docs/product/strategy/01-productstrategie-keuzes.md |
 | EPIC-009 | docs/backlog/epics/01-mvp-epics.md (EP-009), docs/ux/design/02-bewoner-flows.md, docs/ux/design/04-bestuur-flows.md, docs/architecture/constraints/01-randvoorwaarden-ux-development.md |
+| EPIC-010 | docs/backlog/epics/EPIC-010-serviceverzoeken-en-leveranciers.md, docs/marktonderzoek/03-gebruikers-bestuur.md |
 | FEAT-001 | docs/backlog/features/FEAT-001-transactiebeheer.md, docs/ux/design/03-beheerder-flows.md, docs/ui/components/feedback-notifications.md |
 | FEAT-002 | docs/backlog/features/FEAT-002-reserves-overzicht.md, docs/ux/design/04-bestuur-flows.md |
 | FEAT-003 | docs/backlog/features/FEAT-003-splitsingssleutel.md, docs/ux/design/03-beheerder-flows.md |
@@ -111,6 +123,10 @@ Deze backlog is de single source of truth voor uitvoering van VVE Tooling MVP. A
 | FEAT-013 | docs/backlog/features/FEAT-013-export-backup.md |
 | FEAT-014 | docs/backlog/features/FEAT-014-pricing-billing.md, docs/product/strategy/01-productstrategie-keuzes.md |
 | FEAT-015 | docs/backlog/features/FEAT-015-audit-logging.md, docs/product/decisions/01-productbesluiten-aannames-randvoorwaarden.md |
+| FEAT-016 | docs/backlog/features/FEAT-016-bewoner-tickets-en-klachten.md, docs/backlog/epics/EPIC-010-serviceverzoeken-en-leveranciers.md |
+| FEAT-017 | docs/backlog/features/FEAT-017-leveranciers-en-onderhoud.md, docs/backlog/epics/EPIC-010-serviceverzoeken-en-leveranciers.md |
+| FEAT-018 | docs/backlog/features/FEAT-018-reservefonds-prognoses.md, docs/backlog/stories/STORY-026-reserves-scenario-planning.md |
+| FEAT-019 | docs/backlog/features/FEAT-019-splitsingsakte-versiebeheer.md, docs/backlog/features/FEAT-011-documentbeheer.md |
 | STORY-001 | docs/backlog/stories/STORY-001-transactie-toevoegen.md, docs/ui/components/form-controls.md |
 | STORY-002 | docs/backlog/stories/STORY-002-splitsingssleutel-valideren.md, docs/ui/components/feedback-notifications.md |
 | STORY-003 | docs/backlog/stories/STORY-003-bewoner-ziet-eigen-status.md, docs/ux/design/02-bewoner-flows.md |
@@ -139,3 +155,9 @@ Deze backlog is de single source of truth voor uitvoering van VVE Tooling MVP. A
 | STORY-026 | docs/backlog/stories/STORY-026-reserves-scenario-planning.md, docs/backlog/features/FEAT-002-reserves-overzicht.md |
 | STORY-027 | docs/backlog/stories/STORY-027-reserves-herclassificatie-en-audit.md, docs/backlog/features/FEAT-002-reserves-overzicht.md, docs/backlog/features/FEAT-015-audit-logging.md |
 | STORY-028 | docs/backlog/stories/STORY-028-reserves-mobile-dashboard.md, docs/backlog/features/FEAT-002-reserves-overzicht.md, docs/ux/design/02-bewoner-flows.md |
+| STORY-029 | docs/backlog/stories/STORY-029-bewoner-ticket-wizard-en-tijdlijn.md, docs/backlog/features/FEAT-016-bewoner-tickets-en-klachten.md |
+| STORY-030 | docs/backlog/stories/STORY-030-ticket-bewijsstukken-bonnen-facturen.md, docs/backlog/features/FEAT-016-bewoner-tickets-en-klachten.md |
+| STORY-031 | docs/backlog/stories/STORY-031-bestuur-ticket-inzicht-en-behandeling.md, docs/backlog/features/FEAT-016-bewoner-tickets-en-klachten.md |
+| STORY-032 | docs/backlog/stories/STORY-032-splitsingsakte-versie-en-aanvullingen.md, docs/backlog/features/FEAT-019-splitsingsakte-versiebeheer.md |
+| STORY-033 | docs/backlog/stories/STORY-033-reservefonds-prognose-dashboard.md, docs/backlog/features/FEAT-018-reservefonds-prognoses.md |
+| STORY-034 | docs/backlog/stories/STORY-034-leveranciers-koppelen-aan-tickets.md, docs/backlog/features/FEAT-017-leveranciers-en-onderhoud.md |
