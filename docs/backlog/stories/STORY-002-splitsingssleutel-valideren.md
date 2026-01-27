@@ -5,6 +5,7 @@
 - **Eigenaar**: Product Owner
 - **Status**: ✅ Geïmplementeerd
 - **Versie**: 1.1
+- **Prioriteit**: Must (Horizon 1)
 - **Geneste nummering**: 2.1.1
 
 ## User story

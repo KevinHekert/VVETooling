@@ -3,14 +3,23 @@
 ## Doel
 Deze backlog is de single source of truth voor uitvoering van VVE Tooling MVP. Alle items zijn traceerbaar naar `docs/*` en houden rekening met architectuur- en UX-kaders.
 
+## Voortgang Overzicht
+📊 **[Geneste Backlog Overzicht](nested-overview.md)** - Volledige hiërarchie met implementatiestatus
+
+| Niveau | Totaal | ✅ Gereed | ⬜ Backlog | % Gereed |
+|--------|--------|-----------|-----------|----------|
+| Epics | 10 | 4 | 6 | 40% |
+| Features | 19 | 10 | 9 | 53% |
+| Stories | 44 | 22 | 22 | 50% |
+
 ## Navigatie
 - **Ways of working**
   - [Backlog-structuur](ways-of-working/01-backlog-structuur.md)
   - [Prioritering](ways-of-working/02-prioritering.md)
   - [Definition of Ready/Done](ways-of-working/03-definition-of-ready-done.md)
   - [Decision-log aanpak](ways-of-working/04-decision-log-aanpak.md)
-  - [AI Development Guidelines](ways-of-working/05-ai-development-guidelines.md) ✨ **NIEUW**
-- **Implementatierapporten** ✨ **NIEUW**
+  - [AI Development Guidelines](ways-of-working/05-ai-development-guidelines.md)
+- **Implementatierapporten**
   - [Overzicht](implementation-reports/README.md) - Alle implementatierapporten
   - [Template](implementation-reports/TEMPLATE-implementatierapport.md) - Template voor nieuwe rapporten
 - **Screenshots & Visuele Documentatie**
