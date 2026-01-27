@@ -199,3 +199,58 @@ class MeetingInvitationPreview(BaseModel):
     meeting_date: datetime
     agenda_summary: str | None = None
     document_count: int = 0
+
+
+# STORY-072: RSVP schemas
+class RsvpStatus(str, Enum):
+    """RSVP status options (STORY-072)."""
+
+    PRESENT = "present"  # Aanwezig
+    ABSENT = "absent"  # Afwezig
+    WITH_PROXY = "with_proxy"  # Met volmacht
+
+
+class RsvpCreate(BaseModel):
+    """Schema for creating/updating an RSVP (STORY-072)."""
+
+    status: RsvpStatus
+    proxy_holder_name: str | None = Field(None, max_length=255)
+    notes: str | None = Field(None, max_length=500)
+
+    @field_validator('proxy_holder_name')
+    @classmethod
+    def validate_proxy_holder(cls, v: str | None, info) -> str | None:
+        """Validate proxy holder is provided when status is WITH_PROXY."""
+        status = info.data.get('status')
+        if status == RsvpStatus.WITH_PROXY and not v:
+            raise ValueError('Volmachthouder is verplicht bij status "met volmacht"')
+        return v
+
+
+class RsvpResponse(BaseModel):
+    """Response schema for RSVP (STORY-072)."""
+
+    id: uuid.UUID
+    meeting_id: uuid.UUID
+    user_id: uuid.UUID
+    user_name: str | None = None
+    status: RsvpStatus
+    proxy_holder_name: str | None = None
+    notes: str | None = None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class RsvpSummary(BaseModel):
+    """Summary of RSVPs for a meeting (STORY-072)."""
+
+    meeting_id: uuid.UUID
+    total_invited: int
+    total_responded: int
+    present_count: int
+    absent_count: int
+    with_proxy_count: int
+    no_response_count: int
+    response_rate: float
