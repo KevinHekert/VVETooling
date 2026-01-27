@@ -2,7 +2,7 @@
 
 ## Status
 Status: Draft
-Laatst bijgewerkt: 2026-01-26
+Laatst bijgewerkt: 2026-01-27
 
 ## Samenvatting
 Dit document geeft een overzicht van het marktonderzoek voor VVE Tooling vanuit sales perspectief. Het marktonderzoek is opgedeeld in kleinere RFC-achtige documenten die elk een specifiek aspect van de markt belichten.
@@ -13,6 +13,7 @@ Het doel van dit marktonderzoek is om een compleet beeld te krijgen van:
 - De verschillende aspecten (assen) van VVE beheer
 - De huidige markt en concurrentie
 - Kansen en mogelijkheden
+- Customer journeys die de applicatie moet ondersteunen
 
 ## Documentstructuur
 
@@ -35,10 +36,14 @@ Het doel van dit marktonderzoek is om een compleet beeld te krijgen van:
 12. [12-concurrentie-analyse.md](12-concurrentie-analyse.md) - Analyse van concurrenten
 13. [13-markt-kansen.md](13-markt-kansen.md) - Identificatie van marktkansen
 
+### Customer Journeys
+14. [14-customer-journeys.md](14-customer-journeys.md) - Customer journeys vanuit alle perspectieven
+
 ## Leeswijzer
 - Begin met de gebruikersdocumenten (01-04) om de doelgroepen te begrijpen
 - Lees daarna de as-documenten (05-11) om de functionele gebieden te verkennen
-- Sluit af met de marktanalyse documenten (12-13) voor strategisch inzicht
+- Bekijk de marktanalyse documenten (12-13) voor strategisch inzicht
+- Raadpleeg de customer journeys (14) voor gebruikersflows en demo scenario's
 
 ## Definities
 - **VVE**: Vereniging Van Eigenaren
