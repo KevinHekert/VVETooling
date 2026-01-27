@@ -28,6 +28,10 @@ Bestuur kan vastleggen welke versie van de splitsingsakte actief is en welke aan
 - FEAT-003
 - FEAT-011
 - EPIC-002
+- STORY-032
+- STORY-041
+- STORY-042
+- STORY-043
 
 ## Bronverwijzingen
 - [docs/backlog/features/FEAT-003-splitsingssleutel.md](../features/FEAT-003-splitsingssleutel.md)

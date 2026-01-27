@@ -12,6 +12,10 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
      - 1.2.2 STORY-026 Reserves scenario-planning en prognose (Should)
      - 1.2.3 STORY-027 Reserves herclassificatie en audit trail (Should)
      - 1.2.4 STORY-028 Mobile-first reserves dashboard (Must)
+   - 1.3 **FEAT-018 Reservefonds prognoses**
+     - 1.3.1 STORY-033 Reservefonds prognose dashboard (Should)
+     - 1.3.2 STORY-039 Reservefonds prognose export en scenario (Should)
+     - 1.3.3 STORY-040 Reservefonds prognose waarschuwingen (Should)
 
 2. **EPIC-002 Splitsingen beheren**
    - 2.1 **FEAT-003 Splitsingssleutel configuratie**
@@ -49,6 +53,11 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
    - 6.2 **FEAT-012 Documenten downloaden**
      - 6.2.1 STORY-008 Documenten delen en downloaden (Should)
      - 6.2.2 STORY-019 Document download-links en notificaties (Should)
+   - 6.3 **FEAT-019 Splitsingsakte versiebeheer**
+     - 6.3.1 STORY-032 Splitsingsakte versie en aanvullingen (Should)
+     - 6.3.2 STORY-041 Splitsingsakte versies overzicht (Must)
+     - 6.3.3 STORY-042 Splitsingsakte aanvullingen log (Should)
+     - 6.3.4 STORY-043 Splitsingsakte publicatie en toegang (Should)
 
 7. **EPIC-007 Data export & backup**
    - 7.1 **FEAT-013 Export & backup**
@@ -64,6 +73,19 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
      - 9.1.2 STORY-012 Transactie-overzicht met filters en widgets (Must) *(dashboards)*
      - 9.1.3 STORY-024 Multi-tenant toegang en context switcher (Must)
      - 9.1.4 STORY-025 Notificaties en toasts consistent raamwerk (Must)
+
+10. **EPIC-010 Serviceverzoeken & leveranciers**
+    - 10.1 **FEAT-016 Bewoner tickets & klachten**
+      - 10.1.1 STORY-029 Bewoner ticket wizard en tijdlijn (Must)
+      - 10.1.2 STORY-030 Ticket bewijsstukken (bonnen en facturen) (Must)
+      - 10.1.3 STORY-031 Bestuur ticket inzicht en behandeling (Must)
+      - 10.1.4 STORY-037 Ticket communicatie en notities (Must)
+      - 10.1.5 STORY-038 Ticket prioriteit en SLA (Should)
+    - 10.2 **FEAT-017 Leveranciers & onderhoudsopvolging**
+      - 10.2.1 STORY-034 Leveranciers koppelen aan tickets (Should)
+      - 10.2.2 STORY-035 Leveranciersprofiel beheren (Should)
+      - 10.2.3 STORY-036 Leveranciers opvolgacties loggen (Should)
+      - 10.2.4 STORY-044 Ticket supplier collaboration status (Must)
 
 ---
 - Prioriteitlabels komen uit de individuele stories (Must/Should). Waar een story meerdere features raakt, is de primaire plaatsing hierboven opgenomen en gemarkeerd als *gedeeld* wanneer relevant.

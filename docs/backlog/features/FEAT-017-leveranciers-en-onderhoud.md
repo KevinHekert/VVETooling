@@ -28,6 +28,10 @@ Bestuur kan leveranciers koppelen aan tickets, opvolging registreren en contacti
 - EPIC-010
 - FEAT-016
 - FEAT-015
+- STORY-034
+- STORY-035
+- STORY-036
+- STORY-044
 
 ## Bronverwijzingen
 - [docs/backlog/epics/EPIC-010-serviceverzoeken-en-leveranciers.md](../epics/EPIC-010-serviceverzoeken-en-leveranciers.md)

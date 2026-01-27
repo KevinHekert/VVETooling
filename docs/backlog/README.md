@@ -81,6 +81,16 @@ Deze backlog is de single source of truth voor uitvoering van VVE Tooling MVP. A
   - [STORY-032 Splitsingsakte versie en aanvullingen](stories/STORY-032-splitsingsakte-versie-en-aanvullingen.md)
   - [STORY-033 Reservefonds prognose dashboard](stories/STORY-033-reservefonds-prognose-dashboard.md)
   - [STORY-034 Leveranciers koppelen aan tickets](stories/STORY-034-leveranciers-koppelen-aan-tickets.md)
+  - [STORY-035 Leveranciersprofiel beheren](stories/STORY-035-leveranciersprofiel-beheren.md)
+  - [STORY-036 Leveranciers opvolgacties loggen](stories/STORY-036-leveranciers-opvolgacties-loggen.md)
+  - [STORY-037 Ticket communicatie en notities](stories/STORY-037-ticket-communicatie-en-notities.md)
+  - [STORY-038 Ticket prioriteit en SLA](stories/STORY-038-ticket-prioriteit-en-sla.md)
+  - [STORY-039 Reservefonds prognose export en scenario](stories/STORY-039-reservefonds-prognose-export-en-scenario.md)
+  - [STORY-040 Reservefonds prognose waarschuwingen](stories/STORY-040-reservefonds-prognose-waarschuwingen.md)
+  - [STORY-041 Splitsingsakte versies overzicht](stories/STORY-041-splitsingsakte-versies-overzicht.md)
+  - [STORY-042 Splitsingsakte aanvullingen log](stories/STORY-042-splitsingsakte-aanvullingen-log.md)
+  - [STORY-043 Splitsingsakte publicatie en toegang](stories/STORY-043-splitsingsakte-publicatie-en-toegang.md)
+  - [STORY-044 Ticket supplier collaboration status](stories/STORY-044-ticket-supplier-collaboration-status.md)
 - **Decision log**
   - [Open vragen](decision-log/01-open-vragen.md)
   - [Besluiten](decision-log/02-besluiten.md)
@@ -161,3 +171,13 @@ Deze backlog is de single source of truth voor uitvoering van VVE Tooling MVP. A
 | STORY-032 | docs/backlog/stories/STORY-032-splitsingsakte-versie-en-aanvullingen.md, docs/backlog/features/FEAT-019-splitsingsakte-versiebeheer.md |
 | STORY-033 | docs/backlog/stories/STORY-033-reservefonds-prognose-dashboard.md, docs/backlog/features/FEAT-018-reservefonds-prognoses.md |
 | STORY-034 | docs/backlog/stories/STORY-034-leveranciers-koppelen-aan-tickets.md, docs/backlog/features/FEAT-017-leveranciers-en-onderhoud.md |
+| STORY-035 | docs/backlog/stories/STORY-035-leveranciersprofiel-beheren.md, docs/backlog/features/FEAT-017-leveranciers-en-onderhoud.md |
+| STORY-036 | docs/backlog/stories/STORY-036-leveranciers-opvolgacties-loggen.md, docs/backlog/features/FEAT-017-leveranciers-en-onderhoud.md |
+| STORY-037 | docs/backlog/stories/STORY-037-ticket-communicatie-en-notities.md, docs/backlog/features/FEAT-016-bewoner-tickets-en-klachten.md |
+| STORY-038 | docs/backlog/stories/STORY-038-ticket-prioriteit-en-sla.md, docs/backlog/features/FEAT-016-bewoner-tickets-en-klachten.md, docs/backlog/features/FEAT-017-leveranciers-en-onderhoud.md |
+| STORY-039 | docs/backlog/stories/STORY-039-reservefonds-prognose-export-en-scenario.md, docs/backlog/features/FEAT-018-reservefonds-prognoses.md |
+| STORY-040 | docs/backlog/stories/STORY-040-reservefonds-prognose-waarschuwingen.md, docs/backlog/features/FEAT-018-reservefonds-prognoses.md |
+| STORY-041 | docs/backlog/stories/STORY-041-splitsingsakte-versies-overzicht.md, docs/backlog/features/FEAT-019-splitsingsakte-versiebeheer.md |
+| STORY-042 | docs/backlog/stories/STORY-042-splitsingsakte-aanvullingen-log.md, docs/backlog/features/FEAT-019-splitsingsakte-versiebeheer.md |
+| STORY-043 | docs/backlog/stories/STORY-043-splitsingsakte-publicatie-en-toegang.md, docs/backlog/features/FEAT-019-splitsingsakte-versiebeheer.md |
+| STORY-044 | docs/backlog/stories/STORY-044-ticket-supplier-collaboration-status.md, docs/backlog/features/FEAT-017-leveranciers-en-onderhoud.md |

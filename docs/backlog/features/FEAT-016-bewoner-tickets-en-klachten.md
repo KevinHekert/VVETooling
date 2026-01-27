@@ -30,6 +30,11 @@ Bewoners kunnen klachten/tickets indienen en status volgen, terwijl bestuur de b
 - EPIC-009
 - FEAT-011
 - FEAT-015
+- STORY-029
+- STORY-030
+- STORY-031
+- STORY-037
+- STORY-038
 
 ## Bronverwijzingen
 - [docs/backlog/epics/EPIC-010-serviceverzoeken-en-leveranciers.md](../epics/EPIC-010-serviceverzoeken-en-leveranciers.md)
