@@ -169,3 +169,33 @@ STANDARD_AGENDA_TEMPLATE = [
     {"title": "Rondvraag", "duration_minutes": 15, "is_standard": True},
     {"title": "Sluiting", "duration_minutes": 5, "is_standard": True},
 ]
+
+
+# STORY-071: ALV Invitation schemas
+class MeetingInvitationCreate(BaseModel):
+    """Schema for sending ALV invitations (STORY-071)."""
+
+    include_agenda: bool = Field(True, description="Include agenda in invitation")
+    include_documents: bool = Field(False, description="Include document links")
+    custom_message: str | None = Field(None, max_length=2000, description="Optional custom message")
+
+
+class MeetingInvitationResponse(BaseModel):
+    """Response schema for invitation sending (STORY-071)."""
+
+    meeting_id: uuid.UUID
+    invitations_sent: int
+    status: str
+    sent_at: datetime
+    recipients: list[str] = []
+
+
+class MeetingInvitationPreview(BaseModel):
+    """Preview of ALV invitation email (STORY-071)."""
+
+    subject: str
+    body_preview: str
+    recipient_count: int
+    meeting_date: datetime
+    agenda_summary: str | None = None
+    document_count: int = 0
