@@ -114,17 +114,163 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
       - 12.3.1 ✅ STORY-053 E-mail verzenden via geconfigureerde provider (Must)
       - 12.3.2 ✅ STORY-054 E-mail verzending monitoring en logging (Should)
 
+13. **EPIC-013 Contractbeheer** ⬜
+    - 13.1 **FEAT-026 Contractregistratie & Opslag** ⬜
+      - 13.1.1 ⬜ STORY-055 Contract registreren met metadata (Should)
+      - 13.1.2 ⬜ STORY-056 Contract document uploaden (Should)
+      - 13.1.3 ⬜ STORY-057 Contracten doorzoeken en filteren (Should)
+    - 13.2 **FEAT-027 Contract Alerts & Herinneringen** ⬜
+      - 13.2.1 ⬜ STORY-058 Opzegtermijn alert configureren (Should)
+      - 13.2.2 ⬜ STORY-059 Dashboard widget aflopen contracten (Should)
+    - 13.3 **FEAT-028 Leveranciersbeheer** ⬜
+      - 13.3.1 ⬜ STORY-060 Leverancier registreren (Should)
+      - 13.3.2 ⬜ STORY-061 Leverancier evaluatie (Could)
+
+14. **EPIC-014 MJOP & Onderhoudsplanning** ⬜
+    - 14.1 **FEAT-029 MJOP Import & Beheer** ⬜
+      - 14.1.1 ⬜ STORY-062 MJOP importeren vanuit Excel (Should)
+      - 14.1.2 ⬜ STORY-063 Onderhoudselement handmatig toevoegen (Should)
+      - 14.1.3 ⬜ STORY-064 MJOP timeline visualisatie (Should)
+    - 14.2 **FEAT-030 Reserveberekening & Prognose** ⬜
+      - 14.2.1 ⬜ STORY-065 Reserveberekening automatisch (Should)
+      - 14.2.2 ⬜ STORY-066 What-if scenario doorrekenen (Could)
+    - 14.3 **FEAT-031 Onderhoudstaak Beheer** ⬜
+      - 14.3.1 ⬜ STORY-067 Onderhoudstaak aanmaken en toewijzen (Should)
+      - 14.3.2 ⬜ STORY-068 Onderhoudstaak status bijwerken (Should)
+
+15. **EPIC-015 ALV & Vergaderbeheer** ⬜
+    - 15.1 **FEAT-032 ALV Planning & Uitnodigingen** ⬜
+      - 15.1.1 ⬜ STORY-069 ALV plannen met datum en locatie (Must)
+      - 15.1.2 ⬜ STORY-070 ALV agenda opstellen (Must)
+      - 15.1.3 ⬜ STORY-071 ALV uitnodiging versturen (Must)
+    - 15.2 **FEAT-033 Presentie & Volmachten** ⬜
+      - 15.2.1 ⬜ STORY-072 RSVP registreren voor ALV (Must)
+      - 15.2.2 ⬜ STORY-073 Volmacht digitaal afgeven (Must)
+      - 15.2.3 ⬜ STORY-074 Quorum automatisch berekenen (Must)
+    - 15.3 **FEAT-034 Notulen & Besluiten** ⬜
+      - 15.3.1 ⬜ STORY-075 Notulen opstellen met template (Must)
+      - 15.3.2 ⬜ STORY-076 Besluiten extraheren naar register (Should)
+      - 15.3.3 ⬜ STORY-077 Actiepunten toewijzen vanuit notulen (Should)
+      - 15.3.4 ⬜ STORY-120 Notulen delen met eigenaren (Must)
+
+16. **EPIC-016 Juridisch & Compliance** ⬜
+    - 16.1 **FEAT-035 Compliance Dashboard** ⬜
+      - 16.1.1 ⬜ STORY-078 Compliance status per categorie (Should)
+      - 16.1.2 ⬜ STORY-079 Compliance checklist afvinken (Should)
+      - 16.1.3 ⬜ STORY-121 Compliance deadline alert ontvangen (Should)
+    - 16.2 **FEAT-036 AVG Module** ⬜
+      - 16.2.1 ⬜ STORY-080 Privacy statement genereren (Should)
+      - 16.2.2 ⬜ STORY-122 Eigenaar data-export aanvragen (Should)
+    - 16.3 **FEAT-037 Besluiten Register** ⬜
+      - 16.3.1 ⬜ STORY-081 Besluit doorzoeken in register (Should)
+
+17. **EPIC-017 AI-Assistent** ⬜
+    - 17.1 **FEAT-038 AI Chatbot** ⬜
+      - 17.1.1 ⬜ STORY-082 AI chatbot vraag stellen (Could)
+      - 17.1.2 ⬜ STORY-123 Chatbot escalatie naar bestuur (Could)
+    - 17.2 **FEAT-039 Document AI Analyse** ⬜
+      - 17.2.1 ⬜ STORY-083 Factuur automatisch analyseren (Could)
+    - 17.3 **FEAT-040 Slimme Alerts & Suggesties** ⬜
+      - 17.3.1 ⬜ STORY-084 Proactieve alert ontvangen (Could)
+
+18. **EPIC-018 Eigenaren Mobile App** ⬜
+    - 18.1 **FEAT-041 Mobile Eigenaren Portal** ⬜
+      - 18.1.1 ⬜ STORY-085 Mobile portal documenten inzien (Should)
+      - 18.1.2 ⬜ STORY-086 Mobile contributiestatus bekijken (Should)
+    - 18.2 **FEAT-042 Mobile Meldingen & Tickets** ⬜
+      - 18.2.1 ⬜ STORY-087 Mobile melding maken met foto (Should)
+      - 18.2.2 ⬜ STORY-088 Mobile ticket voortgang volgen (Should)
+    - 18.3 **FEAT-043 Mobile Stemmen & Polls** ⬜
+      - 18.3.1 ⬜ STORY-089 Mobile stemmen op poll (Should)
+
+19. **EPIC-019 VVE Verduurzaming** ⬜
+    - 19.1 **FEAT-044 Verduurzaming Projectbeheer** ⬜
+      - 19.1.1 ⬜ STORY-090 Verduurzamingsproject aanmaken (Should)
+      - 19.1.2 ⬜ STORY-119 Kosten-baten analyse verduurzaming (Could)
+    - 19.2 **FEAT-045 Subsidie Overzicht & Ondersteuning** ⬜
+      - 19.2.1 ⬜ STORY-091 Subsidie-mogelijkheden bekijken (Should)
+    - 19.3 **FEAT-046 Energielabel & Duurzaamheid Roadmap** ⬜
+      - 19.3.1 ⬜ STORY-092 Energielabel registreren (Should)
+
+20. **EPIC-020 Benchmark & Analytics** ⬜
+    - 20.1 **FEAT-047 Benchmark Dashboard** ⬜
+      - 20.1.1 ⬜ STORY-093 Benchmark positie bekijken (Could)
+    - 20.2 **FEAT-048 VVE Analytics & Trends** ⬜
+      - 20.2.1 ⬜ STORY-094 Kosten trend analyseren (Could)
+
+21. **EPIC-021 Betalingen & Incasso** ⬜
+    - 21.1 **FEAT-049 Automatische Contributie-inning** ⬜
+      - 21.1.1 ⬜ STORY-095 SEPA-incasso instellen (Should)
+    - 21.2 **FEAT-050 Betalingsherinneringen & Aanmaningen** ⬜
+      - 21.2.1 ⬜ STORY-096 Betalingsherinnering versturen (Should)
+    - 21.3 **FEAT-051 Incasso Workflow** ⬜
+      - 21.3.1 ⬜ STORY-097 Incasso case starten (Could)
+
+22. **EPIC-022 Notificaties & Alerts** ⬜
+    - 22.1 **FEAT-052 Push Notificaties** ⬜
+      - 22.1.1 ⬜ STORY-098 Push notificatie ontvangen (Should)
+    - 22.2 **FEAT-053 Notificatie Voorkeuren** ⬜
+      - 22.2.1 ⬜ STORY-099 Notificatie voorkeuren instellen (Should)
+    - 22.3 **FEAT-054 SMS Notificaties** ⬜
+      - 22.3.1 ⬜ STORY-100 SMS versturen voor urgente alerts (Could)
+
+23. **EPIC-023 Rapportages & Inzichten** ⬜
+    - 23.1 **FEAT-055 Financiële Rapportages** ⬜
+      - 23.1.1 ⬜ STORY-101 Jaarrekening genereren (Must)
+      - 23.1.2 ⬜ STORY-124 Begroting rapport genereren (Must)
+    - 23.2 **FEAT-056 Eigenaar Rapportages** ⬜
+      - 23.2.1 ⬜ STORY-102 Box 3 verklaring genereren (Should)
+    - 23.3 **FEAT-057 Dashboard & KPI's** ⬜
+      - 23.3.1 ⬜ STORY-103 Dashboard widgets configureren (Should)
+
+24. **EPIC-024 Integraties & API** ⬜
+    - 24.1 **FEAT-058 REST API** ⬜
+      - 24.1.1 ⬜ STORY-104 API key aanmaken (Could)
+    - 24.2 **FEAT-059 Bank Integratie** ⬜
+      - 24.2.1 ⬜ STORY-105 Bank statement importeren (Should)
+    - 24.3 **FEAT-060 Boekhoudpakket Integratie** ⬜
+      - 24.3.1 ⬜ STORY-106 Boekhoudpakket koppelen (Could)
+
+25. **EPIC-025 VVE Community & Kennisbank** ⬜
+    - 25.1 **FEAT-061 Kennisbank** ⬜
+      - 25.1.1 ⬜ STORY-107 Kennisbank artikel zoeken (Could)
+    - 25.2 **FEAT-062 Template Bibliotheek** ⬜
+      - 25.2.1 ⬜ STORY-108 Template downloaden en personaliseren (Could)
+    - 25.3 **FEAT-063 Community Forum** ⬜
+      - 25.3.1 ⬜ STORY-109 Forum vraag stellen (Could)
+
+26. **EPIC-026 Energiebeheer & Laadpalen** ⬜
+    - 26.1 **FEAT-064 Laadpaal Registratie & Beheer** ⬜
+      - 26.1.1 ⬜ STORY-110 Laadpaal registreren (Should)
+      - 26.1.2 ⬜ STORY-118 Notificatieregeling aanvraag indienen (Should)
+    - 26.2 **FEAT-065 Laadkosten Doorbelasting** ⬜
+      - 26.2.1 ⬜ STORY-111 Laadkosten doorbelasten (Should)
+    - 26.3 **FEAT-066 Energieverbruik Dashboard** ⬜
+      - 26.3.1 ⬜ STORY-112 Energieverbruik invoeren (Could)
+
+27. **EPIC-027 Digitaal Stemmen & Polls** ⬜
+    - 27.1 **FEAT-067 Digitale Stemming** ⬜
+      - 27.1.1 ⬜ STORY-113 Digitale stemming aanmaken (Must)
+      - 27.1.2 ⬜ STORY-114 Stem uitbrengen op voorstel (Must)
+      - 27.1.3 ⬜ STORY-115 Stemresultaten bekijken (Must)
+    - 27.2 **FEAT-068 Polls & Peilingen** ⬜
+      - 27.2.1 ⬜ STORY-116 Poll aanmaken voor draagvlakmeting (Should)
+    - 27.3 **FEAT-069 Volmacht Beheer** ⬜
+      - 27.3.1 ⬜ STORY-117 Digitale volmacht registreren (Must)
+
 ---
 
 ## Voortgang Samenvatting
 
 | Niveau | Totaal | ✅ Gereed | ⬜ Backlog | % Gereed |
 |--------|--------|-----------|-----------|----------|
-| Epics | 12 | 12 | 0 | 100% |
-| Features | 25 | 25 | 0 | 100% |
-| Stories | 54 | 54 | 0 | 100% |
+| Epics | 27 | 12 | 15 | 44% |
+| Features | 69 | 25 | 44 | 36% |
+| Stories | 124 | 54 | 70 | 44% |
 
-**Volledig afgeronde Epics:** EPIC-001, EPIC-002, EPIC-003, EPIC-004, EPIC-005, EPIC-006, EPIC-007, EPIC-008, EPIC-009, EPIC-010, EPIC-011, EPIC-012
+**Volledig afgeronde Epics (Horizon 1 - MVP):** EPIC-001, EPIC-002, EPIC-003, EPIC-004, EPIC-005, EPIC-006, EPIC-007, EPIC-008, EPIC-009, EPIC-010, EPIC-011, EPIC-012
+
+**Nieuwe Epics (Horizon 2 - Uitbreiding):** EPIC-013, EPIC-014, EPIC-015, EPIC-016, EPIC-017, EPIC-018, EPIC-019, EPIC-020, EPIC-021, EPIC-022, EPIC-023, EPIC-024, EPIC-025, EPIC-026, EPIC-027
 
 ---
 - Prioriteitlabels komen uit de individuele stories (Must/Should). Waar een story meerdere features raakt, is de primaire plaatsing hierboven opgenomen en gemarkeerd als *gedeeld* wanneer relevant.
