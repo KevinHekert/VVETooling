@@ -96,11 +96,11 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
 
 11. **EPIC-011 Correspondentie & sjablonen** ⬜
     - 11.1 **FEAT-020 Sjablonenbeheer** ⬜
-      - *Stories nog te definiëren*
+      - 11.1.1 ⬜ STORY-045 Sjablonenbeheer pagina (Must)
     - 11.2 **FEAT-021 Brieven genereren** ⬜
-      - *Stories nog te definiëren*
+      - 11.2.1 ⬜ STORY-046 Brieven genereren wizard (Must)
     - 11.3 **FEAT-022 Multi-channel verzending** ⬜
-      - *Stories nog te definiëren*
+      - 11.3.1 ⬜ STORY-047 Multi-channel verzending (Should)
 
 ---
 
@@ -110,7 +110,7 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
 |--------|--------|-----------|-----------|----------|
 | Epics | 11 | 10 | 1 | 91% |
 | Features | 22 | 19 | 3 | 86% |
-| Stories | 44 | 44 | 0 | 100% |
+| Stories | 47 | 44 | 3 | 94% |
 
 **Volledig afgeronde Epics:** EPIC-001, EPIC-002, EPIC-003, EPIC-004, EPIC-005, EPIC-006, EPIC-007, EPIC-008, EPIC-009, EPIC-010
 
