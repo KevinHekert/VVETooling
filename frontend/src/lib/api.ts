@@ -433,6 +433,21 @@ class ApiClient {
     );
   }
 
+  async updateTicketAttachment(
+    vveId: string,
+    ticketId: string,
+    attachmentId: string,
+    data: import('@/types').TicketAttachmentUpdate
+  ) {
+    return this.fetch<import('@/types').TicketAttachment>(
+      `/vves/${vveId}/tickets/${ticketId}/attachments/${attachmentId}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
   // Ticket Comments (STORY-037)
   async addTicketComment(
     vveId: string,

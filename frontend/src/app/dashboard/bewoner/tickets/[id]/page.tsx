@@ -10,16 +10,19 @@ import type {
   TicketTimelineEntry, 
   TicketStatus, 
   TicketCategory,
-  TicketCommentCreate 
+  TicketCommentCreate,
+  TicketAttachmentStatus
 } from '@/types';
 
 /**
  * Ticket Detail Page - STORY-029: Bewoner ticket wizard en tijdlijn
+ * STORY-030: Ticket bewijsstukken (bonnen en facturen)
  * 
  * Shows ticket details with:
  * - Status and priority information
  * - Timeline with status changes and comments
- * - Attachments list
+ * - Attachments list with status badges
+ * - Attachment upload functionality
  * - Comment form for adding new comments
  */
 
@@ -30,6 +33,14 @@ const STATUS_LABELS: Record<TicketStatus, { label: string; color: string }> = {
   awaiting_info: { label: 'Wacht op info', color: 'bg-orange-100 text-orange-700' },
   resolved: { label: 'Opgelost', color: 'bg-green-100 text-green-700' },
   closed: { label: 'Gesloten', color: 'bg-gray-100 text-gray-500' },
+};
+
+const ATTACHMENT_STATUS_LABELS: Record<TicketAttachmentStatus, { label: string; color: string }> = {
+  pending: { label: 'In afwachting', color: 'bg-gray-100 text-gray-700' },
+  timely: { label: 'Tijdig', color: 'bg-green-100 text-green-700' },
+  late: { label: 'Te laat', color: 'bg-orange-100 text-orange-700' },
+  accepted: { label: 'Geaccepteerd', color: 'bg-green-100 text-green-700' },
+  rejected: { label: 'Afgewezen', color: 'bg-red-100 text-red-700' },
 };
 
 const CATEGORY_LABELS: Record<TicketCategory, string> = {
@@ -55,6 +66,7 @@ const TIMELINE_ICONS: Record<string, string> = {
   status_changed: '🔄',
   comment_added: '💬',
   attachment_added: '📎',
+  attachment_reviewed: '✓',
   internal_note_added: '📋',
 };
 
@@ -72,6 +84,9 @@ export default function TicketDetailPage() {
   // Comment form state
   const [newComment, setNewComment] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  
+  // Attachment upload state (STORY-030)
+  const [isUploading, setIsUploading] = useState(false);
 
   // TODO: Get VVE ID from context/session
   const vveId = 'demo-vve-id';
@@ -95,6 +110,46 @@ export default function TicketDetailPage() {
     }
     fetchTicketData();
   }, [ticketId]);
+
+  // Handle attachment upload (STORY-030)
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    
+    const file = e.target.files[0];
+    
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      setError(`${file.name} is te groot. Maximum is 10 MB.`);
+      return;
+    }
+    
+    // Validate file type
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      setError(`${file.name} heeft een niet-ondersteund formaat.`);
+      return;
+    }
+    
+    setIsUploading(true);
+    setError(null);
+    
+    try {
+      const attachment = await api.uploadTicketAttachment(vveId, ticketId, file);
+      
+      // Refresh ticket to get updated attachments
+      const ticketData = await api.getTicket(vveId, ticketId);
+      setTicket(ticketData);
+      
+      // Refresh timeline
+      const timelineData = await api.getTicketTimeline(vveId, ticketId);
+      setTimeline(timelineData);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Kon bestand niet uploaden');
+    } finally {
+      setIsUploading(false);
+      e.target.value = ''; // Reset input
+    }
+  };
 
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -206,34 +261,78 @@ export default function TicketDetailPage() {
           <p className="text-gray-900 whitespace-pre-wrap">{ticket.description}</p>
         </div>
 
-        {/* Attachments */}
-        {ticket.attachments && ticket.attachments.length > 0 && (
-          <div className="mt-4 pt-4 border-t">
-            <h2 className="text-sm font-medium text-gray-700 mb-2">
-              Bijlagen ({ticket.attachments.length})
+        {/* Attachments - STORY-030 */}
+        <div className="mt-4 pt-4 border-t">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-sm font-medium text-gray-700">
+              Bijlagen ({ticket.attachments?.length || 0})
             </h2>
+            {/* Upload button */}
+            <label className={`
+              inline-flex items-center px-3 py-1 text-sm font-medium rounded-lg cursor-pointer
+              ${isUploading 
+                ? 'bg-gray-200 text-gray-400' 
+                : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+              }
+            `}>
+              <input
+                type="file"
+                className="hidden"
+                accept=".pdf,.jpg,.jpeg,.png,.webp"
+                onChange={handleFileUpload}
+                disabled={isUploading}
+              />
+              {isUploading ? 'Uploaden...' : '+ Bijlage toevoegen'}
+            </label>
+          </div>
+          
+          {ticket.attachments && ticket.attachments.length > 0 ? (
             <div className="space-y-2">
               {ticket.attachments.map((attachment) => (
                 <div
                   key={attachment.id}
-                  className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg"
+                  className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
                 >
                   <span className="text-xl">
                     {attachment.file_type.includes('pdf') ? '📄' : '🖼️'}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">
-                      {attachment.file_name}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-gray-900 truncate">
+                        {attachment.file_name}
+                      </p>
+                      {/* Status badge */}
+                      <span
+                        className={`
+                          inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+                          ${ATTACHMENT_STATUS_LABELS[attachment.status || 'pending'].color}
+                        `}
+                      >
+                        {ATTACHMENT_STATUS_LABELS[attachment.status || 'pending'].label}
+                      </span>
+                      {/* Timely badge */}
+                      {attachment.is_timely === false && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
+                          Te laat
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xs text-gray-500">
                       {(attachment.file_size_bytes / 1024 / 1024).toFixed(2)} MB
+                      {attachment.rejection_reason && (
+                        <span className="text-red-500 ml-2">
+                          Reden: {attachment.rejection_reason}
+                        </span>
+                      )}
                     </p>
                   </div>
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          ) : (
+            <p className="text-sm text-gray-500">Geen bijlagen toegevoegd</p>
+          )}
+        </div>
       </div>
 
       {/* Timeline */}

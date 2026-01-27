@@ -332,6 +332,8 @@ export interface TicketUpdate {
   priority?: TicketPriority;
 }
 
+export type TicketAttachmentStatus = 'pending' | 'timely' | 'late' | 'accepted' | 'rejected';
+
 export interface TicketAttachment {
   id: string;
   ticket_id: string;
@@ -342,6 +344,18 @@ export interface TicketAttachment {
   uploaded_by_id: string;
   uploaded_by_name?: string;
   created_at: string;
+  // STORY-030 fields
+  status: TicketAttachmentStatus;
+  is_timely: boolean;
+  rejection_reason?: string;
+  reviewed_by_id?: string;
+  reviewed_by_name?: string;
+  reviewed_at?: string;
+}
+
+export interface TicketAttachmentUpdate {
+  status?: TicketAttachmentStatus;
+  rejection_reason?: string;
 }
 
 export interface TicketTimelineEntry {
