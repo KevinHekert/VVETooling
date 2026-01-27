@@ -114,9 +114,9 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
       - 12.3.1 ✅ STORY-053 E-mail verzenden via geconfigureerde provider (Must)
       - 12.3.2 ✅ STORY-054 E-mail verzending monitoring en logging (Should)
 
-13. **EPIC-013 Contractbeheer** ⬜
-    - 13.1 **FEAT-026 Contractregistratie & Opslag** ⬜
-      - 13.1.1 ⬜ STORY-055 Contract registreren met metadata (Should)
+13. **EPIC-013 Contractbeheer** ⚠️
+    - 13.1 **FEAT-026 Contractregistratie & Opslag** ⚠️
+      - 13.1.1 ✅ STORY-055 Contract registreren met metadata (Should)
       - 13.1.2 ⬜ STORY-056 Contract document uploaden (Should)
       - 13.1.3 ⬜ STORY-057 Contracten doorzoeken en filteren (Should)
     - 13.2 **FEAT-027 Contract Alerts & Herinneringen** ⬜
