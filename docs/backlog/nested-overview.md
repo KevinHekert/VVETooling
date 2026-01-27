@@ -85,7 +85,7 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
     - 10.1 **FEAT-016 Bewoner tickets & klachten** ⚠️
       - 10.1.1 ✅ STORY-029 Bewoner ticket wizard en tijdlijn (Must)
       - 10.1.2 ✅ STORY-030 Ticket bewijsstukken (bonnen en facturen) (Must)
-      - 10.1.3 ⬜ STORY-031 Bestuur ticket inzicht en behandeling (Must)
+      - 10.1.3 ✅ STORY-031 Bestuur ticket inzicht en behandeling (Must)
       - 10.1.4 ⬜ STORY-037 Ticket communicatie en notities (Must)
       - 10.1.5 ⬜ STORY-038 Ticket prioriteit en SLA (Should)
     - 10.2 **FEAT-017 Leveranciers & onderhoudsopvolging** ⬜
@@ -102,7 +102,7 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
 |--------|--------|-----------|-----------|----------|
 | Epics | 10 | 4 | 6 | 40% |
 | Features | 19 | 10 | 9 | 53% |
-| Stories | 44 | 24 | 20 | 55% |
+| Stories | 44 | 25 | 19 | 57% |
 
 **Volledig afgeronde Epics:** EPIC-002, EPIC-003, EPIC-004, EPIC-009
 
