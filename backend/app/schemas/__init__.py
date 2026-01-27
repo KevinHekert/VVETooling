@@ -3,6 +3,8 @@
 from .ticket import (
     TicketAttachmentCreate,
     TicketAttachmentResponse,
+    TicketAttachmentStatus,
+    TicketAttachmentUpdate,
     TicketCategory,
     TicketCommentCreate,
     TicketCommentResponse,
@@ -28,7 +30,9 @@ __all__ = [
     "TicketDraft",
     "TicketSummary",
     "TicketAttachmentCreate",
+    "TicketAttachmentUpdate",
     "TicketAttachmentResponse",
+    "TicketAttachmentStatus",
     "TicketTimelineEntryResponse",
     "TicketCommentCreate",
     "TicketCommentResponse",

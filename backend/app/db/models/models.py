@@ -605,6 +605,16 @@ class Ticket(Base):
     )
 
 
+class TicketAttachmentStatus(str, Enum):
+    """Attachment status values (STORY-030)."""
+
+    PENDING = "pending"
+    TIMELY = "timely"
+    LATE = "late"
+    ACCEPTED = "accepted"
+    REJECTED = "rejected"
+
+
 class TicketAttachment(Base):
     """Attachment for a ticket (STORY-030).
 
@@ -631,6 +641,16 @@ class TicketAttachment(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+    # STORY-030: Status tracking for attachments
+    status: Mapped[TicketAttachmentStatus] = mapped_column(
+        SQLEnum(TicketAttachmentStatus), default=TicketAttachmentStatus.PENDING, nullable=False
+    )
+    is_timely: Mapped[bool] = mapped_column(Boolean, default=True)
+    rejection_reason: Mapped[str | None] = mapped_column(String(500))
+    reviewed_by_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     # Relationships
     ticket: Mapped["Ticket"] = relationship("Ticket", back_populates="attachments")

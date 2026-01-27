@@ -45,6 +45,16 @@ class TicketPriority(str, Enum):
 # Maximum attachment size: 10MB per D-004
 MAX_ATTACHMENT_SIZE_BYTES = 10 * 1024 * 1024
 
+class TicketAttachmentStatus(str, Enum):
+    """Attachment status values (STORY-030)."""
+
+    PENDING = "pending"
+    TIMELY = "timely"  # Tijdig aangevraagd
+    LATE = "late"  # Te laat
+    ACCEPTED = "accepted"
+    REJECTED = "rejected"
+
+
 ALLOWED_ATTACHMENT_TYPES = [
     "application/pdf",
     "image/jpeg",
@@ -65,6 +75,13 @@ class TicketAttachmentCreate(TicketAttachmentBase):
     pass
 
 
+class TicketAttachmentUpdate(BaseModel):
+    """Schema for updating a ticket attachment (STORY-030)."""
+
+    status: TicketAttachmentStatus | None = None
+    rejection_reason: str | None = Field(None, max_length=500)
+
+
 class TicketAttachmentResponse(TicketAttachmentBase):
     """Response schema for ticket attachment."""
 
@@ -76,6 +93,13 @@ class TicketAttachmentResponse(TicketAttachmentBase):
     uploaded_by_id: uuid.UUID
     uploaded_by_name: str | None = None
     created_at: datetime
+    # STORY-030 fields
+    status: TicketAttachmentStatus = TicketAttachmentStatus.PENDING
+    is_timely: bool = True
+    rejection_reason: str | None = None
+    reviewed_by_id: uuid.UUID | None = None
+    reviewed_by_name: str | None = None
+    reviewed_at: datetime | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

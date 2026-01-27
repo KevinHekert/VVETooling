@@ -22,6 +22,7 @@ from app.core.security import UserRole
 from app.db.models.models import (
     Ticket,
     TicketAttachment,
+    TicketAttachmentStatus as DBTicketAttachmentStatus,
     TicketCategory,
     TicketComment,
     TicketPriority,
@@ -35,6 +36,8 @@ from app.db.models.models import (
 from app.db.session import get_db
 from app.schemas.ticket import (
     TicketAttachmentResponse,
+    TicketAttachmentStatus,
+    TicketAttachmentUpdate,
     TicketCommentCreate,
     TicketCommentResponse,
     TicketCreate,
@@ -616,6 +619,82 @@ async def list_attachments(
     attachments = attachments_result.scalars().all()
 
     return [TicketAttachmentResponse.model_validate(a) for a in attachments]
+
+
+@router.put(
+    "/{ticket_id}/attachments/{attachment_id}",
+    response_model=TicketAttachmentResponse,
+    summary="Bewijsstuk beoordelen",
+    description="""
+    STORY-030: Als bestuurslid wil ik bewijsstukken kunnen accepteren of afwijzen.
+
+    - Status kan worden gewijzigd naar accepted of rejected
+    - Bij afwijzing is een reden verplicht
+    """,
+)
+async def update_attachment(
+    vve_id: uuid.UUID,
+    ticket_id: uuid.UUID,
+    attachment_id: uuid.UUID,
+    update_data: TicketAttachmentUpdate,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> TicketAttachmentResponse:
+    """Update attachment status (accept/reject).
+
+    Requires bestuurslid or beheerder role.
+    """
+    # Get attachment
+    result = await db.execute(
+        select(TicketAttachment)
+        .join(Ticket)
+        .where(
+            TicketAttachment.id == attachment_id,
+            TicketAttachment.ticket_id == ticket_id,
+            Ticket.vve_id == vve_id,
+        )
+    )
+    attachment = result.scalar_one_or_none()
+
+    if attachment is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Bewijsstuk niet gevonden",
+        )
+
+    # Validate rejection reason
+    if update_data.status == TicketAttachmentStatus.REJECTED and not update_data.rejection_reason:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Een afwijzingsreden is verplicht",
+        )
+
+    # Update attachment
+    if update_data.status:
+        attachment.status = DBTicketAttachmentStatus(update_data.status.value)
+        attachment.reviewed_by_id = current_user.id
+        attachment.reviewed_at = func.now()
+
+    if update_data.rejection_reason:
+        attachment.rejection_reason = update_data.rejection_reason
+
+    # Create timeline entry
+    action_desc = "geaccepteerd" if update_data.status == TicketAttachmentStatus.ACCEPTED else "afgewezen"
+    await _create_timeline_entry(
+        db,
+        ticket_id,
+        current_user.id,
+        "attachment_reviewed",
+        f"Bewijsstuk '{attachment.file_name}' {action_desc}",
+        new_value=update_data.status.value if update_data.status else None,
+    )
+
+    await db.commit()
+    await db.refresh(attachment)
+
+    response = TicketAttachmentResponse.model_validate(attachment)
+    response.reviewed_by_name = current_user.full_name
+    return response
 
 
 # ============================================================================
