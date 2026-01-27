@@ -2,17 +2,49 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { api } from '@/lib/api';
-import type { Supplier, SupplierCreate, SupplierUpdate } from '@/types';
+import type { Supplier, SupplierCreate, SupplierUpdate, SupplierEvaluation, SupplierEvaluationCreate, SupplierEvaluationSummary } from '@/types';
 
 /**
- * Leveranciers Beheer Page - STORY-035
+ * Leveranciers Beheer Page - STORY-035, STORY-061
  * 
  * Shows supplier management with:
  * - List of all suppliers with status badges
  * - Create new supplier form
  * - Edit supplier details inline
  * - Archive/activate suppliers
+ * - STORY-061: Supplier evaluations with star ratings
  */
+
+// Star rating component for STORY-061
+function StarRating({ 
+  rating, 
+  onRatingChange, 
+  readonly = false,
+  size = 'md'
+}: { 
+  rating: number; 
+  onRatingChange?: (rating: number) => void; 
+  readonly?: boolean;
+  size?: 'sm' | 'md';
+}) {
+  const sizeClass = size === 'sm' ? 'text-lg' : 'text-2xl';
+  
+  return (
+    <div className="flex gap-1">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <button
+          key={star}
+          type="button"
+          onClick={() => !readonly && onRatingChange?.(star)}
+          className={`${sizeClass} ${readonly ? 'cursor-default' : 'cursor-pointer hover:scale-110'} transition-transform`}
+          disabled={readonly}
+        >
+          {star <= rating ? '⭐' : '☆'}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 export default function LeveranciersPage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -36,6 +68,17 @@ export default function LeveranciersPage() {
   
   // Show inactive toggle
   const [showInactive, setShowInactive] = useState(false);
+
+  // STORY-061: Evaluation state
+  const [selectedSupplierForEval, setSelectedSupplierForEval] = useState<Supplier | null>(null);
+  const [evaluations, setEvaluations] = useState<SupplierEvaluation[]>([]);
+  const [evaluationSummary, setEvaluationSummary] = useState<SupplierEvaluationSummary | null>(null);
+  const [showEvalForm, setShowEvalForm] = useState(false);
+  const [evalRating, setEvalRating] = useState(0);
+  const [evalFeedback, setEvalFeedback] = useState('');
+  const [evalIsAnonymous, setEvalIsAnonymous] = useState(false);
+  const [isSubmittingEval, setIsSubmittingEval] = useState(false);
+  const [evalSummaries, setEvalSummaries] = useState<Record<string, SupplierEvaluationSummary>>({});
 
   // TODO: Get VVE ID from context/session
   const vveId = 'demo-vve-id';
@@ -111,6 +154,97 @@ export default function LeveranciersPage() {
 
   const handleToggleActive = async (supplier: Supplier) => {
     await handleUpdateSupplier(supplier.id, { is_active: !supplier.is_active });
+  };
+
+  // STORY-061: Evaluation functions
+  const fetchEvaluationSummaries = useCallback(async () => {
+    const summaries: Record<string, SupplierEvaluationSummary> = {};
+    for (const supplier of suppliers) {
+      try {
+        const summary = await api.getSupplierEvaluationSummary(vveId, supplier.id);
+        summaries[supplier.id] = summary;
+      } catch {
+        // Ignore errors for individual summaries
+      }
+    }
+    setEvalSummaries(summaries);
+  }, [suppliers]);
+
+  useEffect(() => {
+    if (suppliers.length > 0) {
+      fetchEvaluationSummaries();
+    }
+  }, [suppliers, fetchEvaluationSummaries]);
+
+  const openEvaluationModal = async (supplier: Supplier) => {
+    setSelectedSupplierForEval(supplier);
+    setError(null);
+    try {
+      const [evals, summary] = await Promise.all([
+        api.getSupplierEvaluations(vveId, supplier.id),
+        api.getSupplierEvaluationSummary(vveId, supplier.id),
+      ]);
+      setEvaluations(evals);
+      setEvaluationSummary(summary);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Kon evaluaties niet ophalen');
+    }
+  };
+
+  const closeEvaluationModal = () => {
+    setSelectedSupplierForEval(null);
+    setEvaluations([]);
+    setEvaluationSummary(null);
+    setShowEvalForm(false);
+    setEvalRating(0);
+    setEvalFeedback('');
+    setEvalIsAnonymous(false);
+  };
+
+  const handleSubmitEvaluation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedSupplierForEval || evalRating === 0) return;
+
+    setIsSubmittingEval(true);
+    setError(null);
+
+    try {
+      const evalData: SupplierEvaluationCreate = {
+        supplier_id: selectedSupplierForEval.id,
+        rating: evalRating,
+        feedback: evalFeedback || undefined,
+        is_anonymous: evalIsAnonymous,
+      };
+
+      await api.createSupplierEvaluation(vveId, selectedSupplierForEval.id, evalData);
+      
+      // Refresh evaluations
+      const [evals, summary] = await Promise.all([
+        api.getSupplierEvaluations(vveId, selectedSupplierForEval.id),
+        api.getSupplierEvaluationSummary(vveId, selectedSupplierForEval.id),
+      ]);
+      setEvaluations(evals);
+      setEvaluationSummary(summary);
+      
+      // Update summary in main list
+      setEvalSummaries(prev => ({
+        ...prev,
+        [selectedSupplierForEval.id]: summary,
+      }));
+
+      // Reset form
+      setShowEvalForm(false);
+      setEvalRating(0);
+      setEvalFeedback('');
+      setEvalIsAnonymous(false);
+
+      setSuccessMessage('Evaluatie succesvol toegevoegd');
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Kon evaluatie niet toevoegen');
+    } finally {
+      setIsSubmittingEval(false);
+    }
   };
 
   if (isLoading) {
@@ -379,6 +513,13 @@ export default function LeveranciersPage() {
                             {supplier.specialty}
                           </span>
                         )}
+                        {/* STORY-061: Show average rating if available */}
+                        {evalSummaries[supplier.id]?.average_rating && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">
+                            ⭐ {evalSummaries[supplier.id].average_rating?.toFixed(1)}
+                            <span className="text-yellow-500">({evalSummaries[supplier.id].evaluation_count})</span>
+                          </span>
+                        )}
                       </div>
                       <div className="text-sm text-gray-600 space-y-1">
                         {supplier.contact_person && (
@@ -395,6 +536,14 @@ export default function LeveranciersPage() {
                       </div>
                     </div>
                     <div className="flex gap-2 ml-4">
+                      {/* STORY-061: Evaluation button */}
+                      <button
+                        onClick={() => openEvaluationModal(supplier)}
+                        className="text-sm text-yellow-600 hover:text-yellow-800"
+                        title="Evaluaties bekijken/toevoegen"
+                      >
+                        ⭐ Evaluaties
+                      </button>
                       <button
                         onClick={() => setEditingSupplier(supplier)}
                         className="text-sm text-blue-600 hover:text-blue-800"
@@ -419,6 +568,166 @@ export default function LeveranciersPage() {
           </div>
         )}
       </div>
+
+      {/* STORY-061: Evaluation Modal */}
+      {selectedSupplierForEval && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              {/* Modal Header */}
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">
+                    Evaluaties - {selectedSupplierForEval.name}
+                  </h2>
+                  {evaluationSummary && evaluationSummary.average_rating !== null && (
+                    <p className="text-sm text-gray-600 mt-1">
+                      Gemiddelde: ⭐ {evaluationSummary.average_rating.toFixed(1)} 
+                      ({evaluationSummary.evaluation_count} evaluatie{evaluationSummary.evaluation_count !== 1 ? 's' : ''})
+                    </p>
+                  )}
+                </div>
+                <button
+                  onClick={closeEvaluationModal}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Add Evaluation Button */}
+              {!showEvalForm && (
+                <button
+                  onClick={() => setShowEvalForm(true)}
+                  className="w-full mb-4 px-4 py-2 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200"
+                >
+                  + Nieuwe Evaluatie Toevoegen
+                </button>
+              )}
+
+              {/* Evaluation Form */}
+              {showEvalForm && (
+                <form onSubmit={handleSubmitEvaluation} className="mb-6 p-4 bg-gray-50 rounded-lg">
+                  <h3 className="font-medium text-gray-900 mb-3">Nieuwe Evaluatie</h3>
+                  
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Beoordeling *
+                    </label>
+                    <StarRating 
+                      rating={evalRating} 
+                      onRatingChange={setEvalRating}
+                    />
+                    {evalRating === 0 && (
+                      <p className="text-xs text-gray-500 mt-1">Klik op de sterren om te beoordelen</p>
+                    )}
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Feedback (optioneel)
+                    </label>
+                    <textarea
+                      value={evalFeedback}
+                      onChange={(e) => setEvalFeedback(e.target.value)}
+                      rows={3}
+                      maxLength={2000}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-yellow-500 focus:border-yellow-500"
+                      placeholder="Beschrijf uw ervaring met deze leverancier..."
+                    />
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={evalIsAnonymous}
+                        onChange={(e) => setEvalIsAnonymous(e.target.checked)}
+                        className="rounded border-gray-300"
+                      />
+                      <span className="text-gray-700">Anoniem beoordelen</span>
+                    </label>
+                  </div>
+
+                  <div className="flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowEvalForm(false);
+                        setEvalRating(0);
+                        setEvalFeedback('');
+                        setEvalIsAnonymous(false);
+                      }}
+                      className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+                    >
+                      Annuleren
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmittingEval || evalRating === 0}
+                      className={`
+                        px-4 py-2 rounded-lg font-medium
+                        ${isSubmittingEval || evalRating === 0
+                          ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                          : 'bg-yellow-500 text-white hover:bg-yellow-600'
+                        }
+                      `}
+                    >
+                      {isSubmittingEval ? 'Toevoegen...' : 'Evaluatie Toevoegen'}
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {/* Evaluations List */}
+              <div className="space-y-4">
+                {evaluations.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">
+                    Nog geen evaluaties voor deze leverancier.
+                  </p>
+                ) : (
+                  evaluations.map((evaluation) => (
+                    <div key={evaluation.id} className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <StarRating rating={evaluation.rating} readonly size="sm" />
+                          <p className="text-xs text-gray-500 mt-1">
+                            {evaluation.is_anonymous ? 'Anoniem' : evaluation.created_by_name || 'Onbekend'} 
+                            {' • '}
+                            {new Date(evaluation.created_at).toLocaleDateString('nl-NL', {
+                              day: 'numeric',
+                              month: 'long',
+                              year: 'numeric',
+                            })}
+                          </p>
+                        </div>
+                        {evaluation.contract_description && (
+                          <span className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-600">
+                            {evaluation.contract_description}
+                          </span>
+                        )}
+                      </div>
+                      {evaluation.feedback && (
+                        <p className="text-sm text-gray-700 mt-2">{evaluation.feedback}</p>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Close button */}
+              <div className="mt-6 flex justify-end">
+                <button
+                  onClick={closeEvaluationModal}
+                  className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Sluiten
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
