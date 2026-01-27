@@ -341,6 +341,118 @@ class ApiClient {
 
     return response.blob();
   }
+
+  // Tickets (STORY-029, STORY-030, STORY-037)
+  async getTickets(vveId: string, params?: {
+    status?: string;
+    category?: string;
+    priority?: string;
+    skip?: number;
+    limit?: number;
+  }) {
+    const query = new URLSearchParams();
+    if (params?.status) query.set('status_filter', params.status);
+    if (params?.category) query.set('category_filter', params.category);
+    if (params?.priority) query.set('priority_filter', params.priority);
+    if (params?.skip) query.set('skip', String(params.skip));
+    if (params?.limit) query.set('limit', String(params.limit));
+    
+    const queryStr = query.toString() ? `?${query.toString()}` : '';
+    return this.fetch<import('@/types').Ticket[]>(
+      `/vves/${vveId}/tickets${queryStr}`
+    );
+  }
+
+  async getTicket(vveId: string, ticketId: string) {
+    return this.fetch<import('@/types').Ticket>(
+      `/vves/${vveId}/tickets/${ticketId}`
+    );
+  }
+
+  async createTicket(vveId: string, data: import('@/types').TicketCreate) {
+    return this.fetch<import('@/types').Ticket>(
+      `/vves/${vveId}/tickets`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async updateTicket(vveId: string, ticketId: string, data: import('@/types').TicketUpdate) {
+    return this.fetch<import('@/types').Ticket>(
+      `/vves/${vveId}/tickets/${ticketId}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async getTicketTimeline(vveId: string, ticketId: string) {
+    return this.fetch<import('@/types').TicketTimelineEntry[]>(
+      `/vves/${vveId}/tickets/${ticketId}/timeline`
+    );
+  }
+
+  // Ticket Attachments (STORY-030)
+  async uploadTicketAttachment(
+    vveId: string,
+    ticketId: string,
+    file: File,
+    description?: string
+  ): Promise<import('@/types').TicketAttachment> {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (description) formData.append('description', description);
+
+    const token = typeof window !== 'undefined' 
+      ? localStorage.getItem('access_token') 
+      : null;
+
+    const response = await fetch(
+      `${this.baseUrl}/vves/${vveId}/tickets/${ticketId}/attachments`,
+      {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: 'Upload mislukt' }));
+      throw new Error(error.detail);
+    }
+
+    return response.json();
+  }
+
+  async getTicketAttachments(vveId: string, ticketId: string) {
+    return this.fetch<import('@/types').TicketAttachment[]>(
+      `/vves/${vveId}/tickets/${ticketId}/attachments`
+    );
+  }
+
+  // Ticket Comments (STORY-037)
+  async addTicketComment(
+    vveId: string,
+    ticketId: string,
+    data: import('@/types').TicketCommentCreate
+  ) {
+    return this.fetch<import('@/types').TicketComment>(
+      `/vves/${vveId}/tickets/${ticketId}/comments`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async getTicketComments(vveId: string, ticketId: string) {
+    return this.fetch<import('@/types').TicketComment[]>(
+      `/vves/${vveId}/tickets/${ticketId}/comments`
+    );
+  }
 }
 
 export const api = new ApiClient(API_BASE_URL);
