@@ -44,6 +44,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Audit Log', href: '/dashboard/beheerder/audit', icon: '📋', roles: ['beheerder'] },
   { label: 'Sjablonen', href: '/dashboard/beheerder/correspondentie/sjablonen', icon: '📝', roles: ['beheerder', 'bestuurslid'] },
   { label: 'Brieven', href: '/dashboard/beheerder/correspondentie/brieven', icon: '✉️', roles: ['beheerder', 'bestuurslid'] },
+  { label: 'Verzending', href: '/dashboard/beheerder/correspondentie/verzending', icon: '📤', roles: ['beheerder', 'bestuurslid'] },
   { label: 'Splitsingssleutel', href: '/instellingen/splitsingssleutel', icon: '🔑', roles: ['beheerder'] },
   { label: 'Rollen & Rechten', href: '/instellingen/rollen', icon: '👥', roles: ['beheerder'] },
   { label: 'Instellingen', href: '/instellingen/onboarding', icon: '⚙️', roles: ['beheerder'] },
