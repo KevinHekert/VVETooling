@@ -138,9 +138,9 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
       - 14.3.1 ⬜ STORY-067 Onderhoudstaak aanmaken en toewijzen (Should)
       - 14.3.2 ⬜ STORY-068 Onderhoudstaak status bijwerken (Should)
 
-15. **EPIC-015 ALV & Vergaderbeheer** ⬜
-    - 15.1 **FEAT-032 ALV Planning & Uitnodigingen** ⬜
-      - 15.1.1 ⬜ STORY-069 ALV plannen met datum en locatie (Must)
+15. **EPIC-015 ALV & Vergaderbeheer** ⚠️
+    - 15.1 **FEAT-032 ALV Planning & Uitnodigingen** ⚠️
+      - 15.1.1 ✅ STORY-069 ALV plannen met datum en locatie (Must)
       - 15.1.2 ⬜ STORY-070 ALV agenda opstellen (Must)
       - 15.1.3 ⬜ STORY-071 ALV uitnodiging versturen (Must)
     - 15.2 **FEAT-033 Presentie & Volmachten** ⬜
