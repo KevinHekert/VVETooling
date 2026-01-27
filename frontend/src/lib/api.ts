@@ -809,6 +809,57 @@ class ApiClient {
       method: 'DELETE',
     });
   }
+
+  // STORY-069: ALV/Meetings API
+  async getMeetings(vveId: string, params?: {
+    status?: import('@/types').MeetingStatus;
+    upcoming_only?: boolean;
+    skip?: number;
+    limit?: number;
+  }) {
+    const query = new URLSearchParams();
+    if (params?.status) query.set('status_filter', params.status);
+    if (params?.upcoming_only !== undefined) query.set('upcoming_only', String(params.upcoming_only));
+    if (params?.skip) query.set('skip', String(params.skip));
+    if (params?.limit) query.set('limit', String(params.limit));
+    
+    const queryStr = query.toString() ? `?${query.toString()}` : '';
+    return this.fetch<import('@/types').MeetingListItem[]>(
+      `/vves/${vveId}/meetings${queryStr}`
+    );
+  }
+
+  async getMeeting(vveId: string, meetingId: string) {
+    return this.fetch<import('@/types').Meeting>(
+      `/vves/${vveId}/meetings/${meetingId}`
+    );
+  }
+
+  async createMeeting(vveId: string, data: import('@/types').MeetingCreate) {
+    return this.fetch<import('@/types').Meeting>(
+      `/vves/${vveId}/meetings`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async updateMeeting(vveId: string, meetingId: string, data: import('@/types').MeetingUpdate) {
+    return this.fetch<import('@/types').Meeting>(
+      `/vves/${vveId}/meetings/${meetingId}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async deleteMeeting(vveId: string, meetingId: string) {
+    return this.fetch(`/vves/${vveId}/meetings/${meetingId}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 export const api = new ApiClient(API_BASE_URL);

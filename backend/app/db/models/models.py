@@ -994,3 +994,76 @@ class Contract(Base):
         Index("ix_contracts_contract_type", "contract_type"),
         Index("ix_contracts_end_date", "end_date"),
     )
+
+
+# ==============================================================================
+# EPIC-015: ALV & Vergaderbeheer
+# ==============================================================================
+
+class MeetingType(str, Enum):
+    """Type of ALV meeting (STORY-069)."""
+
+    FYSIEK = "fysiek"       # Physical meeting
+    ONLINE = "online"       # Online meeting
+    HYBRIDE = "hybride"     # Hybrid meeting
+
+
+class MeetingStatus(str, Enum):
+    """Status of an ALV meeting."""
+
+    GEPLAND = "gepland"         # Scheduled
+    UITNODIGING_VERZONDEN = "uitnodiging_verzonden"  # Invitations sent
+    ACTIEF = "actief"           # In progress
+    AFGESLOTEN = "afgesloten"   # Completed
+    GEANNULEERD = "geannuleerd" # Cancelled
+
+
+class Meeting(Base):
+    """ALV (Algemene Ledenvergadering) meeting (STORY-069).
+
+    Implements STORY-069: ALV plannen met datum en locatie.
+    Implements STORY-070: ALV agenda opstellen.
+    """
+
+    __tablename__ = "meetings"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    vve_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("vves.id", ondelete="CASCADE"), nullable=False
+    )
+    # Meeting details
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text)
+    # Date and time
+    meeting_date: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+    end_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Type and location
+    meeting_type: Mapped[MeetingType] = mapped_column(
+        SQLEnum(MeetingType), nullable=False, default=MeetingType.FYSIEK
+    )
+    location_address: Mapped[str | None] = mapped_column(String(500))  # Physical address
+    location_online_link: Mapped[str | None] = mapped_column(String(500))  # Video conference URL
+    # Status
+    status: Mapped[MeetingStatus] = mapped_column(
+        SQLEnum(MeetingStatus), nullable=False, default=MeetingStatus.GEPLAND
+    )
+    # Audit fields
+    created_by_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    __table_args__ = (
+        Index("ix_meetings_vve_id", "vve_id"),
+        Index("ix_meetings_meeting_date", "meeting_date"),
+        Index("ix_meetings_status", "status"),
+    )

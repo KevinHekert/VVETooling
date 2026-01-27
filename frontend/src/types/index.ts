@@ -718,6 +718,60 @@ export interface ContractAlertResponse {
   is_notice_due: boolean;
 }
 
+// STORY-069: ALV/Meeting types
+export type MeetingType = 'fysiek' | 'online' | 'hybride';
+export type MeetingStatus = 'gepland' | 'uitnodiging_verzonden' | 'actief' | 'afgesloten' | 'geannuleerd';
+
+export interface Meeting {
+  id: string;
+  vve_id: string;
+  title: string;
+  description?: string;
+  meeting_date: string;
+  end_time?: string;
+  meeting_type: MeetingType;
+  location_address?: string;
+  location_online_link?: string;
+  status: MeetingStatus;
+  created_by_id: string;
+  created_at: string;
+  updated_at: string;
+  days_until?: number;
+  is_upcoming: boolean;
+}
+
+export interface MeetingCreate {
+  title: string;
+  description?: string;
+  meeting_date: string;
+  end_time?: string;
+  meeting_type: MeetingType;
+  location_address?: string;
+  location_online_link?: string;
+}
+
+export interface MeetingUpdate {
+  title?: string;
+  description?: string;
+  meeting_date?: string;
+  end_time?: string;
+  meeting_type?: MeetingType;
+  location_address?: string;
+  location_online_link?: string;
+  status?: MeetingStatus;
+}
+
+export interface MeetingListItem {
+  id: string;
+  vve_id: string;
+  title: string;
+  meeting_date: string;
+  meeting_type: MeetingType;
+  status: MeetingStatus;
+  days_until?: number;
+  is_upcoming: boolean;
+}
+
 // API Response types
 export interface ApiError {
   detail: string;
