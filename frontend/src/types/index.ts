@@ -455,6 +455,54 @@ export interface SupplierUpdate {
   is_active?: boolean;
 }
 
+// STORY-041: Splitsingsakte version types
+export type SplitsingsakteVersionStatus = 'draft' | 'active' | 'archived';
+
+export interface SplitsingsakteVersion {
+  id: string;
+  vve_id: string;
+  version_number: number;
+  name: string;
+  description?: string;
+  status: SplitsingsakteVersionStatus;
+  effective_date?: string;
+  archived_date?: string;
+  document_id?: string;
+  document_name?: string;
+  created_by_id: string;
+  created_by_name?: string;
+  created_at: string;
+  updated_at: string;
+  activated_by_id?: string;
+  activated_by_name?: string;
+  activated_at?: string;
+}
+
+export interface SplitsingsakteVersionListItem {
+  id: string;
+  vve_id: string;
+  version_number: number;
+  name: string;
+  status: SplitsingsakteVersionStatus;
+  effective_date?: string;
+  created_at: string;
+  is_active: boolean;
+}
+
+export interface SplitsingsakteVersionCreate {
+  name: string;
+  description?: string;
+  effective_date?: string;
+  document_id?: string;
+}
+
+export interface SplitsingsakteVersionUpdate {
+  name?: string;
+  description?: string;
+  effective_date?: string;
+  document_id?: string;
+}
+
 // API Response types
 export interface ApiError {
   detail: string;

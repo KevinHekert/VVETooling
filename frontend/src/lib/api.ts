@@ -532,6 +532,61 @@ class ApiClient {
       }
     );
   }
+  // STORY-041: Splitsingsakte Versions
+  async getSplitsingsakteVersions(vveId: string, includeArchived = false) {
+    const query = includeArchived ? '?include_archived=true' : '';
+    return this.fetch<import('@/types').SplitsingsakteVersionListItem[]>(
+      `/vves/${vveId}/splitsingsakte-versions${query}`
+    );
+  }
+
+  async createSplitsingsakteVersion(vveId: string, data: import('@/types').SplitsingsakteVersionCreate) {
+    return this.fetch<import('@/types').SplitsingsakteVersion>(
+      `/vves/${vveId}/splitsingsakte-versions`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async getSplitsingsakteVersion(vveId: string, versionId: string) {
+    return this.fetch<import('@/types').SplitsingsakteVersion>(
+      `/vves/${vveId}/splitsingsakte-versions/${versionId}`
+    );
+  }
+
+  async updateSplitsingsakteVersion(
+    vveId: string, 
+    versionId: string, 
+    data: import('@/types').SplitsingsakteVersionUpdate
+  ) {
+    return this.fetch<import('@/types').SplitsingsakteVersion>(
+      `/vves/${vveId}/splitsingsakte-versions/${versionId}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async activateSplitsingsakteVersion(vveId: string, versionId: string) {
+    return this.fetch<import('@/types').SplitsingsakteVersion>(
+      `/vves/${vveId}/splitsingsakte-versions/${versionId}/activate`,
+      {
+        method: 'POST',
+      }
+    );
+  }
+
+  async archiveSplitsingsakteVersion(vveId: string, versionId: string) {
+    return this.fetch<import('@/types').SplitsingsakteVersion>(
+      `/vves/${vveId}/splitsingsakte-versions/${versionId}/archive`,
+      {
+        method: 'POST',
+      }
+    );
+  }
 }
 
 export const api = new ApiClient(API_BASE_URL);
