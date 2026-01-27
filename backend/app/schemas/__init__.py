@@ -2,6 +2,7 @@
 
 from .contract import (
     ContractCreate,
+    ContractDocumentResponse,
     ContractListResponse,
     ContractResponse,
     ContractSummary,
@@ -38,6 +39,7 @@ __all__ = [
     "ContractResponse",
     "ContractListResponse",
     "ContractSummary",
+    "ContractDocumentResponse",
     # Ticket schemas
     "TicketStatus",
     "TicketCategory",

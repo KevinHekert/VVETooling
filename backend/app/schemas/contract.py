@@ -111,3 +111,16 @@ class ContractSummary(BaseModel):
     by_type: dict[str, int]
     total_monthly_costs: Decimal
     total_yearly_costs: Decimal
+
+
+class ContractDocumentResponse(BaseModel):
+    """Response schema for contract document upload (STORY-056)."""
+
+    contract_id: uuid.UUID
+    document_id: uuid.UUID
+    file_name: str
+    file_type: str
+    file_size_bytes: int
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)

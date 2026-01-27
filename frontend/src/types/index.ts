@@ -684,6 +684,16 @@ export interface ContractSummary {
   total_yearly_costs: number;
 }
 
+// STORY-056: Contract document types
+export interface ContractDocumentResponse {
+  contract_id: string;
+  document_id: string;
+  file_name: string;
+  file_type: string;
+  file_size_bytes: number;
+  created_at: string;
+}
+
 // API Response types
 export interface ApiError {
   detail: string;

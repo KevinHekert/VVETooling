@@ -752,6 +752,53 @@ class ApiClient {
       method: 'DELETE',
     });
   }
+
+  // STORY-056: Contract document upload
+  async uploadContractDocument(
+    vveId: string,
+    contractId: string,
+    file: File,
+    description?: string
+  ): Promise<import('@/types').ContractDocumentResponse> {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (description) formData.append('description', description);
+
+    const token = typeof window !== 'undefined' 
+      ? localStorage.getItem('access_token') 
+      : null;
+
+    const response = await fetch(
+      `${this.baseUrl}/vves/${vveId}/contracts/${contractId}/document`,
+      {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: 'Upload mislukt' }));
+      throw new Error(error.detail);
+    }
+
+    return response.json();
+  }
+
+  async linkDocumentToContract(vveId: string, contractId: string, documentId: string) {
+    return this.fetch<import('@/types').Contract>(
+      `/vves/${vveId}/contracts/${contractId}/document/${documentId}`,
+      {
+        method: 'PUT',
+      }
+    );
+  }
+
+  async unlinkDocumentFromContract(vveId: string, contractId: string) {
+    return this.fetch(`/vves/${vveId}/contracts/${contractId}/document`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 export const api = new ApiClient(API_BASE_URL);
