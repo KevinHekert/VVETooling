@@ -803,6 +803,44 @@ export interface MeetingListItem {
   is_upcoming: boolean;
 }
 
+// STORY-070: Agenda Item types
+export interface AgendaItem {
+  id: string;
+  meeting_id: string;
+  title: string;
+  description?: string;
+  duration_minutes?: number;
+  order_index: number;
+  document_id?: string;
+  document_name?: string;
+  is_standard: boolean;
+  created_by_id: string;
+  created_by_name?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AgendaItemCreate {
+  title: string;
+  description?: string;
+  duration_minutes?: number;
+  order_index?: number;
+  document_id?: string;
+  is_standard?: boolean;
+}
+
+export interface AgendaItemUpdate {
+  title?: string;
+  description?: string;
+  duration_minutes?: number;
+  order_index?: number;
+  document_id?: string;
+}
+
+export interface AgendaItemReorder {
+  item_ids: string[];
+}
+
 // API Response types
 export interface ApiError {
   detail: string;

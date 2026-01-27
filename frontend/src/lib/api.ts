@@ -896,6 +896,64 @@ class ApiClient {
       method: 'DELETE',
     });
   }
+
+  // STORY-070: Agenda Items
+  async getAgendaItems(vveId: string, meetingId: string) {
+    return this.fetch<import('@/types').AgendaItem[]>(
+      `/vves/${vveId}/meetings/${meetingId}/agenda`
+    );
+  }
+
+  async createAgendaItem(vveId: string, meetingId: string, data: import('@/types').AgendaItemCreate) {
+    return this.fetch<import('@/types').AgendaItem>(
+      `/vves/${vveId}/meetings/${meetingId}/agenda`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async createStandardAgenda(vveId: string, meetingId: string) {
+    return this.fetch<import('@/types').AgendaItem[]>(
+      `/vves/${vveId}/meetings/${meetingId}/agenda/template`,
+      {
+        method: 'POST',
+      }
+    );
+  }
+
+  async updateAgendaItem(vveId: string, meetingId: string, itemId: string, data: import('@/types').AgendaItemUpdate) {
+    return this.fetch<import('@/types').AgendaItem>(
+      `/vves/${vveId}/meetings/${meetingId}/agenda/${itemId}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async reorderAgendaItems(vveId: string, meetingId: string, data: import('@/types').AgendaItemReorder) {
+    return this.fetch<import('@/types').AgendaItem[]>(
+      `/vves/${vveId}/meetings/${meetingId}/agenda/reorder`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async deleteAgendaItem(vveId: string, meetingId: string, itemId: string) {
+    return this.fetch(`/vves/${vveId}/meetings/${meetingId}/agenda/${itemId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async deleteAllAgendaItems(vveId: string, meetingId: string) {
+    return this.fetch(`/vves/${vveId}/meetings/${meetingId}/agenda`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 export const api = new ApiClient(API_BASE_URL);
