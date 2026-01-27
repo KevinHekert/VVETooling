@@ -109,3 +109,63 @@ class MeetingListResponse(BaseModel):
     is_upcoming: bool = False
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# STORY-070: Agenda Item schemas
+class AgendaItemCreate(BaseModel):
+    """Schema for creating an agenda item (STORY-070)."""
+
+    title: str = Field(..., min_length=2, max_length=255, description="Agenda item title")
+    description: str | None = Field(None, max_length=2000)
+    duration_minutes: int | None = Field(None, ge=1, le=480, description="Duration in minutes")
+    order_index: int = Field(0, ge=0, description="Order in the agenda")
+    document_id: uuid.UUID | None = None
+    is_standard: bool = False
+
+
+class AgendaItemUpdate(BaseModel):
+    """Schema for updating an agenda item (STORY-070)."""
+
+    title: str | None = Field(None, min_length=2, max_length=255)
+    description: str | None = Field(None, max_length=2000)
+    duration_minutes: int | None = Field(None, ge=1, le=480)
+    order_index: int | None = Field(None, ge=0)
+    document_id: uuid.UUID | None = None
+
+
+class AgendaItemResponse(BaseModel):
+    """Response schema for an agenda item (STORY-070)."""
+
+    id: uuid.UUID
+    meeting_id: uuid.UUID
+    title: str
+    description: str | None = None
+    duration_minutes: int | None = None
+    order_index: int
+    document_id: uuid.UUID | None = None
+    document_name: str | None = None
+    is_standard: bool
+    created_by_id: uuid.UUID
+    created_by_name: str | None = None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AgendaItemReorder(BaseModel):
+    """Schema for reordering agenda items (STORY-070)."""
+
+    item_ids: list[uuid.UUID] = Field(..., description="List of agenda item IDs in new order")
+
+
+# Standard agenda items template (STORY-070)
+STANDARD_AGENDA_TEMPLATE = [
+    {"title": "Opening", "duration_minutes": 5, "is_standard": True},
+    {"title": "Vaststelling notulen vorige ALV", "duration_minutes": 10, "is_standard": True},
+    {"title": "Jaarverslag bestuur", "duration_minutes": 15, "is_standard": True},
+    {"title": "Jaarrekening", "duration_minutes": 20, "is_standard": True},
+    {"title": "Begroting volgend jaar", "duration_minutes": 20, "is_standard": True},
+    {"title": "Rondvraag", "duration_minutes": 15, "is_standard": True},
+    {"title": "Sluiting", "duration_minutes": 5, "is_standard": True},
+]
