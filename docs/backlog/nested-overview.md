@@ -9,20 +9,20 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
 
 ---
 
-1. **EPIC-001 Financieel overzicht beheren** ⚠️
+1. **EPIC-001 Financieel overzicht beheren** ✅
    - 1.1 **FEAT-001 Transactiebeheer** ✅
      - 1.1.1 ✅ STORY-001 Transactie toevoegen (Must)
      - 1.1.2 ✅ STORY-011 Transacties importeren en valideren (Must)
      - 1.1.3 ✅ STORY-012 Transactie-overzicht met filters en widgets (Must)
-   - 1.2 **FEAT-002 Reserves & saldo-overzicht** ⚠️
+   - 1.2 **FEAT-002 Reserves & saldo-overzicht** ✅
      - 1.2.1 ✅ STORY-013 Reserves overzicht en allocatie (Must)
      - 1.2.2 ✅ STORY-026 Reserves scenario-planning en prognose (Should)
-     - 1.2.3 ⬜ STORY-027 Reserves herclassificatie en audit trail (Should)
+     - 1.2.3 ✅ STORY-027 Reserves herclassificatie en audit trail (Should)
      - 1.2.4 ✅ STORY-028 Mobile-first reserves dashboard (Must)
-   - 1.3 **FEAT-018 Reservefonds prognoses** ⚠️
+   - 1.3 **FEAT-018 Reservefonds prognoses** ✅
      - 1.3.1 ✅ STORY-033 Reservefonds prognose dashboard (Should)
-     - 1.3.2 ⬜ STORY-039 Reservefonds prognose export en scenario (Should)
-     - 1.3.3 ⬜ STORY-040 Reservefonds prognose waarschuwingen (Should)
+     - 1.3.2 ✅ STORY-039 Reservefonds prognose export en scenario (Should)
+     - 1.3.3 ✅ STORY-040 Reservefonds prognose waarschuwingen (Should)
 
 2. **EPIC-002 Splitsingen beheren** ✅
    - 2.1 **FEAT-003 Splitsingssleutel configuratie** ✅
@@ -108,11 +108,11 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
 
 | Niveau | Totaal | ✅ Gereed | ⬜ Backlog | % Gereed |
 |--------|--------|-----------|-----------|----------|
-| Epics | 11 | 9 | 2 | 82% |
-| Features | 22 | 18 | 4 | 82% |
-| Stories | 44 | 41 | 3 | 93% |
+| Epics | 11 | 10 | 1 | 91% |
+| Features | 22 | 19 | 3 | 86% |
+| Stories | 44 | 44 | 0 | 100% |
 
-**Volledig afgeronde Epics:** EPIC-002, EPIC-003, EPIC-004, EPIC-005, EPIC-006, EPIC-007, EPIC-008, EPIC-009, EPIC-010
+**Volledig afgeronde Epics:** EPIC-001, EPIC-002, EPIC-003, EPIC-004, EPIC-005, EPIC-006, EPIC-007, EPIC-008, EPIC-009, EPIC-010
 
 ---
 - Prioriteitlabels komen uit de individuele stories (Must/Should). Waar een story meerdere features raakt, is de primaire plaatsing hierboven opgenomen en gemarkeerd als *gedeeld* wanneer relevant.
