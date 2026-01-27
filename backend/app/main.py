@@ -59,6 +59,7 @@ def create_app() -> FastAPI:
     app.include_router(budgets.router, prefix=api_prefix)
     app.include_router(audit.router, prefix=api_prefix)
     app.include_router(tickets.router, prefix=api_prefix)
+    app.include_router(tickets.supplier_router, prefix=api_prefix)
 
     @app.get("/health", tags=["system"])
     async def health_check() -> dict[str, str]:
