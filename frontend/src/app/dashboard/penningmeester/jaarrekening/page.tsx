@@ -72,7 +72,6 @@ export default function JaarrekeningPage() {
   const { currentRole } = useAuth();
   
   const isBewoner = currentRole === 'bewoner';
-  const isBestuur = currentRole === 'bestuurslid';
   const canRegenerate = currentRole === 'beheerder';
 
   const [jaarrekening, setJaarrekening] = useState<Jaarrekening | null>(null);

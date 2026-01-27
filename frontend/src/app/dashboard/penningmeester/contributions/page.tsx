@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useToast } from '@/components/ui/Toast';
-import { DashboardWidget, DashboardGrid, KPICard } from '@/components/ui/RoleSwitcher';
+import { KPICard, DashboardGrid } from '@/components/ui/RoleSwitcher';
 import { useAuth } from '@/hooks/useAuth';
-import type { Contribution, ContributionStatus } from '@/types';
+import type { ContributionStatus } from '@/types';
 
 /**
  * Contributions Page - STORY-014
@@ -169,7 +169,7 @@ export default function ContributionsPage() {
     addToast('Contributies herberekend op basis van splitsingssleutel', 'success');
   };
 
-  const handleSendReminder = (unitId: string) => {
+  const handleSendReminder = () => {
     addToast('Herinnering verzonden', 'success');
   };
 
@@ -337,7 +337,7 @@ export default function ContributionsPage() {
                     <td className="px-6 py-4 text-right">
                       {contrib.status !== 'paid' && (
                         <button
-                          onClick={() => handleSendReminder(contrib.unit_id)}
+                          onClick={() => handleSendReminder()}
                           className="text-blue-600 hover:text-blue-800 text-sm"
                         >
                           Herinnering

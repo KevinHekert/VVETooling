@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/ui/Toast';
@@ -18,18 +17,13 @@ import type { Budget } from '@/types';
  */
 
 export default function BudgetsPage() {
-  const router = useRouter();
   const { addToast } = useToast();
   
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [exportingId, setExportingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadBudgets();
-  }, []);
-
-  const loadBudgets = async () => {
+  const loadBudgets = useCallback(async () => {
     try {
       // TODO: Get vveId from context
       const vveId = 'demo-vve-id';
@@ -43,7 +37,11 @@ export default function BudgetsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [addToast]);
+
+  useEffect(() => {
+    loadBudgets();
+  }, [loadBudgets]);
 
   const handleExport = async (budgetId: string, budgetName: string) => {
     setExportingId(budgetId);

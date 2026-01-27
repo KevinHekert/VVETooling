@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import { useEffect, useState, useCallback } from 'react';
 import { api } from '@/lib/api';
 import type { Supplier, SupplierCreate, SupplierUpdate } from '@/types';
 
@@ -40,7 +39,7 @@ export default function LeveranciersPage() {
   // TODO: Get VVE ID from context/session
   const vveId = 'demo-vve-id';
 
-  const fetchSuppliers = async () => {
+  const fetchSuppliers = useCallback(async () => {
     try {
       const data = await api.getSuppliers(vveId, !showInactive);
       setSuppliers(data);
@@ -49,11 +48,11 @@ export default function LeveranciersPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [showInactive]);
 
   useEffect(() => {
     fetchSuppliers();
-  }, [showInactive]);
+  }, [fetchSuppliers]);
 
   const handleCreateSupplier = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -273,7 +272,7 @@ export default function LeveranciersPage() {
         {suppliers.length === 0 ? (
           <div className="p-8 text-center text-gray-500">
             <p>Geen leveranciers gevonden.</p>
-            <p className="mt-2 text-sm">Klik op "Nieuwe Leverancier" om te beginnen.</p>
+            <p className="mt-2 text-sm">Klik op &quot;Nieuwe Leverancier&quot; om te beginnen.</p>
           </div>
         ) : (
           <div className="divide-y divide-gray-200">

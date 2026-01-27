@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import { useEffect, useState, useCallback } from 'react';
 import { api } from '@/lib/api';
 import type { 
   SplitsingsakteVersionListItem,
@@ -46,7 +45,7 @@ export default function SplitsingsakteVersionsPage() {
   // TODO: Get VVE ID from context/session
   const vveId = 'demo-vve-id';
 
-  const fetchVersions = async () => {
+  const fetchVersions = useCallback(async () => {
     try {
       const data = await api.getSplitsingsakteVersions(vveId, includeArchived);
       setVersions(data);
@@ -55,11 +54,11 @@ export default function SplitsingsakteVersionsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [includeArchived]);
 
   useEffect(() => {
     fetchVersions();
-  }, [includeArchived]);
+  }, [fetchVersions]);
 
   const handleViewDetails = async (versionId: string) => {
     try {
@@ -251,7 +250,7 @@ export default function SplitsingsakteVersionsPage() {
         {versions.length === 0 ? (
           <div className="p-8 text-center text-gray-500">
             <p>Geen splitsingsakte versies gevonden.</p>
-            <p className="mt-2 text-sm">Klik op "Nieuwe Versie" om te beginnen.</p>
+            <p className="mt-2 text-sm">Klik op &quot;Nieuwe Versie&quot; om te beginnen.</p>
           </div>
         ) : (
           <table className="min-w-full divide-y divide-gray-200">

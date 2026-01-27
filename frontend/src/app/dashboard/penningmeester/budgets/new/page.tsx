@@ -70,7 +70,7 @@ export default function NewBudgetPage() {
     }
   };
 
-  const updateItem = (index: number, field: keyof BudgetItemCreate, value: any) => {
+  const updateItem = (index: number, field: keyof BudgetItemCreate, value: string | number | undefined) => {
     const newItems = [...items];
     newItems[index] = { ...newItems[index], [field]: value };
     setItems(newItems);
