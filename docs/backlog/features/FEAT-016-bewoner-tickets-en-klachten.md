@@ -3,8 +3,9 @@
 ## Documentinformatie
 - **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: Draft
-- **Versie**: 0.1
+- **Status**: ⬜ Backlog
+- **Versie**: 1.0
+- **Geneste nummering**: 10.1
 
 ## Functioneel doel
 Bewoners kunnen klachten/tickets indienen en status volgen, terwijl bestuur de behandeling en communicatie bewaakt.

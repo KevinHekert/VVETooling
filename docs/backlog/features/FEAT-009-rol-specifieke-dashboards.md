@@ -1,10 +1,11 @@
 # FEAT-009: Rol-specifieke dashboards
 
 ## Documentinformatie
-- **Datum**: 2026-01-26
+- **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: Ready
-- **Versie**: 1.0
+- **Status**: ✅ Geïmplementeerd
+- **Versie**: 1.1
+- **Geneste nummering**: 9.1
 
 ## Functioneel doel
 Iedere rol ziet een passend dashboard met relevante informatie.

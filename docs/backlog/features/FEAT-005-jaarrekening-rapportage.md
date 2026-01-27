@@ -1,10 +1,11 @@
 # FEAT-005: Jaarrekening rapportage
 
 ## Documentinformatie
-- **Datum**: 2026-01-26
+- **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: Ready
-- **Versie**: 1.0
+- **Status**: ✅ Geïmplementeerd
+- **Versie**: 1.1
+- **Geneste nummering**: 3.1
 
 ## Functioneel doel
 Jaarrekening genereren volgens VVE standaarden met export.

@@ -1,10 +1,11 @@
-# FEAT-007: Onboarding wizard penningmeester
+# FEAT-007: Onboarding wizard
 
 ## Documentinformatie
-- **Datum**: 2026-01-26
+- **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: Ready
-- **Versie**: 1.0
+- **Status**: ✅ Geïmplementeerd
+- **Versie**: 1.1
+- **Geneste nummering**: 4.1
 
 ## Functioneel doel
 Stap-voor-stap VVE setup voor penningmeester.
