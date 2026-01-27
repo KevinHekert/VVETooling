@@ -6,14 +6,30 @@ import { DashboardGrid, KPICard } from '@/components/ui/RoleSwitcher';
 import { useAuth } from '@/hooks/useAuth';
 
 /**
- * Reserves Overview Page - STORY-013
+ * Reserves Overview Page - STORY-013, STORY-027
  * 
- * Implements:
+ * STORY-013 Implements:
  * - Reserves section in financial menu
  * - Balance per reserve with allocated transactions
  * - Inline actions for allocation/modification
  * - Mobile-first summary, desktop full table
+ * 
+ * STORY-027 Adds:
+ * - Inline reclassification with toast confirmation
+ * - Audit trail visible in same page
+ * - Export of history
  */
+
+// Reserve classification types
+type ReserveCategory = 'onderhoud' | 'vervanging' | 'algemeen' | 'noodfonds' | 'specifiek';
+
+const CATEGORY_CONFIG: Record<ReserveCategory, { label: string; color: string }> = {
+  onderhoud: { label: 'Onderhoud', color: 'bg-blue-100 text-blue-700' },
+  vervanging: { label: 'Vervanging', color: 'bg-purple-100 text-purple-700' },
+  algemeen: { label: 'Algemeen', color: 'bg-gray-100 text-gray-700' },
+  noodfonds: { label: 'Noodfonds', color: 'bg-red-100 text-red-700' },
+  specifiek: { label: 'Specifiek', color: 'bg-green-100 text-green-700' },
+};
 
 // Mock reserve data
 interface Reserve {
@@ -24,6 +40,19 @@ interface Reserve {
   allocated_count: number;
   description?: string;
   status: 'on_track' | 'below_target' | 'above_target';
+  category: ReserveCategory;
+}
+
+// STORY-027: Audit trail entry
+interface AuditEntry {
+  id: string;
+  reserve_id: string;
+  reserve_name: string;
+  action: 'reclassificatie' | 'allocatie' | 'doelwijziging' | 'naamwijziging';
+  old_value: string;
+  new_value: string;
+  user_name: string;
+  timestamp: string;
 }
 
 const MOCK_RESERVES: Reserve[] = [
@@ -35,6 +64,7 @@ const MOCK_RESERVES: Reserve[] = [
     allocated_count: 24,
     description: 'Reserve voor groot onderhoud aan gebouw',
     status: 'on_track',
+    category: 'onderhoud',
   },
   {
     id: 'res-2',
@@ -44,6 +74,7 @@ const MOCK_RESERVES: Reserve[] = [
     allocated_count: 12,
     description: 'Gespaard voor vervanging lift in 2028',
     status: 'on_track',
+    category: 'vervanging',
   },
   {
     id: 'res-3',
@@ -53,6 +84,7 @@ const MOCK_RESERVES: Reserve[] = [
     allocated_count: 8,
     description: 'Reserve voor dakonderhoud',
     status: 'below_target',
+    category: 'onderhoud',
   },
   {
     id: 'res-4',
@@ -62,6 +94,41 @@ const MOCK_RESERVES: Reserve[] = [
     allocated_count: 5,
     description: 'Algemene buffer voor onvoorziene kosten',
     status: 'above_target',
+    category: 'algemeen',
+  },
+];
+
+// STORY-027: Mock audit trail
+const MOCK_AUDIT_TRAIL: AuditEntry[] = [
+  {
+    id: 'audit-1',
+    reserve_id: 'res-1',
+    reserve_name: 'Groot Onderhoud',
+    action: 'allocatie',
+    old_value: '€30.000',
+    new_value: '€32.500',
+    user_name: 'Jan Jansen',
+    timestamp: '2026-01-20T14:30:00Z',
+  },
+  {
+    id: 'audit-2',
+    reserve_id: 'res-3',
+    reserve_name: 'Dakbedekking',
+    action: 'reclassificatie',
+    old_value: 'Algemeen',
+    new_value: 'Onderhoud',
+    user_name: 'Maria de Vries',
+    timestamp: '2026-01-15T09:15:00Z',
+  },
+  {
+    id: 'audit-3',
+    reserve_id: 'res-2',
+    reserve_name: 'Lift Vervanging',
+    action: 'doelwijziging',
+    old_value: '€20.000',
+    new_value: '€25.000',
+    user_name: 'Jan Jansen',
+    timestamp: '2026-01-10T11:00:00Z',
   },
 ];
 
@@ -74,12 +141,19 @@ export default function ReservesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editAmount, setEditAmount] = useState<number>(0);
+  
+  // STORY-027: Reclassification and audit trail state
+  const [auditTrail, setAuditTrail] = useState<AuditEntry[]>([]);
+  const [reclassifyingId, setReclassifyingId] = useState<string | null>(null);
+  const [newCategory, setNewCategory] = useState<ReserveCategory>('onderhoud');
+  const [showAuditTrail, setShowAuditTrail] = useState(false);
 
   useEffect(() => {
     // Simulate API call
     const loadReserves = async () => {
       await new Promise(resolve => setTimeout(resolve, 500));
       setReserves(MOCK_RESERVES);
+      setAuditTrail(MOCK_AUDIT_TRAIL);
       setIsLoading(false);
     };
     loadReserves();
@@ -114,6 +188,76 @@ export default function ReservesPage() {
     setEditAmount(0);
   };
 
+  // STORY-027: Handle reclassification
+  const handleReclassify = (reserveId: string) => {
+    const reserve = reserves.find(r => r.id === reserveId);
+    if (reserve) {
+      setReclassifyingId(reserveId);
+      setNewCategory(reserve.category);
+    }
+  };
+
+  const handleSaveReclassification = async (reserveId: string) => {
+    const reserve = reserves.find(r => r.id === reserveId);
+    if (!reserve) return;
+
+    const oldCategory = reserve.category;
+    
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    // Update reserve category
+    setReserves(prev => prev.map(r => 
+      r.id === reserveId ? { ...r, category: newCategory } : r
+    ));
+    
+    // Add to audit trail
+    const newAuditEntry: AuditEntry = {
+      id: `audit-${Date.now()}`,
+      reserve_id: reserveId,
+      reserve_name: reserve.name,
+      action: 'reclassificatie',
+      old_value: CATEGORY_CONFIG[oldCategory].label,
+      new_value: CATEGORY_CONFIG[newCategory].label,
+      user_name: 'Huidige Gebruiker',
+      timestamp: new Date().toISOString(),
+    };
+    setAuditTrail(prev => [newAuditEntry, ...prev]);
+    
+    setReclassifyingId(null);
+    addToast(`${reserve.name} geherclassificeerd naar ${CATEGORY_CONFIG[newCategory].label}`, 'success');
+  };
+
+  // STORY-027: Export audit trail
+  const handleExportAuditTrail = () => {
+    const headers = ['Datum', 'Reserve', 'Actie', 'Van', 'Naar', 'Gebruiker'];
+    const rows = auditTrail.map(entry => [
+      new Date(entry.timestamp).toLocaleDateString('nl-NL'),
+      entry.reserve_name,
+      entry.action,
+      entry.old_value,
+      entry.new_value,
+      entry.user_name,
+    ]);
+
+    const csvContent = [
+      headers.join(';'),
+      ...rows.map(row => row.join(';')),
+    ].join('\n');
+
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `reserves_audit_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+
+    addToast('Audit trail geëxporteerd', 'success');
+  };
+
   const getStatusBadge = (status: Reserve['status']) => {
     const badges = {
       on_track: { text: 'Op schema', color: 'bg-green-100 text-green-800' },
@@ -144,15 +288,70 @@ export default function ReservesPage() {
           <h1 className="text-2xl font-bold text-gray-900">Reserves</h1>
           <p className="text-gray-600">Overzicht van alle reservefondsen</p>
         </div>
-        {canEdit && (
+        <div className="flex gap-2">
+          {/* STORY-027: Audit trail toggle */}
           <button
-            onClick={() => addToast('Nieuwe reserve functie komt binnenkort', 'info')}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            onClick={() => setShowAuditTrail(!showAuditTrail)}
+            className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
           >
-            + Nieuwe Reserve
+            📜 Historie {auditTrail.length > 0 && `(${auditTrail.length})`}
           </button>
-        )}
+          {canEdit && (
+            <button
+              onClick={() => addToast('Nieuwe reserve functie komt binnenkort', 'info')}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              + Nieuwe Reserve
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* STORY-027: Audit Trail Section */}
+      {showAuditTrail && (
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+            <h2 className="text-lg font-medium text-gray-900">Wijzigingshistorie</h2>
+            <button
+              onClick={handleExportAuditTrail}
+              className="text-sm text-blue-600 hover:text-blue-800"
+            >
+              Exporteren
+            </button>
+          </div>
+          {auditTrail.length === 0 ? (
+            <p className="p-4 text-gray-500 text-center">Geen wijzigingen gevonden</p>
+          ) : (
+            <ul className="divide-y divide-gray-200">
+              {auditTrail.map((entry) => (
+                <li key={entry.id} className="p-4 hover:bg-gray-50">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${
+                          entry.action === 'reclassificatie' ? 'bg-purple-100 text-purple-700' :
+                          entry.action === 'allocatie' ? 'bg-green-100 text-green-700' :
+                          'bg-blue-100 text-blue-700'
+                        }`}>
+                          {entry.action}
+                        </span>
+                        <span className="font-medium text-gray-900">{entry.reserve_name}</span>
+                      </div>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {entry.old_value} → {entry.new_value}
+                      </p>
+                    </div>
+                    <div className="text-right text-sm text-gray-500">
+                      <p>{new Date(entry.timestamp).toLocaleDateString('nl-NL')}</p>
+                      <p>{entry.user_name}</p>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
 
       {/* Summary KPIs */}
       <DashboardGrid columns={3}>
@@ -179,6 +378,7 @@ export default function ReservesPage() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reserve</th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Categorie</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Saldo</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Doel</th>
                 <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Voortgang</th>
@@ -193,6 +393,7 @@ export default function ReservesPage() {
               {reserves.map((reserve) => {
                 const progress = (reserve.current_balance / reserve.target_amount) * 100;
                 const isEditing = editingId === reserve.id;
+                const isReclassifying = reclassifyingId === reserve.id;
                 
                 return (
                   <tr key={reserve.id} className="hover:bg-gray-50">
@@ -203,6 +404,51 @@ export default function ReservesPage() {
                           <p className="text-sm text-gray-500">{reserve.description}</p>
                         )}
                       </div>
+                    </td>
+                    {/* STORY-027: Category column with inline reclassification */}
+                    <td className="px-6 py-4 text-center">
+                      {isReclassifying ? (
+                        <div className="flex items-center gap-2">
+                          <select
+                            value={newCategory}
+                            onChange={(e) => setNewCategory(e.target.value as ReserveCategory)}
+                            className="text-xs border border-gray-300 rounded px-2 py-1"
+                          >
+                            {(Object.keys(CATEGORY_CONFIG) as ReserveCategory[]).map((cat) => (
+                              <option key={cat} value={cat}>
+                                {CATEGORY_CONFIG[cat].label}
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            onClick={() => handleSaveReclassification(reserve.id)}
+                            className="text-green-600 hover:text-green-800"
+                          >
+                            ✓
+                          </button>
+                          <button
+                            onClick={() => setReclassifyingId(null)}
+                            className="text-gray-400 hover:text-gray-600"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center gap-1">
+                          <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${CATEGORY_CONFIG[reserve.category].color}`}>
+                            {CATEGORY_CONFIG[reserve.category].label}
+                          </span>
+                          {canEdit && (
+                            <button
+                              onClick={() => handleReclassify(reserve.id)}
+                              className="text-gray-400 hover:text-gray-600 ml-1"
+                              title="Herclassificeren"
+                            >
+                              ✎
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-right font-medium text-gray-900">
                       € {reserve.current_balance.toLocaleString('nl-NL', { minimumFractionDigits: 2 })}
