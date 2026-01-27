@@ -316,9 +316,9 @@ export default function BrievenGenerenPage() {
 
       {/* Progress Indicator */}
       <ProgressIndicator
-        steps={WIZARD_STEPS.map((s, i) => ({
+        steps={WIZARD_STEPS.map((s) => ({
+          id: s.key,
           label: s.label,
-          status: i < currentStepIndex ? 'complete' : i === currentStepIndex ? 'current' : 'upcoming',
         }))}
         currentStep={currentStepIndex}
       />

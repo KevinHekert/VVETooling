@@ -496,7 +496,7 @@ export default function SjablonenPage() {
               {/* Card Content - Preview */}
               <div className="p-4">
                 <p className="text-sm text-gray-600 line-clamp-3">
-                  {highlightMergeFields(template.content.slice(0, 150) + (template.content.length > 150 ? '...' : ''))}
+                  {highlightMergeFields(template.content)}
                 </p>
               </div>
 
