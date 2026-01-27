@@ -483,6 +483,55 @@ class ApiClient {
       }
     );
   }
+
+  // STORY-044: Ticket Supplier Status
+  async updateTicketSupplierStatus(
+    vveId: string,
+    ticketId: string,
+    data: import('@/types').TicketSupplierStatusUpdate
+  ) {
+    return this.fetch<import('@/types').Ticket>(
+      `/vves/${vveId}/tickets/${ticketId}/supplier-status`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  // Suppliers (STORY-035, STORY-044)
+  async getSuppliers(vveId: string, activeOnly = true) {
+    const query = activeOnly ? '?active_only=true' : '?active_only=false';
+    return this.fetch<import('@/types').Supplier[]>(
+      `/vves/${vveId}/suppliers${query}`
+    );
+  }
+
+  async createSupplier(vveId: string, data: import('@/types').SupplierCreate) {
+    return this.fetch<import('@/types').Supplier>(
+      `/vves/${vveId}/suppliers`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async getSupplier(vveId: string, supplierId: string) {
+    return this.fetch<import('@/types').Supplier>(
+      `/vves/${vveId}/suppliers/${supplierId}`
+    );
+  }
+
+  async updateSupplier(vveId: string, supplierId: string, data: import('@/types').SupplierUpdate) {
+    return this.fetch<import('@/types').Supplier>(
+      `/vves/${vveId}/suppliers/${supplierId}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }
+    );
+  }
 }
 
 export const api = new ApiClient(API_BASE_URL);

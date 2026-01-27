@@ -291,10 +291,12 @@ export interface AuditLogFilters {
   is_financial?: boolean;
 }
 
-// Ticket types (STORY-029, STORY-030, STORY-037)
+// Ticket types (STORY-029, STORY-030, STORY-037, STORY-044)
 export type TicketStatus = 'draft' | 'submitted' | 'in_progress' | 'awaiting_info' | 'resolved' | 'closed';
 export type TicketCategory = 'maintenance' | 'noise' | 'safety' | 'cleaning' | 'facilities' | 'other';
 export type TicketPriority = 'low' | 'medium' | 'high' | 'urgent';
+// STORY-044: Supplier collaboration status
+export type SupplierStatus = 'scheduled' | 'in_progress' | 'completed';
 
 export interface Ticket {
   id: string;
@@ -311,6 +313,14 @@ export interface Ticket {
   created_at: string;
   updated_at: string;
   resolved_at?: string;
+  // STORY-044: Supplier status fields
+  supplier_id?: string;
+  supplier_name?: string;
+  supplier_status?: SupplierStatus;
+  supplier_status_note?: string;
+  supplier_status_updated_at?: string;
+  supplier_status_updated_by_id?: string;
+  supplier_status_updated_by_name?: string;
   attachments: TicketAttachment[];
   timeline: TicketTimelineEntry[];
 }
@@ -401,6 +411,48 @@ export interface TicketDraft {
   category?: TicketCategory;
   location?: string;
   step: number;
+}
+
+// STORY-044: Supplier status update
+export interface TicketSupplierStatusUpdate {
+  supplier_id?: string | null;
+  supplier_status?: SupplierStatus;
+  supplier_status_note?: string;
+}
+
+// STORY-035, STORY-044: Supplier types
+export interface Supplier {
+  id: string;
+  vve_id: string;
+  name: string;
+  contact_person?: string;
+  email?: string;
+  phone?: string;
+  specialty?: string;
+  notes?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SupplierCreate {
+  name: string;
+  contact_person?: string;
+  email?: string;
+  phone?: string;
+  specialty?: string;
+  notes?: string;
+  is_active?: boolean;
+}
+
+export interface SupplierUpdate {
+  name?: string;
+  contact_person?: string;
+  email?: string;
+  phone?: string;
+  specialty?: string;
+  notes?: string;
+  is_active?: boolean;
 }
 
 // API Response types
