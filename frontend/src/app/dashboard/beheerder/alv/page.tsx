@@ -2,15 +2,16 @@
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
-import type { MeetingListItem, MeetingCreate, MeetingType, MeetingStatus } from '@/types';
+import type { MeetingListItem, MeetingCreate, MeetingType, MeetingStatus, AgendaItem, AgendaItemCreate } from '@/types';
 
 /**
- * ALV (Algemene Ledenvergadering) Management - STORY-069
+ * ALV (Algemene Ledenvergadering) Management - STORY-069, STORY-070
  * 
  * Allows beheerder/secretaris to:
  * - Plan new ALV meetings with date, time, type and location
  * - View list of upcoming and past meetings
  * - Update meeting status
+ * - STORY-070: Manage agenda with items, durations, and drag & drop
  */
 
 const MEETING_TYPE_LABELS: Record<MeetingType, { label: string; icon: string }> = {
@@ -44,6 +45,17 @@ export default function ALVPage() {
     meeting_date: '',
     meeting_type: 'fysiek',
   });
+
+  // STORY-070: Agenda state
+  const [selectedMeeting, setSelectedMeeting] = useState<MeetingListItem | null>(null);
+  const [agendaItems, setAgendaItems] = useState<AgendaItem[]>([]);
+  const [isLoadingAgenda, setIsLoadingAgenda] = useState(false);
+  const [showAgendaForm, setShowAgendaForm] = useState(false);
+  const [newAgendaItem, setNewAgendaItem] = useState<AgendaItemCreate>({
+    title: '',
+    duration_minutes: 10,
+  });
+  const [isSubmittingAgenda, setIsSubmittingAgenda] = useState(false);
 
   // TODO: Get VVE ID from context/session
   const vveId = 'demo-vve-id';
@@ -96,6 +108,103 @@ export default function ALVPage() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // STORY-070: Agenda functions
+  const openAgendaModal = async (meeting: MeetingListItem) => {
+    setSelectedMeeting(meeting);
+    setIsLoadingAgenda(true);
+    setError(null);
+    try {
+      const items = await api.getAgendaItems(vveId, meeting.id);
+      setAgendaItems(items);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Kon agenda niet ophalen');
+    } finally {
+      setIsLoadingAgenda(false);
+    }
+  };
+
+  const closeAgendaModal = () => {
+    setSelectedMeeting(null);
+    setAgendaItems([]);
+    setShowAgendaForm(false);
+    setNewAgendaItem({ title: '', duration_minutes: 10 });
+  };
+
+  const handleLoadTemplate = async () => {
+    if (!selectedMeeting) return;
+    setIsSubmittingAgenda(true);
+    setError(null);
+    try {
+      const items = await api.createStandardAgenda(vveId, selectedMeeting.id);
+      setAgendaItems(items);
+      setSuccessMessage('Standaard agenda geladen');
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Kon template niet laden');
+    } finally {
+      setIsSubmittingAgenda(false);
+    }
+  };
+
+  const handleAddAgendaItem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedMeeting || !newAgendaItem.title.trim()) return;
+    
+    setIsSubmittingAgenda(true);
+    setError(null);
+    try {
+      const item = await api.createAgendaItem(vveId, selectedMeeting.id, newAgendaItem);
+      setAgendaItems([...agendaItems, item]);
+      setNewAgendaItem({ title: '', duration_minutes: 10 });
+      setShowAgendaForm(false);
+      setSuccessMessage('Agendapunt toegevoegd');
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Kon agendapunt niet toevoegen');
+    } finally {
+      setIsSubmittingAgenda(false);
+    }
+  };
+
+  const handleDeleteAgendaItem = async (itemId: string) => {
+    if (!selectedMeeting) return;
+    try {
+      await api.deleteAgendaItem(vveId, selectedMeeting.id, itemId);
+      setAgendaItems(agendaItems.filter(item => item.id !== itemId));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Kon agendapunt niet verwijderen');
+    }
+  };
+
+  const handleMoveItem = async (itemId: string, direction: 'up' | 'down') => {
+    if (!selectedMeeting) return;
+    const currentIndex = agendaItems.findIndex(item => item.id === itemId);
+    if (currentIndex === -1) return;
+    if (direction === 'up' && currentIndex === 0) return;
+    if (direction === 'down' && currentIndex === agendaItems.length - 1) return;
+
+    const newItems = [...agendaItems];
+    const swapIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    [newItems[currentIndex], newItems[swapIndex]] = [newItems[swapIndex], newItems[currentIndex]];
+    
+    setAgendaItems(newItems);
+    
+    // Persist new order
+    try {
+      await api.reorderAgendaItems(vveId, selectedMeeting.id, {
+        item_ids: newItems.map(item => item.id),
+      });
+    } catch (err) {
+      // Revert on error
+      setAgendaItems(agendaItems);
+      setError(err instanceof Error ? err.message : 'Kon volgorde niet opslaan');
+    }
+  };
+
+  const getTotalDuration = () => {
+    return agendaItems.reduce((sum, item) => sum + (item.duration_minutes || 0), 0);
   };
 
   // Stats
@@ -326,6 +435,9 @@ export default function ALVPage() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Acties
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -373,10 +485,225 @@ export default function ALVPage() {
                       {MEETING_STATUS_LABELS[meeting.status]?.label || meeting.status}
                     </span>
                   </td>
+                  <td className="px-6 py-4">
+                    {/* STORY-070: Agenda button */}
+                    <button
+                      onClick={() => openAgendaModal(meeting)}
+                      className="text-sm text-blue-600 hover:text-blue-800"
+                    >
+                      📋 Agenda
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* STORY-070: Agenda Modal */}
+      {selectedMeeting && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              {/* Modal Header */}
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">
+                    Agenda - {selectedMeeting.title}
+                  </h2>
+                  <p className="text-sm text-gray-600">
+                    {new Date(selectedMeeting.meeting_date).toLocaleDateString('nl-NL', {
+                      weekday: 'long',
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric',
+                    })}
+                    {agendaItems.length > 0 && (
+                      <span className="ml-2">• Totaal: {getTotalDuration()} minuten</span>
+                    )}
+                  </p>
+                </div>
+                <button
+                  onClick={closeAgendaModal}
+                  className="text-gray-400 hover:text-gray-600 text-2xl"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-2 mb-4">
+                {agendaItems.length === 0 && (
+                  <button
+                    onClick={handleLoadTemplate}
+                    disabled={isSubmittingAgenda}
+                    className="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 disabled:opacity-50"
+                  >
+                    📋 Standaard Agenda Laden
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowAgendaForm(!showAgendaForm)}
+                  className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200"
+                >
+                  + Agendapunt Toevoegen
+                </button>
+              </div>
+
+              {/* Add Agenda Item Form */}
+              {showAgendaForm && (
+                <form onSubmit={handleAddAgendaItem} className="mb-4 p-4 bg-gray-50 rounded-lg">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Titel *
+                      </label>
+                      <input
+                        type="text"
+                        value={newAgendaItem.title}
+                        onChange={(e) => setNewAgendaItem({ ...newAgendaItem, title: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                        placeholder="Bijv. Jaarrekening bespreken"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Duur (min)
+                      </label>
+                      <input
+                        type="number"
+                        value={newAgendaItem.duration_minutes || ''}
+                        onChange={(e) => setNewAgendaItem({ ...newAgendaItem, duration_minutes: parseInt(e.target.value) || undefined })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                        min="1"
+                        max="480"
+                      />
+                    </div>
+                    <div className="md:col-span-3">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Beschrijving
+                      </label>
+                      <textarea
+                        value={newAgendaItem.description || ''}
+                        onChange={(e) => setNewAgendaItem({ ...newAgendaItem, description: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                        rows={2}
+                        placeholder="Extra toelichting..."
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2 mt-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowAgendaForm(false);
+                        setNewAgendaItem({ title: '', duration_minutes: 10 });
+                      }}
+                      className="px-3 py-1.5 text-gray-600 hover:text-gray-800"
+                    >
+                      Annuleren
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmittingAgenda || !newAgendaItem.title.trim()}
+                      className="px-4 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                    >
+                      Toevoegen
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {/* Loading */}
+              {isLoadingAgenda ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+              ) : agendaItems.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <p className="text-4xl mb-2">📋</p>
+                  <p>Nog geen agendapunten.</p>
+                  <p className="text-sm">Laad de standaard agenda of voeg handmatig punten toe.</p>
+                </div>
+              ) : (
+                /* Agenda Items List */
+                <div className="space-y-2">
+                  {agendaItems.map((item, index) => (
+                    <div
+                      key={item.id}
+                      className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200"
+                    >
+                      {/* Order controls */}
+                      <div className="flex flex-col gap-1">
+                        <button
+                          onClick={() => handleMoveItem(item.id, 'up')}
+                          disabled={index === 0}
+                          className="text-gray-400 hover:text-gray-600 disabled:opacity-30"
+                          title="Omhoog"
+                        >
+                          ▲
+                        </button>
+                        <button
+                          onClick={() => handleMoveItem(item.id, 'down')}
+                          disabled={index === agendaItems.length - 1}
+                          className="text-gray-400 hover:text-gray-600 disabled:opacity-30"
+                          title="Omlaag"
+                        >
+                          ▼
+                        </button>
+                      </div>
+                      
+                      {/* Order number */}
+                      <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-medium text-sm">
+                        {index + 1}
+                      </div>
+                      
+                      {/* Item content */}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-gray-900">{item.title}</p>
+                          {item.is_standard && (
+                            <span className="text-xs bg-gray-200 px-1.5 py-0.5 rounded">Standaard</span>
+                          )}
+                        </div>
+                        {item.description && (
+                          <p className="text-sm text-gray-600 mt-0.5">{item.description}</p>
+                        )}
+                      </div>
+                      
+                      {/* Duration */}
+                      {item.duration_minutes && (
+                        <div className="text-sm text-gray-500">
+                          🕐 {item.duration_minutes} min
+                        </div>
+                      )}
+                      
+                      {/* Delete button */}
+                      <button
+                        onClick={() => handleDeleteAgendaItem(item.id)}
+                        className="text-red-400 hover:text-red-600"
+                        title="Verwijderen"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Close button */}
+              <div className="mt-6 flex justify-end">
+                <button
+                  onClick={closeAgendaModal}
+                  className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Sluiten
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
