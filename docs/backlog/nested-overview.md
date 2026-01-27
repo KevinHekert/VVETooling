@@ -102,15 +102,27 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
     - 11.3 **FEAT-022 Multi-channel verzending** ✅
       - 11.3.1 ✅ STORY-047 Multi-channel verzending (Should)
 
+12. **EPIC-012 E-mail Integraties** ⬜
+    - 12.1 **FEAT-023 E-mail Provider Configuratie** ⬜
+      - 12.1.1 ⬜ STORY-048 E-mail provider configureren via Settings (Must)
+    - 12.2 **FEAT-024 E-mail Provider Abstractie** ⬜
+      - 12.2.1 ⬜ STORY-049 Mailchimp integratie implementeren (Must)
+      - 12.2.2 ⬜ STORY-050 Amazon SES integratie implementeren (Must)
+      - 12.2.3 ⬜ STORY-051 SendGrid integratie implementeren (Must)
+      - 12.2.4 ⬜ STORY-052 E-mail provider abstractie laag (Must)
+    - 12.3 **FEAT-025 E-mail Verzending API** ⬜
+      - 12.3.1 ⬜ STORY-053 E-mail verzenden via geconfigureerde provider (Must)
+      - 12.3.2 ⬜ STORY-054 E-mail verzending monitoring en logging (Should)
+
 ---
 
 ## Voortgang Samenvatting
 
 | Niveau | Totaal | ✅ Gereed | ⬜ Backlog | % Gereed |
 |--------|--------|-----------|-----------|----------|
-| Epics | 11 | 11 | 0 | 100% |
-| Features | 22 | 22 | 0 | 100% |
-| Stories | 47 | 47 | 0 | 100% |
+| Epics | 12 | 11 | 1 | 92% |
+| Features | 25 | 22 | 3 | 88% |
+| Stories | 54 | 47 | 7 | 87% |
 
 **Volledig afgeronde Epics:** EPIC-001, EPIC-002, EPIC-003, EPIC-004, EPIC-005, EPIC-006, EPIC-007, EPIC-008, EPIC-009, EPIC-010, EPIC-011
 
