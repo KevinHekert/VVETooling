@@ -222,6 +222,7 @@ export default function ALVPage() {
 
   // STORY-071: Invitation functions
   const openInvitationModal = async (meeting: MeetingListItem) => {
+    setSelectedMeeting(meeting); // Ensure meeting is set for send
     setShowInvitationModal(true);
     setIsLoadingInvitation(true);
     setError(null);
@@ -597,7 +598,7 @@ export default function ALVPage() {
       )}
 
       {/* STORY-070: Agenda Modal */}
-      {selectedMeeting && !showRsvpModal && (
+      {selectedMeeting && !showRsvpModal && !showInvitationModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
@@ -622,6 +623,7 @@ export default function ALVPage() {
                 <button
                   onClick={closeAgendaModal}
                   className="text-gray-400 hover:text-gray-600 text-2xl"
+                  aria-label="Sluiten"
                 >
                   ✕
                 </button>
@@ -824,6 +826,7 @@ export default function ALVPage() {
                 <button
                   onClick={closeInvitationModal}
                   className="text-gray-400 hover:text-gray-600 text-2xl"
+                  aria-label="Sluiten"
                 >
                   ✕
                 </button>
@@ -921,6 +924,7 @@ export default function ALVPage() {
                 <button
                   onClick={closeRsvpModal}
                   className="text-gray-400 hover:text-gray-600 text-2xl"
+                  aria-label="Sluiten"
                 >
                   ✕
                 </button>

@@ -157,9 +157,9 @@ export default function LeveranciersPage() {
   };
 
   // STORY-061: Evaluation functions
-  const fetchEvaluationSummaries = useCallback(async () => {
+  const fetchEvaluationSummaries = useCallback(async (supplierList: Supplier[]) => {
     const summaries: Record<string, SupplierEvaluationSummary> = {};
-    for (const supplier of suppliers) {
+    for (const supplier of supplierList) {
       try {
         const summary = await api.getSupplierEvaluationSummary(vveId, supplier.id);
         summaries[supplier.id] = summary;
@@ -168,11 +168,11 @@ export default function LeveranciersPage() {
       }
     }
     setEvalSummaries(summaries);
-  }, [suppliers]);
+  }, []);
 
   useEffect(() => {
     if (suppliers.length > 0) {
-      fetchEvaluationSummaries();
+      fetchEvaluationSummaries(suppliers);
     }
   }, [suppliers, fetchEvaluationSummaries]);
 
@@ -590,6 +590,7 @@ export default function LeveranciersPage() {
                 <button
                   onClick={closeEvaluationModal}
                   className="text-gray-400 hover:text-gray-600"
+                  aria-label="Sluiten"
                 >
                   ✕
                 </button>
