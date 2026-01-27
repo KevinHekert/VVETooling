@@ -119,8 +119,8 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
       - 13.1.1 ✅ STORY-055 Contract registreren met metadata (Should)
       - 13.1.2 ✅ STORY-056 Contract document uploaden (Should)
       - 13.1.3 ✅ STORY-057 Contracten doorzoeken en filteren (Should)
-    - 13.2 **FEAT-027 Contract Alerts & Herinneringen** ⬜
-      - 13.2.1 ⬜ STORY-058 Opzegtermijn alert configureren (Should)
+    - 13.2 **FEAT-027 Contract Alerts & Herinneringen** ⚠️
+      - 13.2.1 ✅ STORY-058 Opzegtermijn alert configureren (Should)
       - 13.2.2 ⬜ STORY-059 Dashboard widget aflopen contracten (Should)
     - 13.3 **FEAT-028 Leveranciersbeheer** ⬜
       - 13.3.1 ⬜ STORY-060 Leverancier registreren (Should)
