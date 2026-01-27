@@ -214,6 +214,34 @@ export interface StorageUsage {
   is_near_limit: boolean;
 }
 
+// STORY-019: Document share link types
+export interface DocumentShareLinkRequest {
+  expires_in_hours?: number;
+  allow_download?: boolean;
+}
+
+export interface DocumentShareLink {
+  id: string;
+  document_id: string;
+  share_url: string;
+  token: string;
+  expires_at: string;
+  created_by_id: string;
+  created_by_name?: string;
+  allow_download: boolean;
+  view_count: number;
+  download_count: number;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface DocumentDownloadUrl {
+  download_url: string;
+  expires_in_seconds: number;
+  file_name: string;
+  file_type: string;
+}
+
 // Budget types (STORY-006)
 export type BudgetStatus = 'draft' | 'approved' | 'archived';
 
@@ -266,7 +294,7 @@ export interface BudgetSummary {
   item_count: number;
 }
 
-// Audit Log types (STORY-010)
+// Audit Log types (STORY-010, STORY-023)
 export interface AuditLog {
   id: string;
   vve_id: string | null;
@@ -280,6 +308,7 @@ export interface AuditLog {
   ip_address?: string;
   is_financial: boolean;
   created_at: string;
+  result?: string;
 }
 
 export interface AuditLogFilters {
@@ -289,6 +318,23 @@ export interface AuditLogFilters {
   start_date?: string;
   end_date?: string;
   is_financial?: boolean;
+}
+
+// STORY-023: Audit log list and export types
+export interface AuditLogListResponse {
+  items: AuditLog[];
+  total: number;
+  page: number;
+  size: number;
+}
+
+export interface AuditLogExportSummary {
+  export_id: string;
+  format: string;
+  record_count: number;
+  file_size_estimate: string;
+  download_url: string;
+  expires_at: string;
 }
 
 // Ticket types (STORY-029, STORY-030, STORY-037, STORY-044)
@@ -535,6 +581,31 @@ export interface SplitsingsakteVersionUpdate {
   name?: string;
   description?: string;
   effective_date?: string;
+  document_id?: string;
+}
+
+// STORY-032, STORY-042: Splitsingsakte amendments/aanvullingen
+export type SplitsingsakteAmendmentType = 'wijziging' | 'toevoeging' | 'correctie' | 'verduidelijking';
+
+export interface SplitsingsakteAmendment {
+  id: string;
+  version_id: string;
+  title: string;
+  description: string;
+  amendment_type: SplitsingsakteAmendmentType;
+  effective_date: string;
+  document_id?: string;
+  document_name?: string;
+  created_by_id: string;
+  created_by_name?: string;
+  created_at: string;
+}
+
+export interface SplitsingsakteAmendmentCreate {
+  title: string;
+  description: string;
+  amendment_type: SplitsingsakteAmendmentType;
+  effective_date: string;
   document_id?: string;
 }
 

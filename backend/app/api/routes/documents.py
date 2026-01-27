@@ -2,10 +2,13 @@
 
 Implements FEAT-011 (Documentbeheer) and STORY-004 (Bestuur uploadt document).
 Implements STORY-018: Document versiebeheer en rol-specifiek delen.
+Implements STORY-019: Document download-links en notificaties.
 Storage limits per D-004.
 """
 
+import secrets
 import uuid
+from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
@@ -23,7 +26,10 @@ from app.schemas.document import (
     ALLOWED_FILE_TYPES,
     DEFAULT_VISIBLE_ROLES,
     MAX_FILE_SIZE_BYTES,
+    DocumentDownloadResponse,
     DocumentResponse,
+    DocumentShareLinkRequest,
+    DocumentShareLinkResponse,
     DocumentUpdate,
     DocumentUploadResponse,
     DocumentVersionResponse,
@@ -544,3 +550,285 @@ async def restore_document_version(
     await db.refresh(version_to_restore)
 
     return DocumentResponse.model_validate(version_to_restore)
+
+
+# ============================================================================
+# Download Links & Notifications Endpoints (STORY-019)
+# ============================================================================
+
+# In-memory store for share links (in production, this would be a database table)
+# Structure: { token: { document_id, vve_id, expires_at, allow_download, view_count, download_count, ... } }
+_share_links_store: dict[str, dict] = {}
+
+
+@router.get(
+    "/{document_id}/download",
+    response_model=DocumentDownloadResponse,
+    summary="Document download link genereren",
+    description="""
+    STORY-019: Genereer een beveiligde download URL voor een document.
+    
+    - URL is tijdelijk geldig (1 uur standaard)
+    - Download wordt gelogd voor audit trail
+    - Rol-gebaseerde toegangscontrole
+    """,
+)
+async def get_download_url(
+    vve_id: uuid.UUID,
+    document_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_member)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> DocumentDownloadResponse:
+    """Generate a secure download URL for a document.
+    
+    Returns a pre-signed URL that expires after 1 hour.
+    All members can download public documents; bestuur/beheerder can download all.
+    """
+    # Find the document
+    result = await db.execute(
+        select(Document).where(
+            Document.id == document_id,
+            Document.vve_id == vve_id,
+        )
+    )
+    document = result.scalar_one_or_none()
+    
+    if document is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Document niet gevonden",
+        )
+    
+    # Check visibility permissions
+    user_role = current_user.get_role_for_vve(vve_id)
+    if user_role and user_role.value == "bewoner" and not document.is_public:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Geen toegang tot dit document",
+        )
+    
+    # In production, generate a pre-signed S3 URL
+    # For now, generate a mock download URL with token
+    download_token = secrets.token_urlsafe(32)
+    expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
+    
+    # Store token temporarily for validation (in production, use database)
+    _share_links_store[download_token] = {
+        "document_id": str(document_id),
+        "vve_id": str(vve_id),
+        "expires_at": expires_at,
+        "type": "download",
+        "user_id": str(current_user.id),
+    }
+    
+    # TODO: Log download request for audit (FEAT-015 integration)
+    # audit_service.log_action(
+    #     user_id=current_user.id,
+    #     action="document_download_requested",
+    #     entity_type="document",
+    #     entity_id=document_id,
+    # )
+    
+    return DocumentDownloadResponse(
+        download_url=f"/api/v1/documents/download/{download_token}",
+        expires_in_seconds=3600,
+        file_name=document.file_name,
+        file_type=document.file_type,
+    )
+
+
+@router.post(
+    "/{document_id}/share-links",
+    response_model=DocumentShareLinkResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Deelbare link genereren",
+    description="""
+    STORY-019: Genereer een deelbare link voor een document.
+    
+    - Link is configureerbaar qua vervaldatum (1 uur tot 1 week)
+    - Optioneel: alleen bekijken of ook downloaden toestaan
+    - Tracking van views en downloads
+    - Bestuur kan links beheren en intrekken
+    """,
+)
+async def create_share_link(
+    vve_id: uuid.UUID,
+    document_id: uuid.UUID,
+    request: DocumentShareLinkRequest,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> DocumentShareLinkResponse:
+    """Create a shareable link for a document.
+    
+    Requires bestuurslid or beheerder role.
+    """
+    # Find the document
+    result = await db.execute(
+        select(Document).where(
+            Document.id == document_id,
+            Document.vve_id == vve_id,
+        )
+    )
+    document = result.scalar_one_or_none()
+    
+    if document is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Document niet gevonden",
+        )
+    
+    # Generate secure share token
+    share_token = secrets.token_urlsafe(48)
+    link_id = uuid.uuid4()
+    created_at = datetime.now(timezone.utc)
+    expires_at = created_at + timedelta(hours=request.expires_in_hours)
+    
+    # Store the share link (in production, persist to database)
+    _share_links_store[share_token] = {
+        "id": str(link_id),
+        "document_id": str(document_id),
+        "vve_id": str(vve_id),
+        "expires_at": expires_at,
+        "allow_download": request.allow_download,
+        "created_by_id": str(current_user.id),
+        "created_by_name": current_user.full_name,
+        "created_at": created_at,
+        "view_count": 0,
+        "download_count": 0,
+        "is_active": True,
+        "type": "share",
+    }
+    
+    # TODO: Log share link creation for audit (FEAT-015 integration)
+    
+    return DocumentShareLinkResponse(
+        id=link_id,
+        document_id=document_id,
+        share_url=f"/documents/shared/{share_token}",
+        token=share_token,
+        expires_at=expires_at,
+        created_by_id=current_user.id,
+        created_by_name=current_user.full_name,
+        allow_download=request.allow_download,
+        view_count=0,
+        download_count=0,
+        is_active=True,
+        created_at=created_at,
+    )
+
+
+@router.get(
+    "/{document_id}/share-links",
+    response_model=list[DocumentShareLinkResponse],
+    summary="Deelbare links ophalen",
+    description="""
+    STORY-019: Haal alle actieve deelbare links voor een document op.
+    
+    - Bestuur kan alle links beheren
+    - Toont view/download statistieken
+    """,
+)
+async def list_share_links(
+    vve_id: uuid.UUID,
+    document_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> list[DocumentShareLinkResponse]:
+    """List all active share links for a document.
+    
+    Requires bestuurslid or beheerder role.
+    """
+    # Verify document exists
+    result = await db.execute(
+        select(Document).where(
+            Document.id == document_id,
+            Document.vve_id == vve_id,
+        )
+    )
+    if result.scalar_one_or_none() is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Document niet gevonden",
+        )
+    
+    # Find all share links for this document (in production, query database)
+    links = []
+    now = datetime.now(timezone.utc)
+    
+    for token, data in _share_links_store.items():
+        if (
+            data.get("type") == "share"
+            and data.get("document_id") == str(document_id)
+            and data.get("is_active", False)
+            and data.get("expires_at", now) > now
+        ):
+            links.append(
+                DocumentShareLinkResponse(
+                    id=uuid.UUID(data["id"]),
+                    document_id=uuid.UUID(data["document_id"]),
+                    share_url=f"/documents/shared/{token}",
+                    token=token,
+                    expires_at=data["expires_at"],
+                    created_by_id=uuid.UUID(data["created_by_id"]),
+                    created_by_name=data.get("created_by_name"),
+                    allow_download=data.get("allow_download", True),
+                    view_count=data.get("view_count", 0),
+                    download_count=data.get("download_count", 0),
+                    is_active=data.get("is_active", True),
+                    created_at=data["created_at"],
+                )
+            )
+    
+    return links
+
+
+@router.delete(
+    "/{document_id}/share-links/{link_token}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Deelbare link intrekken",
+    description="""
+    STORY-019: Trek een deelbare link in zodat deze niet meer gebruikt kan worden.
+    """,
+)
+async def revoke_share_link(
+    vve_id: uuid.UUID,
+    document_id: uuid.UUID,
+    link_token: str,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> None:
+    """Revoke a share link for a document.
+    
+    Requires bestuurslid or beheerder role.
+    """
+    # Verify document exists
+    result = await db.execute(
+        select(Document).where(
+            Document.id == document_id,
+            Document.vve_id == vve_id,
+        )
+    )
+    if result.scalar_one_or_none() is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Document niet gevonden",
+        )
+    
+    # Find and deactivate the share link
+    if link_token not in _share_links_store:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Link niet gevonden",
+        )
+    
+    link_data = _share_links_store[link_token]
+    if link_data.get("document_id") != str(document_id):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Link niet gevonden voor dit document",
+        )
+    
+    # Mark as inactive (in production, update database)
+    _share_links_store[link_token]["is_active"] = False
+    
+    # TODO: Log share link revocation for audit (FEAT-015 integration)

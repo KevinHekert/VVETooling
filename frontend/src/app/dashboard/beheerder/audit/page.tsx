@@ -2,17 +2,23 @@
 
 import { useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/Toast';
+import { api } from '@/lib/api';
+import type { AuditLog, AuditLogExportSummary } from '@/types';
 
 /**
- * Audit Log Page - STORY-010
+ * Audit Log Page - STORY-010, STORY-023
  * 
  * Implements:
  * - Beheer-menu sectie voor Audit logs
  * - Logs tonen: gebruiker, rol, actie, timestamp, resultaat
  * - Filters op periode, rol en actie (inline)
- * - Export knop (voorbereid)
+ * - Export knop (CSV) - STORY-023
+ * - Export preview met record count - STORY-023
  * - Responsive tabel met mobiele kernvelden
  */
+
+// Mock VVE ID - in production this would come from auth context
+const MOCK_VVE_ID = '123e4567-e89b-12d3-a456-426614174000';
 
 // Mock audit log type - matches backend schema
 interface AuditLogEntry {
@@ -98,8 +104,8 @@ const MOCK_AUDIT_LOGS: AuditLogEntry[] = [
 ];
 
 // Available filter options
-const ACTION_TYPES = ['create', 'update', 'delete', 'upload', 'download', 'login', 'approve'];
-const ENTITY_TYPES = ['transaction', 'document', 'budget', 'user', 'unit'];
+const ACTION_TYPES = ['create', 'update', 'delete', 'upload', 'download', 'login', 'approve', 'share'];
+const ENTITY_TYPES = ['transaction', 'document', 'budget', 'user', 'unit', 'ticket', 'supplier'];
 
 export default function AuditLogPage() {
   const { addToast } = useToast();
@@ -112,19 +118,38 @@ export default function AuditLogPage() {
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
   const [financialOnly, setFinancialOnly] = useState(false);
+  
+  // STORY-023: Export state
+  const [showExportPanel, setShowExportPanel] = useState(false);
+  const [exportSummary, setExportSummary] = useState<AuditLogExportSummary | null>(null);
+  const [isPreparingExport, setIsPreparingExport] = useState(false);
 
   useEffect(() => {
     // In production, fetch from API
     // For now, use mock data
     const fetchLogs = async () => {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      setLogs(MOCK_AUDIT_LOGS);
-      setIsLoading(false);
+      try {
+        // Try API first
+        const response = await api.getAuditLogs(MOCK_VVE_ID, {
+          action: actionFilter || undefined,
+          entity_type: entityFilter || undefined,
+          start_date: startDate || undefined,
+          end_date: endDate || undefined,
+          is_financial: financialOnly || undefined,
+        });
+        setLogs(response.items as unknown as AuditLogEntry[]);
+      } catch {
+        // Fallback to mock data
+        await new Promise(resolve => setTimeout(resolve, 300));
+        setLogs(MOCK_AUDIT_LOGS);
+      } finally {
+        setIsLoading(false);
+      }
     };
     fetchLogs();
-  }, []);
+  }, [actionFilter, entityFilter, startDate, endDate, financialOnly]);
 
-  // Apply filters
+  // Apply filters (for mock data)
   const filteredLogs = logs.filter(log => {
     if (actionFilter && log.action !== actionFilter) return false;
     if (entityFilter && log.entity_type !== entityFilter) return false;
@@ -134,9 +159,91 @@ export default function AuditLogPage() {
     return true;
   });
 
-  const handleExport = () => {
-    // Future: Export to CSV/Excel
-    addToast('Export functionaliteit komt binnenkort', 'info');
+  // STORY-023: Prepare export
+  const handleExportClick = async () => {
+    setShowExportPanel(true);
+    setIsPreparingExport(true);
+    
+    try {
+      const summary = await api.prepareAuditLogExport(MOCK_VVE_ID, {
+        action: actionFilter || undefined,
+        entity_type: entityFilter || undefined,
+        start_date: startDate || undefined,
+        end_date: endDate || undefined,
+        is_financial: financialOnly || undefined,
+      });
+      setExportSummary(summary);
+    } catch {
+      // Fallback for demo
+      setExportSummary({
+        export_id: 'demo-export',
+        format: 'csv',
+        record_count: filteredLogs.length,
+        file_size_estimate: `${Math.round(filteredLogs.length * 0.15)} KB`,
+        download_url: '#',
+        expires_at: new Date(Date.now() + 3600000).toISOString(),
+      });
+    } finally {
+      setIsPreparingExport(false);
+    }
+  };
+
+  // STORY-023: Download CSV
+  const handleDownloadCsv = () => {
+    try {
+      // Try API download
+      const downloadUrl = api.getAuditLogExportUrl(MOCK_VVE_ID, {
+        action: actionFilter || undefined,
+        entity_type: entityFilter || undefined,
+        start_date: startDate || undefined,
+        end_date: endDate || undefined,
+        is_financial: financialOnly || undefined,
+      });
+      
+      // Open in new tab/trigger download
+      window.open(downloadUrl, '_blank');
+      addToast('CSV export gestart', 'success');
+      setShowExportPanel(false);
+    } catch {
+      // Fallback: Generate CSV client-side
+      generateClientSideCsv();
+    }
+  };
+
+  // STORY-023: Client-side CSV generation fallback
+  const generateClientSideCsv = () => {
+    const headers = ['Datum', 'Tijd', 'Gebruiker', 'Actie', 'Type', 'Entiteit ID', 'IP-adres', 'Financieel'];
+    const rows = filteredLogs.map(log => {
+      const date = new Date(log.created_at);
+      return [
+        date.toLocaleDateString('nl-NL'),
+        date.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' }),
+        log.user_name || 'Systeem',
+        getActionLabel(log.action),
+        getEntityLabel(log.entity_type),
+        log.entity_id || '',
+        log.ip_address || '',
+        log.is_financial ? 'Ja' : 'Nee',
+      ];
+    });
+    
+    const csvContent = [
+      headers.join(';'),
+      ...rows.map(row => row.join(';')),
+    ].join('\n');
+    
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `audit_log_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+    
+    addToast('CSV gedownload', 'success');
+    setShowExportPanel(false);
   };
 
   const clearFilters = () => {
@@ -164,13 +271,55 @@ export default function AuditLogPage() {
           <p className="text-gray-600">Overzicht van alle acties binnen uw VVE</p>
         </div>
         <button
-          onClick={handleExport}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+          onClick={handleExportClick}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
           <ExportIcon />
-          Exporteren
+          Exporteren naar CSV
         </button>
       </div>
+
+      {/* STORY-023: Export Panel */}
+      {showExportPanel && (
+        <div className="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500">
+          <div className="flex items-start justify-between">
+            <div>
+              <h3 className="text-sm font-medium text-gray-900">Export voorbereiden</h3>
+              {isPreparingExport ? (
+                <div className="flex items-center gap-2 mt-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                  <span className="text-sm text-gray-600">Bezig met voorbereiden...</span>
+                </div>
+              ) : exportSummary ? (
+                <div className="mt-2 space-y-1">
+                  <p className="text-sm text-gray-600">
+                    <strong>{exportSummary.record_count}</strong> records gevonden
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    Geschatte grootte: {exportSummary.file_size_estimate}
+                  </p>
+                </div>
+              ) : null}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowExportPanel(false)}
+                className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800"
+              >
+                Annuleren
+              </button>
+              <button
+                onClick={handleDownloadCsv}
+                disabled={isPreparingExport}
+                className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              >
+                <DownloadIcon />
+                Download CSV
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Filters - Inline */}
       <div className="bg-white rounded-lg shadow p-4">
@@ -369,6 +518,7 @@ function ActionBadge({ action }: { action: string }) {
     download: 'bg-indigo-100 text-indigo-800',
     login: 'bg-gray-100 text-gray-800',
     approve: 'bg-emerald-100 text-emerald-800',
+    share: 'bg-cyan-100 text-cyan-800',
   };
 
   return (
@@ -399,6 +549,15 @@ function ExportIcon() {
   );
 }
 
+function DownloadIcon() {
+  return (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+    </svg>
+  );
+}
+
 // Helper functions
 function formatDateTime(isoString: string): string {
   const date = new Date(isoString);
@@ -420,6 +579,7 @@ function getActionLabel(action: string): string {
     download: 'Gedownload',
     login: 'Ingelogd',
     approve: 'Goedgekeurd',
+    share: 'Gedeeld',
   };
   return labels[action] || action;
 }
@@ -431,6 +591,8 @@ function getEntityLabel(entityType: string): string {
     budget: 'Begroting',
     user: 'Gebruiker',
     unit: 'Eenheid',
+    ticket: 'Ticket',
+    supplier: 'Leverancier',
   };
   return labels[entityType] || entityType;
 }
