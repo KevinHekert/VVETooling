@@ -19,6 +19,7 @@ Deze backlog is de single source of truth voor uitvoering van VVE Tooling MVP. A
   - [Definition of Ready/Done](ways-of-working/03-definition-of-ready-done.md)
   - [Decision-log aanpak](ways-of-working/04-decision-log-aanpak.md)
   - [AI Development Guidelines](ways-of-working/05-ai-development-guidelines.md)
+  - [Instructie Sales → PM → PO](ways-of-working/06-instructie-sales-pm-po.md)
 - **Implementatierapporten**
   - [Overzicht](implementation-reports/README.md) - Alle implementatierapporten
   - [Template](implementation-reports/TEMPLATE-implementatierapport.md) - Template voor nieuwe rapporten
