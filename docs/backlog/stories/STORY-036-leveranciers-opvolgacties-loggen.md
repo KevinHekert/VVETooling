@@ -3,10 +3,11 @@
 ## Documentinformatie
 - **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: ⬜ Backlog
+- **Status**: ✅ Geïmplementeerd
 - **Versie**: 1.0
 - **Prioriteit**: Should (Horizon 2)
 - **Geneste nummering**: 10.2.3
+- **Implementatierapport**: [STORY-036-implementatie.md](../implementation-reports/STORY-036-implementatie.md)
 
 ## User story
 Als **bestuurslid** wil ik opvolgacties met leveranciers kunnen registreren, zodat communicatie en afspraken traceerbaar blijven per ticket.
