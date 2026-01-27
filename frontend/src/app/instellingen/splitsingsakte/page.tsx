@@ -701,7 +701,20 @@ export default function SplitsingsakteVersionsPage() {
                     }}
                     className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
                   >
-                    Activeren
+                    Publiceren voor bewoners
+                  </button>
+                )}
+                {/* STORY-043: Show download button for active versions */}
+                {selectedVersion.status === 'active' && selectedVersion.document_name && (
+                  <button
+                    onClick={() => {
+                      addToast('Document wordt gedownload', 'info');
+                      // In production, this would trigger a real download
+                    }}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  >
+                    <DownloadIcon />
+                    Download PDF
                   </button>
                 )}
               </div>
@@ -710,5 +723,15 @@ export default function SplitsingsakteVersionsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// STORY-043: Download icon component
+function DownloadIcon() {
+  return (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+    </svg>
   );
 }
