@@ -5,6 +5,8 @@ Implements STORY-030: Ticket bewijsstukken (bonnen en facturen).
 Implements STORY-037: Ticket communicatie en notities.
 """
 
+import os
+import re
 import uuid
 from typing import Annotated
 
@@ -52,6 +54,33 @@ from app.schemas.ticket import (
 )
 
 router = APIRouter(prefix="/vves/{vve_id}/tickets", tags=["tickets"])
+
+
+def _sanitize_filename(filename: str | None) -> str:
+    """Sanitize a filename to prevent path traversal attacks.
+    
+    Removes path separators and special characters, keeping only safe characters.
+    """
+    if not filename:
+        return "unknown"
+    
+    # Get only the base filename (remove any path)
+    filename = os.path.basename(filename)
+    
+    # Remove or replace potentially dangerous characters
+    # Keep only alphanumeric, dots, hyphens, and underscores
+    sanitized = re.sub(r'[^\w\.\-]', '_', filename)
+    
+    # Prevent empty filenames or files starting with dot
+    if not sanitized or sanitized.startswith('.'):
+        sanitized = f"file_{sanitized}"
+    
+    # Limit length
+    if len(sanitized) > 255:
+        name, ext = os.path.splitext(sanitized)
+        sanitized = name[:255-len(ext)] + ext
+    
+    return sanitized
 
 
 async def _create_timeline_entry(
@@ -544,13 +573,16 @@ async def upload_attachment(
             detail=f"Bestand is te groot ({file_size / (1024*1024):.1f} MB). Maximum is 10 MB.",
         )
 
-    # Generate S3 key
-    s3_key = f"vves/{vve_id}/tickets/{ticket_id}/attachments/{uuid.uuid4()}/{file.filename}"
+    # Sanitize filename to prevent path traversal attacks
+    safe_filename = _sanitize_filename(file.filename)
+
+    # Generate S3 key with UUID to prevent collisions
+    s3_key = f"vves/{vve_id}/tickets/{ticket_id}/attachments/{uuid.uuid4()}/{safe_filename}"
 
     # Create attachment record
     attachment = TicketAttachment(
         ticket_id=ticket_id,
-        file_name=file.filename or "unknown",
+        file_name=safe_filename,
         file_type=file.content_type or "application/octet-stream",
         file_size_bytes=file_size,
         s3_key=s3_key,
