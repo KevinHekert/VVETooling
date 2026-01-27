@@ -29,6 +29,7 @@ from app.db.models.models import (
 )
 from app.db.session import get_db
 from app.schemas.contract import (
+    ContractAlertResponse,
     ContractCreate,
     ContractDocumentResponse,
     ContractListResponse,
@@ -105,6 +106,7 @@ async def create_contract(
         start_date=contract_data.start_date,
         end_date=contract_data.end_date,
         notice_period_days=contract_data.notice_period_days,
+        alert_days_before=contract_data.alert_days_before,
         costs=contract_data.costs,
         costs_period=contract_data.costs_period.value if contract_data.costs_period else None,
         created_by_id=current_user.id,
@@ -269,6 +271,82 @@ async def get_contract_summary(
         total_monthly_costs=total_monthly_costs,
         total_yearly_costs=total_yearly_costs,
     )
+
+
+@router.get(
+    "/alerts",
+    response_model=list[ContractAlertResponse],
+    summary="Get contract alerts",
+    description="Get contracts with upcoming notice deadlines that require alerts (STORY-058).",
+)
+async def get_contract_alerts(
+    vve_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_beheerder)],
+    db: AsyncSession = Depends(get_db),
+    include_past: bool = Query(False, description="Include contracts where alert date has passed"),
+) -> list[ContractAlertResponse]:
+    """Get contracts requiring alerts (STORY-058)."""
+    from datetime import timedelta
+    
+    now = datetime.now(timezone.utc)
+    
+    # Query contracts that have end_date, notice_period, and are active
+    query = select(Contract).where(
+        Contract.vve_id == vve_id,
+        Contract.is_active.is_(True),
+        Contract.end_date.isnot(None),
+        Contract.notice_period_days.isnot(None),
+    )
+    
+    result = await db.execute(query)
+    contracts = result.scalars().all()
+    
+    alerts = []
+    for contract in contracts:
+        if not contract.end_date or not contract.notice_period_days:
+            continue
+            
+        # Calculate notice deadline
+        notice_deadline = contract.end_date - timedelta(days=contract.notice_period_days)
+        
+        # Calculate alert date (default 30 days before notice deadline)
+        alert_days = contract.alert_days_before or 30
+        alert_date = notice_deadline - timedelta(days=alert_days)
+        
+        # Calculate days until
+        days_until_alert = (alert_date - now).days
+        days_until_notice = (notice_deadline - now).days
+        
+        # Skip if alert date is in the future (more than 0 days) unless we want past
+        is_alert_due = days_until_alert <= 0
+        is_notice_due = days_until_notice <= 0
+        
+        # Only include if alert is due or upcoming (within alert window)
+        if not include_past and days_until_alert > alert_days:
+            continue
+        
+        alerts.append(
+            ContractAlertResponse(
+                id=contract.id,
+                vve_id=contract.vve_id,
+                supplier_name=contract.supplier_name,
+                contract_type=ContractType(contract.contract_type.value),
+                end_date=contract.end_date,
+                notice_period_days=contract.notice_period_days,
+                alert_days_before=alert_days,
+                notice_deadline=notice_deadline,
+                alert_date=alert_date,
+                days_until_alert=days_until_alert,
+                days_until_notice=days_until_notice,
+                is_alert_due=is_alert_due,
+                is_notice_due=is_notice_due,
+            )
+        )
+    
+    # Sort by days until alert (most urgent first)
+    alerts.sort(key=lambda a: a.days_until_alert)
+    
+    return alerts
 
 
 @router.get(

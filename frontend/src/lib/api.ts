@@ -729,6 +729,14 @@ class ApiClient {
     );
   }
 
+  // STORY-058: Contract alerts
+  async getContractAlerts(vveId: string, includePast = false) {
+    const query = includePast ? '?include_past=true' : '';
+    return this.fetch<import('@/types').ContractAlertResponse[]>(
+      `/vves/${vveId}/contracts/alerts${query}`
+    );
+  }
+
   async createContract(vveId: string, data: import('@/types').ContractCreate) {
     return this.fetch<import('@/types').Contract>(
       `/vves/${vveId}/contracts`,

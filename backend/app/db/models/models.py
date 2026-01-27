@@ -964,6 +964,8 @@ class Contract(Base):
     end_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     # Notice period in days (opzegtermijn)
     notice_period_days: Mapped[int | None] = mapped_column()
+    # Alert configuration (STORY-058)
+    alert_days_before: Mapped[int | None] = mapped_column(default=30)  # Days before notice deadline to alert
     # Costs
     costs: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
     costs_period: Mapped[str | None] = mapped_column(

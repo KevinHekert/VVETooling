@@ -1,6 +1,7 @@
 """Pydantic schemas package."""
 
 from .contract import (
+    ContractAlertResponse,
     ContractCreate,
     ContractDocumentResponse,
     ContractListResponse,
@@ -40,6 +41,7 @@ __all__ = [
     "ContractListResponse",
     "ContractSummary",
     "ContractDocumentResponse",
+    "ContractAlertResponse",
     # Ticket schemas
     "TicketStatus",
     "TicketCategory",

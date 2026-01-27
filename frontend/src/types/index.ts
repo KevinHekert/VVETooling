@@ -631,6 +631,8 @@ export interface Contract {
   created_at: string;
   updated_at: string;
   is_active: boolean;
+  // STORY-058: Alert configuration
+  alert_days_before?: number;
 }
 
 export interface ContractCreate {
@@ -641,6 +643,7 @@ export interface ContractCreate {
   start_date: string;
   end_date?: string;
   notice_period_days?: number;
+  alert_days_before?: number;
   costs?: number;
   costs_period?: CostsPeriod;
 }
@@ -653,6 +656,7 @@ export interface ContractUpdate {
   start_date?: string;
   end_date?: string;
   notice_period_days?: number;
+  alert_days_before?: number;
   costs?: number;
   costs_period?: CostsPeriod;
   is_active?: boolean;
@@ -692,6 +696,23 @@ export interface ContractDocumentResponse {
   file_type: string;
   file_size_bytes: number;
   created_at: string;
+}
+
+// STORY-058: Contract alert types
+export interface ContractAlertResponse {
+  id: string;
+  vve_id: string;
+  supplier_name: string;
+  contract_type: ContractType;
+  end_date: string;
+  notice_period_days: number;
+  alert_days_before: number;
+  notice_deadline: string;
+  alert_date: string;
+  days_until_alert: number;
+  days_until_notice: number;
+  is_alert_due: boolean;
+  is_notice_due: boolean;
 }
 
 // API Response types

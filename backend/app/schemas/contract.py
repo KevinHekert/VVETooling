@@ -40,6 +40,7 @@ class ContractBase(BaseModel):
     start_date: datetime
     end_date: datetime | None = None
     notice_period_days: int | None = Field(None, ge=0, le=365)
+    alert_days_before: int | None = Field(30, ge=0, le=365, description="Days before notice deadline to generate alert")
     costs: Decimal | None = Field(None, ge=0, decimal_places=2)
     costs_period: CostsPeriod | None = None
 
@@ -60,6 +61,7 @@ class ContractUpdate(BaseModel):
     start_date: datetime | None = None
     end_date: datetime | None = None
     notice_period_days: int | None = Field(None, ge=0, le=365)
+    alert_days_before: int | None = Field(None, ge=0, le=365)
     costs: Decimal | None = Field(None, ge=0, decimal_places=2)
     costs_period: CostsPeriod | None = None
     is_active: bool | None = None
@@ -122,5 +124,25 @@ class ContractDocumentResponse(BaseModel):
     file_type: str
     file_size_bytes: int
     created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ContractAlertResponse(BaseModel):
+    """Response schema for contract alert (STORY-058)."""
+
+    id: uuid.UUID
+    vve_id: uuid.UUID
+    supplier_name: str
+    contract_type: ContractType
+    end_date: datetime
+    notice_period_days: int
+    alert_days_before: int
+    notice_deadline: datetime  # end_date - notice_period_days
+    alert_date: datetime  # notice_deadline - alert_days_before
+    days_until_alert: int
+    days_until_notice: int
+    is_alert_due: bool  # True if alert_date is today or past
+    is_notice_due: bool  # True if notice_deadline is today or past
 
     model_config = ConfigDict(from_attributes=True)
