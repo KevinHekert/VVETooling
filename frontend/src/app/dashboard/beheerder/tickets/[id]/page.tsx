@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import type { 
@@ -16,7 +16,6 @@ import type {
   SupplierStatus,
   Supplier,
   TicketSupplierStatusUpdate,
-  SlaStatus,
   SupplierFollowUp,
   SupplierFollowUpCreate,
   SupplierFollowUpChannel
@@ -104,7 +103,6 @@ const TIMELINE_ICONS: Record<string, string> = {
 
 export default function BeheerderTicketDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const ticketId = params.id as string;
 
   const [ticket, setTicket] = useState<Ticket | null>(null);

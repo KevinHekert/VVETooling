@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/ui/Toast';
-import { DashboardWidget, DashboardGrid, KPICard } from '@/components/ui/RoleSwitcher';
+import { DashboardGrid, KPICard } from '@/components/ui/RoleSwitcher';
 import { useAuth } from '@/hooks/useAuth';
 import type { Transaction, TransactionCategory, TransactionSummary } from '@/types';
 

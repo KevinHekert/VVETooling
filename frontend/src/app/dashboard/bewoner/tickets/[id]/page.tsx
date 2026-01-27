@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import type { 
@@ -13,7 +13,6 @@ import type {
   TicketCommentCreate,
   TicketAttachmentStatus,
   SupplierStatus,
-  SlaStatus
 } from '@/types';
 
 /**
@@ -95,7 +94,6 @@ const TIMELINE_ICONS: Record<string, string> = {
 
 export default function TicketDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const ticketId = params.id as string;
 
   const [ticket, setTicket] = useState<Ticket | null>(null);
@@ -157,7 +155,7 @@ export default function TicketDetailPage() {
     setError(null);
     
     try {
-      const attachment = await api.uploadTicketAttachment(vveId, ticketId, file);
+      await api.uploadTicketAttachment(vveId, ticketId, file);
       
       // Refresh ticket to get updated attachments
       const ticketData = await api.getTicket(vveId, ticketId);

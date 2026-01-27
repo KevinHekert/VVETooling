@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/Toast';
-import { DashboardWidget, DashboardGrid, KPICard } from '@/components/ui/RoleSwitcher';
+import { DashboardGrid, KPICard } from '@/components/ui/RoleSwitcher';
 import { useAuth } from '@/hooks/useAuth';
 
 /**
