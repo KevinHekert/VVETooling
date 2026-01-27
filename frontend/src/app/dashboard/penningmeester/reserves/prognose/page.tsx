@@ -40,25 +40,35 @@ interface YearlyPrognose {
   planned_expenses: number;
 }
 
+// STORY-039: Scenario parameters for configuration
+interface ScenarioParams {
+  contributionMultiplier: number;  // 1.0 = 100%
+  expenseMultiplier: number;       // 1.0 = 100%
+  years: number;                   // projection period
+}
+
 // Scenario configuration
-const SCENARIO_CONFIG: Record<Scenario, { label: string; description: string; color: string; badgeColor: string }> = {
+const SCENARIO_CONFIG: Record<Scenario, { label: string; description: string; color: string; badgeColor: string; defaultParams: ScenarioParams }> = {
   basis: {
     label: 'Basis',
     description: 'Standaard groei o.b.v. huidige contributies',
     color: 'bg-blue-500',
     badgeColor: 'bg-blue-100 text-blue-700',
+    defaultParams: { contributionMultiplier: 1.0, expenseMultiplier: 1.0, years: 3 },
   },
   optimistisch: {
     label: 'Optimistisch',
     description: '+10% contributies, geen onvoorziene kosten',
     color: 'bg-green-500',
     badgeColor: 'bg-green-100 text-green-700',
+    defaultParams: { contributionMultiplier: 1.1, expenseMultiplier: 0.9, years: 3 },
   },
   conservatief: {
     label: 'Conservatief',
     description: 'Hogere uitgaven, lagere groei',
     color: 'bg-orange-500',
     badgeColor: 'bg-orange-100 text-orange-700',
+    defaultParams: { contributionMultiplier: 0.95, expenseMultiplier: 1.15, years: 3 },
   },
 };
 
@@ -153,6 +163,14 @@ export default function ReservePrognosePage() {
   const [selectedScenario, setSelectedScenario] = useState<Scenario>('basis');
   const [isLoading, setIsLoading] = useState(true);
   const [expandedReserve, setExpandedReserve] = useState<string | null>(null);
+  
+  // STORY-039: Scenario parameter configuration
+  const [showConfigPanel, setShowConfigPanel] = useState(false);
+  const [scenarioParams, setScenarioParams] = useState<Record<Scenario, ScenarioParams>>({
+    basis: SCENARIO_CONFIG.basis.defaultParams,
+    optimistisch: SCENARIO_CONFIG.optimistisch.defaultParams,
+    conservatief: SCENARIO_CONFIG.conservatief.defaultParams,
+  });
 
   useEffect(() => {
     const loadData = async () => {
@@ -186,9 +204,22 @@ export default function ReservePrognosePage() {
       });
     });
 
+    // STORY-039: Include scenario parameters in export
+    const params = scenarioParams[selectedScenario];
+    const paramsRow = [
+      '',
+      '',
+      'Parameters:',
+      `Bijdrage: ${Math.round(params.contributionMultiplier * 100)}%`,
+      `Uitgaven: ${Math.round(params.expenseMultiplier * 100)}%`,
+      `Looptijd: ${params.years} jaar`,
+    ];
+
     const csvContent = [
       headers.join(';'),
       ...rows.map(row => row.join(';')),
+      '',
+      paramsRow.join(';'),
     ].join('\n');
 
     const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -245,7 +276,15 @@ export default function ReservePrognosePage() {
 
       {/* Scenario Selector */}
       <div className="bg-white rounded-lg shadow p-4">
-        <h2 className="text-sm font-medium text-gray-700 mb-3">Scenario selecteren</h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-medium text-gray-700">Scenario selecteren</h2>
+          <button
+            onClick={() => setShowConfigPanel(!showConfigPanel)}
+            className="text-sm text-blue-600 hover:text-blue-800"
+          >
+            {showConfigPanel ? 'Verbergen' : 'Parameters aanpassen'}
+          </button>
+        </div>
         <div className="flex flex-wrap gap-2">
           {(Object.keys(SCENARIO_CONFIG) as Scenario[]).map((scenario) => {
             const config = SCENARIO_CONFIG[scenario];
@@ -271,6 +310,96 @@ export default function ReservePrognosePage() {
         <p className="text-sm text-gray-500 mt-3">
           {SCENARIO_CONFIG[selectedScenario].description}
         </p>
+
+        {/* STORY-039: Scenario Parameters Configuration Panel */}
+        {showConfigPanel && (
+          <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <h3 className="text-sm font-medium text-gray-700 mb-3">
+              Parameters voor &quot;{SCENARIO_CONFIG[selectedScenario].label}&quot;
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">
+                  Bijdrage factor
+                  <span className="ml-1 text-gray-400 cursor-help" title="1.0 = 100% van huidige bijdrage">ⓘ</span>
+                </label>
+                <input
+                  type="number"
+                  step="0.05"
+                  min="0.5"
+                  max="2"
+                  value={scenarioParams[selectedScenario].contributionMultiplier}
+                  onChange={(e) => {
+                    const value = parseFloat(e.target.value) || 1;
+                    setScenarioParams(prev => ({
+                      ...prev,
+                      [selectedScenario]: { ...prev[selectedScenario], contributionMultiplier: value }
+                    }));
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                />
+                <p className="text-xs text-gray-400 mt-1">
+                  {Math.round(scenarioParams[selectedScenario].contributionMultiplier * 100)}% van basis
+                </p>
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">
+                  Uitgaven factor
+                  <span className="ml-1 text-gray-400 cursor-help" title="1.0 = 100% geplande uitgaven">ⓘ</span>
+                </label>
+                <input
+                  type="number"
+                  step="0.05"
+                  min="0.5"
+                  max="2"
+                  value={scenarioParams[selectedScenario].expenseMultiplier}
+                  onChange={(e) => {
+                    const value = parseFloat(e.target.value) || 1;
+                    setScenarioParams(prev => ({
+                      ...prev,
+                      [selectedScenario]: { ...prev[selectedScenario], expenseMultiplier: value }
+                    }));
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                />
+                <p className="text-xs text-gray-400 mt-1">
+                  {Math.round(scenarioParams[selectedScenario].expenseMultiplier * 100)}% van gepland
+                </p>
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">
+                  Looptijd (jaren)
+                </label>
+                <input
+                  type="number"
+                  step="1"
+                  min="1"
+                  max="10"
+                  value={scenarioParams[selectedScenario].years}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value) || 3;
+                    setScenarioParams(prev => ({
+                      ...prev,
+                      [selectedScenario]: { ...prev[selectedScenario], years: value }
+                    }));
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end mt-4">
+              <button
+                onClick={() => {
+                  addToast('Parameters opgeslagen', 'success');
+                  setShowConfigPanel(false);
+                }}
+                className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700"
+              >
+                Toepassen
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Summary Cards */}
