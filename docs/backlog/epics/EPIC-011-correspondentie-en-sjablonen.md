@@ -3,7 +3,7 @@
 ## Documentinformatie
 - **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner / Sales
-- **Status**: Draft
+- **Status**: ✅ Geïmplementeerd
 - **Versie**: 0.1
 
 ## Doel / waarde
