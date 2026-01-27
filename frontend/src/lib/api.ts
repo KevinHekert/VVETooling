@@ -954,6 +954,23 @@ class ApiClient {
       method: 'DELETE',
     });
   }
+
+  // STORY-071: ALV Invitations
+  async previewInvitation(vveId: string, meetingId: string) {
+    return this.fetch<import('@/types').MeetingInvitationPreview>(
+      `/vves/${vveId}/meetings/${meetingId}/invitation/preview`
+    );
+  }
+
+  async sendInvitation(vveId: string, meetingId: string, data: import('@/types').MeetingInvitationCreate) {
+    return this.fetch<import('@/types').MeetingInvitationResponse>(
+      `/vves/${vveId}/meetings/${meetingId}/invitation/send`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
 }
 
 export const api = new ApiClient(API_BASE_URL);

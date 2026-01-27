@@ -841,6 +841,30 @@ export interface AgendaItemReorder {
   item_ids: string[];
 }
 
+// STORY-071: ALV Invitation types
+export interface MeetingInvitationCreate {
+  include_agenda?: boolean;
+  include_documents?: boolean;
+  custom_message?: string;
+}
+
+export interface MeetingInvitationResponse {
+  meeting_id: string;
+  invitations_sent: number;
+  status: string;
+  sent_at: string;
+  recipients: string[];
+}
+
+export interface MeetingInvitationPreview {
+  subject: string;
+  body_preview: string;
+  recipient_count: number;
+  meeting_date: string;
+  agenda_summary?: string;
+  document_count: number;
+}
+
 // API Response types
 export interface ApiError {
   detail: string;
