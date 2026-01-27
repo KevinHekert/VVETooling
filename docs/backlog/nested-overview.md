@@ -45,13 +45,13 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
    - 4.2 **FEAT-008 Gebruikers uitnodigen** ✅
      - 4.2.1 ✅ STORY-017 Onboarding uitnodigingen en herinneringen (Must) *(gedeeld)*
 
-5. **EPIC-005 Veiligheid & compliance** ⚠️
+5. **EPIC-005 Veiligheid & compliance** ✅
    - 5.1 **FEAT-010 Authenticatie & RBAC** ✅
      - 5.1.1 ✅ STORY-005 Rol-gebaseerd inloggen (Must)
      - 5.1.2 ✅ STORY-021 Auth & RBAC UI beheer (Must)
-   - 5.2 **FEAT-015 Audit logging** ⚠️
+   - 5.2 **FEAT-015 Audit logging** ✅
      - 5.2.1 ✅ STORY-010 Audit logging zichtbaar in UI (Should)
-     - 5.2.2 ⬜ STORY-023 Audit logging filters en export (Should)
+     - 5.2.2 ✅ STORY-023 Audit logging filters en export (Should)
 
 6. **EPIC-006 Documenten delen** ⚠️
    - 6.1 **FEAT-011 Documentbeheer** ✅
@@ -100,11 +100,11 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
 
 | Niveau | Totaal | ✅ Gereed | ⬜ Backlog | % Gereed |
 |--------|--------|-----------|-----------|----------|
-| Epics | 10 | 5 | 5 | 50% |
-| Features | 19 | 13 | 6 | 68% |
-| Stories | 44 | 33 | 11 | 75% |
+| Epics | 10 | 6 | 4 | 60% |
+| Features | 19 | 14 | 5 | 74% |
+| Stories | 44 | 34 | 10 | 77% |
 
-**Volledig afgeronde Epics:** EPIC-002, EPIC-003, EPIC-004, EPIC-009, EPIC-010
+**Volledig afgeronde Epics:** EPIC-002, EPIC-003, EPIC-004, EPIC-005, EPIC-009, EPIC-010
 
 ---
 - Prioriteitlabels komen uit de individuele stories (Must/Should). Waar een story meerdere features raakt, is de primaire plaatsing hierboven opgenomen en gemarkeerd als *gedeeld* wanneer relevant.
