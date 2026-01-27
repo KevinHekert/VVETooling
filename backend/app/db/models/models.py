@@ -597,6 +597,51 @@ class Supplier(Base):
     )
 
 
+class SupplierFollowUpChannel(str, Enum):
+    """Communication channel for supplier follow-ups (STORY-036)."""
+
+    PHONE = "phone"  # Telefoon
+    EMAIL = "email"  # E-mail
+    IN_PERSON = "in_person"  # Persoonlijk
+    OTHER = "other"  # Anders
+
+
+class SupplierFollowUp(Base):
+    """Follow-up action logged for supplier communication (STORY-036).
+
+    Implements STORY-036: Leveranciers opvolgacties loggen.
+    Tracks all communication with suppliers per ticket.
+    """
+
+    __tablename__ = "supplier_follow_ups"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    ticket_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tickets.id", ondelete="CASCADE"), nullable=False
+    )
+    supplier_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("suppliers.id", ondelete="CASCADE"), nullable=False
+    )
+    channel: Mapped[SupplierFollowUpChannel] = mapped_column(
+        SQLEnum(SupplierFollowUpChannel), nullable=False
+    )
+    summary: Mapped[str] = mapped_column(String(500), nullable=False)
+    contact_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    created_by_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+    __table_args__ = (
+        Index("ix_supplier_follow_ups_ticket_id", "ticket_id"),
+        Index("ix_supplier_follow_ups_supplier_id", "supplier_id"),
+    )
+
+
 class Ticket(Base):
     """Ticket for resident complaints and service requests (FEAT-016).
 
