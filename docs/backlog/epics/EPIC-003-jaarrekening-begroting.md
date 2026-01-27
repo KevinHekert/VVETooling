@@ -1,10 +1,10 @@
 # EPIC-003: Jaarrekening & begroting
 
 ## Documentinformatie
-- **Datum**: 2026-01-26
+- **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: Ready
-- **Versie**: 1.0
+- **Status**: Review
+- **Versie**: 1.1
 
 ## Doel / waarde
 Penningmeesters kunnen jaarrekening en begroting genereren op basis van bestaande transacties en reserves.
@@ -13,6 +13,7 @@ Penningmeesters kunnen jaarrekening en begroting genereren op basis van bestaand
 - Jaarrekening rapportage met verplichte onderdelen.
 - Begroting voor volgend jaar met vergelijking.
 - Export naar PDF.
+- Scenario-vergelijkingen voor begroting (best case / base case).
 
 ## Out-of-scope
 - Accountant workflows buiten MVP.

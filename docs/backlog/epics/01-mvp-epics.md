@@ -1,11 +1,12 @@
 # Epics & Backlog - VVE Tooling MVP
 
 ## Documentinformatie
-- **Datum**: 2026-01-26 (Updated: 2026-01-26)
+- **Datum**: 2026-01-27 (Updated: 2026-01-27)
 - **Eigenaar**: Product Management
-- **Status**: Final
-- **Versie**: 2.1
+- **Status**: Review
+- **Versie**: 2.2
 - **Changelog**: 
+  - v2.2 - EP-010 toegevoegd (onderhoud/contracten/communicatie) en feature-toewijzing per epic aangescherpt
   - v2.1 - Epics herbekeken vanuit PM perspectief: EP-004, EP-005, EP-006 ge-update om beter aan te sluiten bij multi-user doelstellingen en VvE onboarding voor alle rollen
   - v2.0 - Multi-user platform requirement (EP-009 toegevoegd, alle epics ge-update)
 
@@ -38,6 +39,7 @@ Dit document definieert **Epics** voor VVE Tooling MVP. Elke epic is:
 | EP-007 | VVE kan data exporteren en back-uppen | P1 | To Do | MVP Q2/Q3 |
 | EP-008 | VVE kan betalen voor platform (flat fee) | P0 | To Do | MVP Q2 |
 | **EP-009** | **Bestuursleden en Bewoners kunnen inloggen en platform gebruiken** | **P0** | **To Do** | **MVP Q2** |
+| EP-010 | VVE kan onderhoud, contracten en communicatie centraal beheren | P1 | To Do | Horizon 2 |
 
 ---
 
@@ -675,6 +677,58 @@ VVE's hebben **gebrek aan transparantie en samenwerking** omdat alleen de pennin
 
 ---
 
+## EP-010: VVE kan onderhoud, contracten en communicatie centraal beheren
+
+### Probleemomschrijving
+VVE's beheren onderhoudsverzoeken, contracten met aannemers en bewonerscommunicatie **versnipperd** via e-mail, WhatsApp en losse Excel-bestanden. Hierdoor ontbreekt overzicht over **openstaande meldingen**, **onderhoudsplanning** en **contractverplichtingen**, met als gevolg vertraagde acties, gemiste opzegtermijnen en frustratie bij bewoners en bestuur.
+
+**User pain points**:
+- **Bestuur**: "Ik ben het overzicht kwijt van welke onderhoudszaken nog openstaan"
+- **Secretaris**: "Contracten en opzegtermijnen zitten in mijn mailbox"
+- **Bewoner**: "Ik weet niet of mijn melding is opgepakt"
+- **Penningmeester**: "Onderhoudskosten zijn lastig te plannen zonder actuele MJOP"
+
+### Doelstelling
+Bestuur en penningmeester kunnen onderhoud en contracten **gestructureerd plannen** en bewoners **consistent informeren**, waardoor 90% van onderhoudsverzoeken binnen targettijd wordt opgepakt en contractverplichtingen nooit worden gemist.
+
+### In Scope
+- Ticketing voor onderhoudsmeldingen (status, prioriteit, eigenaar)
+- MJOP/onderhoudsplannen met planning en budgetkoppeling
+- Contractenregister voor aannemers (looptijd, SLA, opzegtermijnen)
+- Communicatie en brieven genereren vanuit templates (bijv. aankondigingen, opleveringen)
+- Bewoners kunnen status updates volgen via dashboard/notificaties
+
+### Out of Scope
+- Geavanceerde procurement/offertevergelijking
+- Integraties met externe onderhoudssystemen (Roadmap)
+- Live chat of callcenter tooling
+
+### Succesindicatoren
+**Quantitative**:
+- ✅ 80%+ onderhoudsmeldingen wordt via tickets geregistreerd
+- ✅ 100% contracten met aannemers zijn opgeslagen met opzegdatum
+- ✅ 90% meldingen krijgt status update binnen 5 werkdagen
+
+**Qualitative**:
+- ✅ "Ik zie precies wat er nog open staat" (bestuur)
+- ✅ "Mijn melding wordt serieus genomen" (bewoner)
+- ✅ "Ik hoef niet meer te zoeken naar contracten" (secretaris)
+
+### Herleidbaarheid
+- **Marktonderzoek**: docs/marktonderzoek/07-as-onderhoud.md, docs/marktonderzoek/06-as-contracten.md, docs/marktonderzoek/09-as-communicatie.md
+- **Probleemstatement**: docs/product/discovery/01-probleemdefinitie-productrichting.md - Transparantie & samenwerking
+- **Strategie**: docs/product/strategy/01-productstrategie-keuzes.md - Roadmap uitbreidingen (Post-MVP)
+
+### Acceptance Criteria (High-Level)
+- [ ] Bewoners kunnen onderhoudsmelding indienen en status volgen
+- [ ] Bestuur kan tickets prioriteren, toewijzen en sluiten
+- [ ] MJOP bevat geplande taken met verwachte kosten
+- [ ] Contractenregister toont looptijd en opzegtermijn per aannemer
+- [ ] Brieven/templates kunnen worden gegenereerd en gedeeld met bewoners
+- [ ] Dashboard toont open tickets en komende onderhoudswerkzaamheden
+
+---
+
 ## Prioritisering & Roadmap
 
 ### MVP Critical Path (Must Have voor Launch)
@@ -695,13 +749,12 @@ VVE's hebben **gebrek aan transparantie en samenwerking** omdat alleen de pennin
 **Estimated timeline**: +1 maand (Q3 2026)
 
 ### Post-MVP (Roadmap Fase 2)
+- EP-010 Onderhoud, contracten en communicatie (tickets, MJOP, leveranciers, brieven)
 - Bank integraties (automatisch transacties ophalen)
 - Native mobile apps (iOS/Android) - vooral voor bewoners
 - In-app messaging (chat tussen bewoners en bestuur)
 - Polls/Voting (online stemmen)
 - WhatsApp integraties
-- Onderhoud planning
-- Contract management
 
 ## Next Steps
 
@@ -722,7 +775,7 @@ VVE's hebben **gebrek aan transparantie en samenwerking** omdat alleen de pennin
 
 ## Conclusie
 
-Deze **9 Epics** vormen de basis van VVE Tooling MVP. Ze zijn:
+Deze **10 Epics** vormen de basis van VVE Tooling backlog. Ze zijn:
 - ✅ **Problem-focused**: Geformuleerd vanuit gebruikers pijnpunten
 - ✅ **Herleidbaar**: Linked naar discovery en strategy docs
 - ✅ **Meetbaar**: Duidelijke succesindicatoren
@@ -731,6 +784,6 @@ Deze **9 Epics** vormen de basis van VVE Tooling MVP. Ze zijn:
 
 **Critical path** (EP-001 t/m EP-006, EP-008, EP-009) is **must-have** voor MVP launch. EP-007 is **nice-to-have** en kan later.
 
-**Belangrijkste wijziging vs origineel**: **EP-009 (Multi-user)** is toegevoegd als P0 epic. Dit verandert het product van "tool voor penningmeester" naar "platform voor hele VVE". Dit heeft grote impact op UX, permissions, pricing en value proposition.
+**Belangrijkste wijziging vs origineel**: **EP-009 (Multi-user)** is toegevoegd als P0 epic. Dit verandert het product van "tool voor penningmeester" naar "platform voor hele VVE". EP-010 borgt de doorvertaling naar onderhoud, contracten en communicatie in de post-MVP roadmap.
 
 Met deze epics bouwen we een **collaboratief, transparant platform** dat het core probleem (gebrek aan overzicht en samenwerking in VVE) oplost met multi-user access en VVE-specifieke differentiatie.

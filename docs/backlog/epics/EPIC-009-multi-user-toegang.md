@@ -1,10 +1,10 @@
 # EPIC-009: Multi-user toegang & rollen
 
 ## Documentinformatie
-- **Datum**: 2026-01-26
+- **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: Ready
-- **Versie**: 1.0
+- **Status**: Review
+- **Versie**: 1.1
 
 ## Doel / waarde
 Bestuursleden en bewoners kunnen veilig inloggen en krijgen rol-specifieke toegang tot het platform.
@@ -13,6 +13,7 @@ Bestuursleden en bewoners kunnen veilig inloggen en krijgen rol-specifieke toega
 - Authenticatie en uitnodigingen.
 - Rollen en role-based UI.
 - Bewoners read-only toegang tot eigen data.
+- Externe aannemersaccounts voor toegewezen onderhoudstickets.
 
 ## Out-of-scope
 - Multi-VVE accounts (roadmap).

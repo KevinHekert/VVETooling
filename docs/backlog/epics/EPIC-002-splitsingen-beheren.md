@@ -1,10 +1,10 @@
 # EPIC-002: VVE-specifieke splitsingen beheren
 
 ## Documentinformatie
-- **Datum**: 2026-01-26
+- **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: Ready
-- **Versie**: 1.0
+- **Status**: Review
+- **Versie**: 1.1
 
 ## Doel / waarde
 Automatische en correcte splitsingsberekeningen voor contributies, zodat penningmeesters geen handmatige Excel-formules meer nodig hebben.
@@ -13,6 +13,7 @@ Automatische en correcte splitsingsberekeningen voor contributies, zodat penning
 - Splitsingssleutel vastleggen per eigenaar.
 - Automatische berekening contributies.
 - Overzichten per eigenaar.
+- Herberekening bij mutaties (wisseling eigenaar of percentage).
 
 ## Out-of-scope
 - Meerdere splitsingssleutels per VVE (roadmap).

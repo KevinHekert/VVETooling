@@ -25,6 +25,7 @@ Deze backlog is de single source of truth voor uitvoering van VVE Tooling MVP. A
   - [EPIC-007 Data export & backup](epics/EPIC-007-data-export-backup.md)
   - [EPIC-008 Betaling & abonnement](epics/EPIC-008-betaling-en-abonnement.md)
   - [EPIC-009 Multi-user toegang & rollen](epics/EPIC-009-multi-user-toegang.md)
+  - [EPIC-010 Onderhoud, contracten & communicatie](epics/EPIC-010-onderhoud-contracten-communicatie.md)
 - **Features**
   - [FEAT-001 Transactiebeheer](features/FEAT-001-transactiebeheer.md)
   - [FEAT-002 Reserves & saldo-overzicht](features/FEAT-002-reserves-overzicht.md)
@@ -41,6 +42,22 @@ Deze backlog is de single source of truth voor uitvoering van VVE Tooling MVP. A
   - [FEAT-013 Export & backup](features/FEAT-013-export-backup.md)
   - [FEAT-014 Pricing & billing](features/FEAT-014-pricing-billing.md)
   - [FEAT-015 Audit logging](features/FEAT-015-audit-logging.md)
+  - [FEAT-016 Onderhoudstickets](features/FEAT-016-onderhoudstickets.md)
+  - [FEAT-017 MJOP & onderhoudsplanning](features/FEAT-017-mjop-onderhoudsplan.md)
+  - [FEAT-018 Contractenregister](features/FEAT-018-contractenregister.md)
+  - [FEAT-019 Communicatie & brieven](features/FEAT-019-communicatie-brieven.md)
+  - [FEAT-020 Leveranciersportaal](features/FEAT-020-leveranciersportaal.md)
+  - [FEAT-021 Financieel dashboard & KPI's](features/FEAT-021-financieel-dashboard-kpis.md)
+  - [FEAT-022 Begrotingsscenario's](features/FEAT-022-begrotingsscenario.md)
+  - [FEAT-023 Onboarding checklist & activatie](features/FEAT-023-onboarding-checklist.md)
+  - [FEAT-024 Contractdocumenten & metadata](features/FEAT-024-contractdocumenten-metadata.md)
+  - [FEAT-025 Leveranciersrollen & toegang](features/FEAT-025-leveranciersrollen-toegang.md)
+  - [FEAT-026 Export onderhoud & contracten](features/FEAT-026-export-onderhoud-contracten.md)
+  - [FEAT-027 Abonnement add-ons](features/FEAT-027-abonnement-addons.md)
+  - [FEAT-028 Mutatie-herberekening](features/FEAT-028-mutatie-herberekening.md)
+  - [FEAT-029 Bewonersstatus updates](features/FEAT-029-bewonersstatus-updates.md)
+  - [FEAT-030 Contract compliance alerts](features/FEAT-030-contract-compliance-alerts.md)
+  - [FEAT-031 Ticketing SLA rapportage](features/FEAT-031-ticketing-sla-rapportage.md)
 - **Stories**
   - [STORY-001 Transactie toevoegen](stories/STORY-001-transactie-toevoegen.md)
   - [STORY-002 Splitsingssleutel valideren](stories/STORY-002-splitsingssleutel-valideren.md)
@@ -96,6 +113,7 @@ Deze backlog is de single source of truth voor uitvoering van VVE Tooling MVP. A
 | EPIC-007 | docs/backlog/epics/01-mvp-epics.md (EP-007), docs/architecture/decisions/ADR-005-observability-logging.md |
 | EPIC-008 | docs/backlog/epics/01-mvp-epics.md (EP-008), docs/product/strategy/01-productstrategie-keuzes.md |
 | EPIC-009 | docs/backlog/epics/01-mvp-epics.md (EP-009), docs/ux/design/02-bewoner-flows.md, docs/ux/design/04-bestuur-flows.md, docs/architecture/constraints/01-randvoorwaarden-ux-development.md |
+| EPIC-010 | docs/backlog/epics/01-mvp-epics.md (EP-010), docs/marktonderzoek/06-as-contracten.md, docs/marktonderzoek/07-as-onderhoud.md, docs/marktonderzoek/09-as-communicatie.md |
 | FEAT-001 | docs/backlog/features/FEAT-001-transactiebeheer.md, docs/ux/design/03-beheerder-flows.md, docs/ui/components/feedback-notifications.md |
 | FEAT-002 | docs/backlog/features/FEAT-002-reserves-overzicht.md, docs/ux/design/04-bestuur-flows.md |
 | FEAT-003 | docs/backlog/features/FEAT-003-splitsingssleutel.md, docs/ux/design/03-beheerder-flows.md |
@@ -111,6 +129,22 @@ Deze backlog is de single source of truth voor uitvoering van VVE Tooling MVP. A
 | FEAT-013 | docs/backlog/features/FEAT-013-export-backup.md |
 | FEAT-014 | docs/backlog/features/FEAT-014-pricing-billing.md, docs/product/strategy/01-productstrategie-keuzes.md |
 | FEAT-015 | docs/backlog/features/FEAT-015-audit-logging.md, docs/product/decisions/01-productbesluiten-aannames-randvoorwaarden.md |
+| FEAT-016 | docs/backlog/features/FEAT-016-onderhoudstickets.md, docs/backlog/epics/EPIC-010-onderhoud-contracten-communicatie.md |
+| FEAT-017 | docs/backlog/features/FEAT-017-mjop-onderhoudsplan.md, docs/backlog/epics/EPIC-010-onderhoud-contracten-communicatie.md |
+| FEAT-018 | docs/backlog/features/FEAT-018-contractenregister.md, docs/backlog/epics/EPIC-010-onderhoud-contracten-communicatie.md |
+| FEAT-019 | docs/backlog/features/FEAT-019-communicatie-brieven.md, docs/backlog/epics/EPIC-010-onderhoud-contracten-communicatie.md |
+| FEAT-020 | docs/backlog/features/FEAT-020-leveranciersportaal.md, docs/backlog/epics/EPIC-010-onderhoud-contracten-communicatie.md |
+| FEAT-021 | docs/backlog/features/FEAT-021-financieel-dashboard-kpis.md, docs/backlog/epics/EPIC-001-financieel-overzicht-beheren.md |
+| FEAT-022 | docs/backlog/features/FEAT-022-begrotingsscenario.md, docs/backlog/epics/EPIC-003-jaarrekening-begroting.md |
+| FEAT-023 | docs/backlog/features/FEAT-023-onboarding-checklist.md, docs/backlog/epics/EPIC-004-onboarding-multi-user.md |
+| FEAT-024 | docs/backlog/features/FEAT-024-contractdocumenten-metadata.md, docs/backlog/epics/EPIC-006-documenten-delen.md |
+| FEAT-025 | docs/backlog/features/FEAT-025-leveranciersrollen-toegang.md, docs/backlog/epics/EPIC-009-multi-user-toegang.md |
+| FEAT-026 | docs/backlog/features/FEAT-026-export-onderhoud-contracten.md, docs/backlog/epics/EPIC-007-data-export-backup.md |
+| FEAT-027 | docs/backlog/features/FEAT-027-abonnement-addons.md, docs/backlog/epics/EPIC-008-betaling-en-abonnement.md |
+| FEAT-028 | docs/backlog/features/FEAT-028-mutatie-herberekening.md, docs/backlog/epics/EPIC-002-splitsingen-beheren.md |
+| FEAT-029 | docs/backlog/features/FEAT-029-bewonersstatus-updates.md, docs/backlog/epics/EPIC-009-multi-user-toegang.md |
+| FEAT-030 | docs/backlog/features/FEAT-030-contract-compliance-alerts.md, docs/backlog/epics/EPIC-010-onderhoud-contracten-communicatie.md |
+| FEAT-031 | docs/backlog/features/FEAT-031-ticketing-sla-rapportage.md, docs/backlog/epics/EPIC-010-onderhoud-contracten-communicatie.md |
 | STORY-001 | docs/backlog/stories/STORY-001-transactie-toevoegen.md, docs/ui/components/form-controls.md |
 | STORY-002 | docs/backlog/stories/STORY-002-splitsingssleutel-valideren.md, docs/ui/components/feedback-notifications.md |
 | STORY-003 | docs/backlog/stories/STORY-003-bewoner-ziet-eigen-status.md, docs/ux/design/02-bewoner-flows.md |

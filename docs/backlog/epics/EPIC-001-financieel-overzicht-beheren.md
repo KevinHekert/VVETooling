@@ -1,10 +1,10 @@
 # EPIC-001: Financieel overzicht beheren
 
 ## Documentinformatie
-- **Datum**: 2026-01-26
+- **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: Ready
-- **Versie**: 1.0
+- **Status**: Review
+- **Versie**: 1.1
 
 ## Doel / waarde
 Penningmeesters kunnen inkomsten en uitgaven efficiënt registreren en direct financieel inzicht krijgen, met minder handwerk dan Excel.
@@ -13,6 +13,7 @@ Penningmeesters kunnen inkomsten en uitgaven efficiënt registreren en direct fi
 - Transacties toevoegen, wijzigen en verwijderen.
 - Categoriseren per VVE-categorie en reserve.
 - Financieel overzicht met filters en basisrapportages.
+- Financieel dashboard met KPI's en managementsamenvattingen.
 
 ## Out-of-scope
 - Bankkoppelingen (roadmap).

@@ -60,10 +60,19 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
 
 9. **EPIC-009 Multi-user toegang & dashboards**
    - 9.1 **FEAT-009 Rol-specifieke dashboards**
-     - 9.1.1 STORY-009 Rol-specifiek dashboard raamwerk (Must)
-     - 9.1.2 STORY-012 Transactie-overzicht met filters en widgets (Must) *(dashboards)*
-     - 9.1.3 STORY-024 Multi-tenant toegang en context switcher (Must)
-     - 9.1.4 STORY-025 Notificaties en toasts consistent raamwerk (Must)
+      - 9.1.1 STORY-009 Rol-specifiek dashboard raamwerk (Must)
+      - 9.1.2 STORY-012 Transactie-overzicht met filters en widgets (Must) *(dashboards)*
+      - 9.1.3 STORY-024 Multi-tenant toegang en context switcher (Must)
+      - 9.1.4 STORY-025 Notificaties en toasts consistent raamwerk (Must)
+
+10. **EPIC-010 Onderhoud, contracten & communicatie**
+   - 10.1 **FEAT-016 Onderhoudstickets**
+   - 10.2 **FEAT-017 MJOP & onderhoudsplanning**
+   - 10.3 **FEAT-018 Contractenregister**
+   - 10.4 **FEAT-019 Communicatie & brieven**
+   - 10.5 **FEAT-020 Leveranciersportaal**
+   - 10.6 **FEAT-030 Contract compliance alerts**
+   - 10.7 **FEAT-031 Ticketing SLA rapportage**
 
 ---
 - Prioriteitlabels komen uit de individuele stories (Must/Should). Waar een story meerdere features raakt, is de primaire plaatsing hierboven opgenomen en gemarkeerd als *gedeeld* wanneer relevant.

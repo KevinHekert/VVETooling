@@ -1,10 +1,10 @@
 # EPIC-007: Data export & backup
 
 ## Documentinformatie
-- **Datum**: 2026-01-26
+- **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: Ready
-- **Versie**: 1.0
+- **Status**: Review
+- **Versie**: 1.1
 
 ## Doel / waarde
 VVE's kunnen data exporteren en back-uppen om ownership en compliance te waarborgen.
@@ -12,6 +12,7 @@ VVE's kunnen data exporteren en back-uppen om ownership en compliance te waarbor
 ## Scope
 - Export van financiële data (CSV/PDF).
 - Basis backup/export voor documenten.
+- Export van onderhoudstickets en contractregister (CSV/PDF).
 
 ## Out-of-scope
 - Volledige data portability automatisering.

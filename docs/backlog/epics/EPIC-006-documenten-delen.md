@@ -1,10 +1,10 @@
 # EPIC-006: Documenten delen
 
 ## Documentinformatie
-- **Datum**: 2026-01-26
+- **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: Ready
-- **Versie**: 1.0
+- **Status**: Review
+- **Versie**: 1.1
 
 ## Doel / waarde
 Bestuur en bewoners kunnen documenten veilig opslaan, terugvinden en delen zonder losse mail/drive.
@@ -13,6 +13,7 @@ Bestuur en bewoners kunnen documenten veilig opslaan, terugvinden en delen zonde
 - Document upload (bestuur/penningmeester).
 - Documenten inzien en downloaden (alle rollen).
 - Basis categorisering en zoek/filter.
+- Contracten archiveren met metadata (looptijd, opzegtermijn).
 
 ## Out-of-scope
 - Geavanceerde document workflows (e-signing).

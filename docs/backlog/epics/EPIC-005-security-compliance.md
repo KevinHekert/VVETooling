@@ -1,10 +1,10 @@
 # EPIC-005: Veiligheid & compliance
 
 ## Documentinformatie
-- **Datum**: 2026-01-26
+- **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: Ready
-- **Versie**: 1.0
+- **Status**: Review
+- **Versie**: 1.1
 
 ## Doel / waarde
 Gebruikers vertrouwen het platform door aantoonbare security, privacy en compliance (AVG, data isolation, audit logging).
@@ -14,6 +14,7 @@ Gebruikers vertrouwen het platform door aantoonbare security, privacy en complia
 - Audit logging voor kritieke acties.
 - Privacy by design (bewoners zien alleen eigen data).
 - Security & privacy communicatie (policy).
+- Toegangscontrole voor leveranciersaccounts (aannemers beperkt tot toegewezen tickets).
 
 ## Out-of-scope
 - ISO/SOC2 certificering.

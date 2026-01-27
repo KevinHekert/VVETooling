@@ -1,10 +1,10 @@
 # EPIC-004: Onboarding voor alle rollen
 
 ## Documentinformatie
-- **Datum**: 2026-01-26
+- **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: Ready
-- **Versie**: 1.0
+- **Status**: Review
+- **Versie**: 1.1
 
 ## Doel / waarde
 Alle rollen (penningmeester, bestuur, bewoners) kunnen snel starten zonder hulp, met duidelijke activatie en onboarding.
@@ -13,6 +13,7 @@ Alle rollen (penningmeester, bestuur, bewoners) kunnen snel starten zonder hulp,
 - Onboarding wizard voor penningmeester.
 - Uitnodigen en activeren van bestuur & bewoners.
 - Rol-specifieke welkom flows.
+- Onboarding checklist met tijdlijn en next steps per rol.
 
 ## Out-of-scope
 - Persoonlijke onboarding calls.

@@ -1,10 +1,10 @@
 # EPIC-008: Betaling & abonnement
 
 ## Documentinformatie
-- **Datum**: 2026-01-26
+- **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: Ready
-- **Versie**: 1.0
+- **Status**: Review
+- **Versie**: 1.1
 
 ## Doel / waarde
 VVE's kunnen het platform afnemen en betalen via een duidelijk abonnement, passend bij het flat fee model.
@@ -13,6 +13,7 @@ VVE's kunnen het platform afnemen en betalen via een duidelijk abonnement, passe
 - Pricing tiers en checkout.
 - Trial naar betaald.
 - Facturatie/abonnementsstatus.
+- Contracten voor aannemers als add-on (upgrade workflow).
 
 ## Out-of-scope
 - Complexe enterprise contracten.
