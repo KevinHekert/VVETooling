@@ -141,7 +141,7 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
 15. **EPIC-015 ALV & Vergaderbeheer** ⚠️
     - 15.1 **FEAT-032 ALV Planning & Uitnodigingen** ⚠️
       - 15.1.1 ✅ STORY-069 ALV plannen met datum en locatie (Must)
-      - 15.1.2 ⬜ STORY-070 ALV agenda opstellen (Must)
+      - 15.1.2 ✅ STORY-070 ALV agenda opstellen (Must)
       - 15.1.3 ⬜ STORY-071 ALV uitnodiging versturen (Must)
     - 15.2 **FEAT-033 Presentie & Volmachten** ⬜
       - 15.2.1 ⬜ STORY-072 RSVP registreren voor ALV (Must)
@@ -266,7 +266,7 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
 |--------|--------|-----------|-----------|----------|
 | Epics | 27 | 13 | 14 | 48% |
 | Features | 69 | 26 | 43 | 38% |
-| Stories | 124 | 55 | 69 | 44% |
+| Stories | 124 | 56 | 68 | 45% |
 
 **Volledig afgeronde Epics (Horizon 1 - MVP):** EPIC-001, EPIC-002, EPIC-003, EPIC-004, EPIC-005, EPIC-006, EPIC-007, EPIC-008, EPIC-009, EPIC-010, EPIC-011, EPIC-012, EPIC-013
 
