@@ -468,6 +468,21 @@ class ApiClient {
       `/vves/${vveId}/tickets/${ticketId}/comments`
     );
   }
+
+  async updateTicketComment(
+    vveId: string,
+    ticketId: string,
+    commentId: string,
+    data: import('@/types').TicketCommentUpdate
+  ) {
+    return this.fetch<import('@/types').TicketComment>(
+      `/vves/${vveId}/tickets/${ticketId}/comments/${commentId}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }
+    );
+  }
 }
 
 export const api = new ApiClient(API_BASE_URL);

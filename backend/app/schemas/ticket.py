@@ -135,6 +135,12 @@ class TicketCommentCreate(TicketCommentBase):
     pass
 
 
+class TicketCommentUpdate(BaseModel):
+    """Schema for updating a ticket comment (STORY-037)."""
+
+    is_answered: bool | None = None
+
+
 class TicketCommentResponse(TicketCommentBase):
     """Response schema for ticket comment."""
 
@@ -144,6 +150,11 @@ class TicketCommentResponse(TicketCommentBase):
     author_name: str | None = None
     created_at: datetime
     updated_at: datetime
+    # STORY-037: Mark as answered
+    is_answered: bool = False
+    answered_by_id: uuid.UUID | None = None
+    answered_by_name: str | None = None
+    answered_at: datetime | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

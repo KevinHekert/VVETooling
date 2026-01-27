@@ -379,11 +379,20 @@ export interface TicketComment {
   is_internal: boolean;
   created_at: string;
   updated_at: string;
+  // STORY-037 fields
+  is_answered: boolean;
+  answered_by_id?: string;
+  answered_by_name?: string;
+  answered_at?: string;
 }
 
 export interface TicketCommentCreate {
   content: string;
   is_internal?: boolean;
+}
+
+export interface TicketCommentUpdate {
+  is_answered?: boolean;
 }
 
 export interface TicketDraft {

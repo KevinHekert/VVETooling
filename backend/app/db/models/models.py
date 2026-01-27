@@ -718,6 +718,12 @@ class TicketComment(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+    # STORY-037: Mark as answered
+    is_answered: Mapped[bool] = mapped_column(Boolean, default=False)
+    answered_by_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    answered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     # Relationships
     ticket: Mapped["Ticket"] = relationship("Ticket", back_populates="comments")

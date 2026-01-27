@@ -40,6 +40,7 @@ from app.schemas.ticket import (
     TicketAttachmentUpdate,
     TicketCommentCreate,
     TicketCommentResponse,
+    TicketCommentUpdate,
     TicketCreate,
     TicketListResponse,
     TicketResponse,
@@ -848,6 +849,78 @@ async def list_comments(
         responses.append(response)
 
     return responses
+
+
+@router.put(
+    "/{ticket_id}/comments/{comment_id}",
+    response_model=TicketCommentResponse,
+    summary="Reactie markeren als beantwoord",
+    description="""
+    STORY-037: Als bestuurslid wil ik reacties kunnen markeren als beantwoord.
+
+    - Alleen bestuur kan reacties markeren als beantwoord
+    - Beantwoord status wordt getoond in de tijdlijn
+    """,
+)
+async def update_comment(
+    vve_id: uuid.UUID,
+    ticket_id: uuid.UUID,
+    comment_id: uuid.UUID,
+    update_data: TicketCommentUpdate,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> TicketCommentResponse:
+    """Update a comment (mark as answered).
+
+    Requires bestuurslid or beheerder role.
+    """
+    # Get comment
+    result = await db.execute(
+        select(TicketComment)
+        .join(Ticket)
+        .where(
+            TicketComment.id == comment_id,
+            TicketComment.ticket_id == ticket_id,
+            Ticket.vve_id == vve_id,
+        )
+    )
+    comment = result.scalar_one_or_none()
+
+    if comment is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Reactie niet gevonden",
+        )
+
+    # Update answered status
+    if update_data.is_answered is not None:
+        comment.is_answered = update_data.is_answered
+        if update_data.is_answered:
+            comment.answered_by_id = current_user.id
+            comment.answered_at = func.now()
+
+            # Create timeline entry
+            await _create_timeline_entry(
+                db,
+                ticket_id,
+                current_user.id,
+                "comment_answered",
+                "Reactie gemarkeerd als beantwoord",
+            )
+
+    await db.commit()
+    await db.refresh(comment)
+
+    # Get author name
+    author_result = await db.execute(
+        select(User).where(User.id == comment.author_id)
+    )
+    author = author_result.scalar_one_or_none()
+
+    response = TicketCommentResponse.model_validate(comment)
+    response.author_name = f"{author.first_name} {author.last_name}" if author else None
+    response.answered_by_name = current_user.full_name if comment.is_answered else None
+    return response
 
 
 @router.get(
