@@ -289,6 +289,25 @@ export default function ContractenPage() {
                 />
               </div>
 
+              {/* Alert Days (STORY-058) */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Alert vooraf (dagen)
+                </label>
+                <select
+                  value={formData.alert_days_before ?? 30}
+                  onChange={(e) => setFormData({ ...formData, alert_days_before: parseInt(e.target.value) })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value={30}>30 dagen</option>
+                  <option value={60}>60 dagen</option>
+                  <option value={90}>90 dagen</option>
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Hoeveel dagen voor de opzegtermijn wilt u een alert ontvangen?
+                </p>
+              </div>
+
               {/* Costs */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
