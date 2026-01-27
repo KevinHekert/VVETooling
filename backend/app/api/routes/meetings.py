@@ -15,11 +15,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.dependencies.auth import (
     CurrentUser,
     require_bestuurslid,
+    require_member,
 )
 from app.db.models.models import (
     Document,
     Meeting,
     MeetingAgendaItem,
+    MeetingRsvp,
+    MeetingRsvpStatus as DBMeetingRsvpStatus,
     MeetingStatus as DBMeetingStatus,
     MeetingType as DBMeetingType,
     User,
@@ -40,6 +43,10 @@ from app.schemas.meeting import (
     MeetingStatus,
     MeetingType,
     MeetingUpdate,
+    RsvpCreate,
+    RsvpResponse,
+    RsvpStatus,
+    RsvpSummary,
     STANDARD_AGENDA_TEMPLATE,
 )
 
@@ -843,4 +850,225 @@ async def send_invitation(
         status="sent",
         sent_at=datetime.now(timezone.utc),
         recipients=recipients,
+    )
+
+
+# ============================================================================
+# STORY-072: RSVP Endpoints
+# ============================================================================
+
+
+@router.post(
+    "/{meeting_id}/rsvp",
+    response_model=RsvpResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="RSVP registreren",
+    description="STORY-072: Registreer aanwezigheid voor een ALV vergadering.",
+)
+async def create_or_update_rsvp(
+    vve_id: uuid.UUID,
+    meeting_id: uuid.UUID,
+    rsvp_data: RsvpCreate,
+    current_user: Annotated[CurrentUser, Depends(require_member)],
+    db: AsyncSession = Depends(get_db),
+) -> RsvpResponse:
+    """Create or update RSVP for a meeting."""
+    # Get meeting
+    meeting_result = await db.execute(
+        select(Meeting).where(Meeting.id == meeting_id, Meeting.vve_id == vve_id)
+    )
+    meeting = meeting_result.scalar_one_or_none()
+    
+    if not meeting:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Vergadering niet gevonden",
+        )
+
+    # Check if meeting is in the future
+    days_until = _calculate_days_until(meeting.meeting_date)
+    if days_until is not None and days_until < 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="RSVP kan niet meer worden geregistreerd voor een afgelopen vergadering",
+        )
+
+    # Check existing RSVP
+    existing_result = await db.execute(
+        select(MeetingRsvp).where(
+            MeetingRsvp.meeting_id == meeting_id,
+            MeetingRsvp.user_id == current_user.id,
+        )
+    )
+    existing_rsvp = existing_result.scalar_one_or_none()
+
+    if existing_rsvp:
+        # Update existing
+        existing_rsvp.status = DBMeetingRsvpStatus(rsvp_data.status.value)
+        existing_rsvp.proxy_holder_name = rsvp_data.proxy_holder_name
+        existing_rsvp.notes = rsvp_data.notes
+        rsvp = existing_rsvp
+    else:
+        # Create new
+        rsvp = MeetingRsvp(
+            meeting_id=meeting_id,
+            user_id=current_user.id,
+            status=DBMeetingRsvpStatus(rsvp_data.status.value),
+            proxy_holder_name=rsvp_data.proxy_holder_name,
+            notes=rsvp_data.notes,
+        )
+        db.add(rsvp)
+
+    await db.commit()
+    await db.refresh(rsvp)
+
+    return RsvpResponse(
+        id=rsvp.id,
+        meeting_id=rsvp.meeting_id,
+        user_id=rsvp.user_id,
+        user_name=f"{current_user.first_name} {current_user.last_name}",
+        status=RsvpStatus(rsvp.status.value),
+        proxy_holder_name=rsvp.proxy_holder_name,
+        notes=rsvp.notes,
+        created_at=rsvp.created_at,
+        updated_at=rsvp.updated_at,
+    )
+
+
+@router.get(
+    "/{meeting_id}/rsvp",
+    response_model=RsvpResponse | None,
+    summary="Eigen RSVP ophalen",
+    description="STORY-072: Haal de eigen RSVP status op voor een vergadering.",
+)
+async def get_my_rsvp(
+    vve_id: uuid.UUID,
+    meeting_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_member)],
+    db: AsyncSession = Depends(get_db),
+) -> RsvpResponse | None:
+    """Get current user's RSVP for a meeting."""
+    result = await db.execute(
+        select(MeetingRsvp).where(
+            MeetingRsvp.meeting_id == meeting_id,
+            MeetingRsvp.user_id == current_user.id,
+        )
+    )
+    rsvp = result.scalar_one_or_none()
+
+    if not rsvp:
+        return None
+
+    return RsvpResponse(
+        id=rsvp.id,
+        meeting_id=rsvp.meeting_id,
+        user_id=rsvp.user_id,
+        user_name=f"{current_user.first_name} {current_user.last_name}",
+        status=RsvpStatus(rsvp.status.value),
+        proxy_holder_name=rsvp.proxy_holder_name,
+        notes=rsvp.notes,
+        created_at=rsvp.created_at,
+        updated_at=rsvp.updated_at,
+    )
+
+
+@router.get(
+    "/{meeting_id}/rsvps",
+    response_model=list[RsvpResponse],
+    summary="Alle RSVP's ophalen",
+    description="STORY-072: Haal alle RSVP's op voor een vergadering (alleen bestuur).",
+)
+async def list_rsvps(
+    vve_id: uuid.UUID,
+    meeting_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: AsyncSession = Depends(get_db),
+) -> list[RsvpResponse]:
+    """List all RSVPs for a meeting (board only)."""
+    # Verify meeting exists
+    meeting_result = await db.execute(
+        select(Meeting).where(Meeting.id == meeting_id, Meeting.vve_id == vve_id)
+    )
+    if not meeting_result.scalar_one_or_none():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Vergadering niet gevonden",
+        )
+
+    result = await db.execute(
+        select(MeetingRsvp, User)
+        .join(User, MeetingRsvp.user_id == User.id)
+        .where(MeetingRsvp.meeting_id == meeting_id)
+        .order_by(User.last_name, User.first_name)
+    )
+    rsvps_users = result.all()
+
+    return [
+        RsvpResponse(
+            id=rsvp.id,
+            meeting_id=rsvp.meeting_id,
+            user_id=rsvp.user_id,
+            user_name=f"{user.first_name} {user.last_name}",
+            status=RsvpStatus(rsvp.status.value),
+            proxy_holder_name=rsvp.proxy_holder_name,
+            notes=rsvp.notes,
+            created_at=rsvp.created_at,
+            updated_at=rsvp.updated_at,
+        )
+        for rsvp, user in rsvps_users
+    ]
+
+
+@router.get(
+    "/{meeting_id}/rsvps/summary",
+    response_model=RsvpSummary,
+    summary="RSVP samenvatting",
+    description="STORY-072: Haal een samenvatting op van alle RSVP's voor een vergadering.",
+)
+async def get_rsvp_summary(
+    vve_id: uuid.UUID,
+    meeting_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: AsyncSession = Depends(get_db),
+) -> RsvpSummary:
+    """Get RSVP summary for a meeting."""
+    # Verify meeting exists
+    meeting_result = await db.execute(
+        select(Meeting).where(Meeting.id == meeting_id, Meeting.vve_id == vve_id)
+    )
+    if not meeting_result.scalar_one_or_none():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Vergadering niet gevonden",
+        )
+
+    # Count total invited members
+    members_result = await db.execute(
+        select(VVEMember).where(VVEMember.vve_id == vve_id, VVEMember.is_active.is_(True))
+    )
+    total_invited = len(members_result.scalars().all())
+
+    # Count RSVPs by status
+    rsvps_result = await db.execute(
+        select(MeetingRsvp).where(MeetingRsvp.meeting_id == meeting_id)
+    )
+    rsvps = rsvps_result.scalars().all()
+
+    present_count = sum(1 for r in rsvps if r.status == DBMeetingRsvpStatus.PRESENT)
+    absent_count = sum(1 for r in rsvps if r.status == DBMeetingRsvpStatus.ABSENT)
+    with_proxy_count = sum(1 for r in rsvps if r.status == DBMeetingRsvpStatus.WITH_PROXY)
+    total_responded = len(rsvps)
+    no_response_count = total_invited - total_responded
+
+    response_rate = (total_responded / total_invited * 100) if total_invited > 0 else 0.0
+
+    return RsvpSummary(
+        meeting_id=meeting_id,
+        total_invited=total_invited,
+        total_responded=total_responded,
+        present_count=present_count,
+        absent_count=absent_count,
+        with_proxy_count=with_proxy_count,
+        no_response_count=no_response_count,
+        response_rate=round(response_rate, 1),
     )
