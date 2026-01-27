@@ -8,9 +8,9 @@ Deze backlog is de single source of truth voor uitvoering van VVE Tooling MVP. A
 
 | Niveau | Totaal | ✅ Gereed | ⬜ Backlog | % Gereed |
 |--------|--------|-----------|-----------|----------|
-| Epics | 11 | 11 | 0 | 100% |
-| Features | 22 | 22 | 0 | 100% |
-| Stories | 47 | 47 | 0 | 100% |
+| Epics | 12 | 11 | 1 | 92% |
+| Features | 25 | 22 | 3 | 88% |
+| Stories | 54 | 47 | 7 | 87% |
 
 ## Navigatie
 - **Ways of working**
@@ -36,6 +36,7 @@ Deze backlog is de single source of truth voor uitvoering van VVE Tooling MVP. A
   - [EPIC-009 Multi-user toegang & rollen](epics/EPIC-009-multi-user-toegang.md)
   - [EPIC-010 Serviceverzoeken & leveranciers](epics/EPIC-010-serviceverzoeken-en-leveranciers.md)
   - [EPIC-011 Correspondentie & sjablonen](epics/EPIC-011-correspondentie-en-sjablonen.md)
+  - [EPIC-012 E-mail Integraties](epics/EPIC-012-email-integraties.md)
 - **Features**
   - [FEAT-001 Transactiebeheer](features/FEAT-001-transactiebeheer.md)
   - [FEAT-002 Reserves & saldo-overzicht](features/FEAT-002-reserves-overzicht.md)
@@ -59,6 +60,9 @@ Deze backlog is de single source of truth voor uitvoering van VVE Tooling MVP. A
   - [FEAT-020 Sjablonenbeheer](features/FEAT-020-sjablonenbeheer.md)
   - [FEAT-021 Brieven genereren](features/FEAT-021-brieven-genereren.md)
   - [FEAT-022 Multi-channel verzending](features/FEAT-022-multi-channel-verzending.md)
+  - [FEAT-023 E-mail Provider Configuratie](features/FEAT-023-email-provider-configuratie.md)
+  - [FEAT-024 E-mail Provider Abstractie](features/FEAT-024-email-provider-abstractie.md)
+  - [FEAT-025 E-mail Verzending API](features/FEAT-025-email-verzending-api.md)
 - **Stories**
   - [STORY-001 Transactie toevoegen](stories/STORY-001-transactie-toevoegen.md)
   - [STORY-002 Splitsingssleutel valideren](stories/STORY-002-splitsingssleutel-valideren.md)
@@ -107,6 +111,13 @@ Deze backlog is de single source of truth voor uitvoering van VVE Tooling MVP. A
   - [STORY-045 Sjablonenbeheer pagina](stories/STORY-045-sjablonenbeheer-pagina.md)
   - [STORY-046 Brieven genereren wizard](stories/STORY-046-brieven-genereren-wizard.md)
   - [STORY-047 Multi-channel verzending](stories/STORY-047-multi-channel-verzending.md)
+  - [STORY-048 E-mail provider configureren via Settings](stories/STORY-048-email-provider-configureren.md)
+  - [STORY-049 Mailchimp integratie implementeren](stories/STORY-049-mailchimp-integratie.md)
+  - [STORY-050 Amazon SES integratie implementeren](stories/STORY-050-amazon-ses-integratie.md)
+  - [STORY-051 SendGrid integratie implementeren](stories/STORY-051-sendgrid-integratie.md)
+  - [STORY-052 E-mail provider abstractie laag](stories/STORY-052-email-provider-abstractie-laag.md)
+  - [STORY-053 E-mail verzenden via geconfigureerde provider](stories/STORY-053-email-verzenden-via-provider.md)
+  - [STORY-054 E-mail verzending monitoring en logging](stories/STORY-054-email-monitoring-logging.md)
 - **Decision log**
   - [Open vragen](decision-log/01-open-vragen.md)
   - [Besluiten](decision-log/02-besluiten.md)
@@ -201,3 +212,14 @@ Deze backlog is de single source of truth voor uitvoering van VVE Tooling MVP. A
 | STORY-042 | docs/backlog/stories/STORY-042-splitsingsakte-aanvullingen-log.md, docs/backlog/features/FEAT-019-splitsingsakte-versiebeheer.md |
 | STORY-043 | docs/backlog/stories/STORY-043-splitsingsakte-publicatie-en-toegang.md, docs/backlog/features/FEAT-019-splitsingsakte-versiebeheer.md |
 | STORY-044 | docs/backlog/stories/STORY-044-ticket-supplier-collaboration-status.md, docs/backlog/features/FEAT-017-leveranciers-en-onderhoud.md |
+| EPIC-012 | docs/backlog/epics/EPIC-012-email-integraties.md, docs/backlog/epics/EPIC-011-correspondentie-en-sjablonen.md, docs/backlog/epics/EPIC-005-security-compliance.md |
+| FEAT-023 | docs/backlog/features/FEAT-023-email-provider-configuratie.md, docs/backlog/epics/EPIC-012-email-integraties.md |
+| FEAT-024 | docs/backlog/features/FEAT-024-email-provider-abstractie.md, docs/backlog/epics/EPIC-012-email-integraties.md |
+| FEAT-025 | docs/backlog/features/FEAT-025-email-verzending-api.md, docs/backlog/epics/EPIC-012-email-integraties.md |
+| STORY-048 | docs/backlog/stories/STORY-048-email-provider-configureren.md, docs/backlog/features/FEAT-023-email-provider-configuratie.md |
+| STORY-049 | docs/backlog/stories/STORY-049-mailchimp-integratie.md, docs/backlog/features/FEAT-024-email-provider-abstractie.md |
+| STORY-050 | docs/backlog/stories/STORY-050-amazon-ses-integratie.md, docs/backlog/features/FEAT-024-email-provider-abstractie.md |
+| STORY-051 | docs/backlog/stories/STORY-051-sendgrid-integratie.md, docs/backlog/features/FEAT-024-email-provider-abstractie.md |
+| STORY-052 | docs/backlog/stories/STORY-052-email-provider-abstractie-laag.md, docs/backlog/features/FEAT-024-email-provider-abstractie.md |
+| STORY-053 | docs/backlog/stories/STORY-053-email-verzenden-via-provider.md, docs/backlog/features/FEAT-025-email-verzending-api.md |
+| STORY-054 | docs/backlog/stories/STORY-054-email-monitoring-logging.md, docs/backlog/features/FEAT-025-email-verzending-api.md, docs/backlog/features/FEAT-015-audit-logging.md |
