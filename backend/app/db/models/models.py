@@ -1166,3 +1166,52 @@ class MeetingAgendaItem(Base):
         Index("ix_meeting_agenda_items_meeting_id", "meeting_id"),
         Index("ix_meeting_agenda_items_order", "meeting_id", "order_index"),
     )
+
+
+class MeetingRsvpStatus(str, Enum):
+    """RSVP status for ALV meetings (STORY-072)."""
+
+    PRESENT = "present"  # Aanwezig
+    ABSENT = "absent"  # Afwezig
+    WITH_PROXY = "with_proxy"  # Met volmacht
+
+
+class MeetingRsvp(Base):
+    """RSVP response for an ALV meeting (STORY-072).
+
+    Implements STORY-072: RSVP registreren voor ALV.
+    Allows owners to confirm attendance for meetings.
+    """
+
+    __tablename__ = "meeting_rsvps"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    meeting_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("meetings.id", ondelete="CASCADE"), nullable=False
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    # RSVP status
+    status: Mapped[MeetingRsvpStatus] = mapped_column(
+        SQLEnum(MeetingRsvpStatus), nullable=False
+    )
+    # Optional proxy holder (if status is WITH_PROXY)
+    proxy_holder_name: Mapped[str | None] = mapped_column(String(255))
+    # Notes from respondent
+    notes: Mapped[str | None] = mapped_column(Text)
+    # Timestamps
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    __table_args__ = (
+        Index("ix_meeting_rsvps_meeting_id", "meeting_id"),
+        Index("ix_meeting_rsvps_user_id", "user_id"),
+        UniqueConstraint("meeting_id", "user_id", name="uq_meeting_rsvp_user"),
+    )
