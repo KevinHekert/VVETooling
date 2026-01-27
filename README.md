@@ -31,6 +31,7 @@ Het marktonderzoek omvat:
 - **Markt assen**: Contributie, contracten, onderhoud, financiële administratie, communicatie, juridische zaken en vergaderingen
 - **Concurrentie analyse**: Overzicht van de huidige markt en concurrenten
 - **Markt kansen**: Geïdentificeerde kansen en strategieën
+- **Customer journeys**: Flows vanuit alle gebruikersperspectieven
 
 ### UX Discovery
 UX onderzoek en vraagstukken zijn beschikbaar in `docs/ux/discovery/`.
