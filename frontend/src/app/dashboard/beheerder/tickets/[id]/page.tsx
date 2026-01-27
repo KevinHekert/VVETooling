@@ -12,17 +12,21 @@ import type {
   TicketCategory,
   TicketCommentCreate,
   TicketUpdate,
-  TicketAttachmentStatus
+  TicketAttachmentStatus,
+  SupplierStatus,
+  Supplier,
+  TicketSupplierStatusUpdate
 } from '@/types';
 
 /**
- * Bestuur/Beheerder Ticket Detail Page - STORY-031
+ * Bestuur/Beheerder Ticket Detail Page - STORY-031, STORY-044
  * 
  * Shows ticket details with management capabilities:
  * - View full ticket details, timeline, attachments
  * - Update ticket status
  * - Add internal notes (not visible to bewoner)
  * - Accept/reject attachments
+ * - STORY-044: Update supplier status
  */
 
 const STATUS_LABELS: Record<TicketStatus, { label: string; color: string }> = {
@@ -32,6 +36,13 @@ const STATUS_LABELS: Record<TicketStatus, { label: string; color: string }> = {
   awaiting_info: { label: 'Wacht op info', color: 'bg-orange-100 text-orange-700' },
   resolved: { label: 'Opgelost', color: 'bg-green-100 text-green-700' },
   closed: { label: 'Gesloten', color: 'bg-gray-100 text-gray-500' },
+};
+
+// STORY-044: Supplier status labels
+const SUPPLIER_STATUS_LABELS: Record<SupplierStatus, { label: string; color: string }> = {
+  scheduled: { label: 'Ingepland', color: 'bg-purple-100 text-purple-700' },
+  in_progress: { label: 'Bezig', color: 'bg-yellow-100 text-yellow-700' },
+  completed: { label: 'Afgerond', color: 'bg-green-100 text-green-700' },
 };
 
 const ATTACHMENT_STATUS_LABELS: Record<TicketAttachmentStatus, { label: string; color: string }> = {
@@ -67,6 +78,7 @@ const TIMELINE_ICONS: Record<string, string> = {
   attachment_added: '📎',
   attachment_reviewed: '✓',
   internal_note_added: '📋',
+  supplier_status_changed: '🔧',
 };
 
 export default function BeheerderTicketDetailPage() {
@@ -93,21 +105,41 @@ export default function BeheerderTicketDetailPage() {
   // Attachment review state
   const [rejectionReason, setRejectionReason] = useState('');
 
+  // STORY-044: Supplier status state
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [selectedSupplierId, setSelectedSupplierId] = useState<string>('');
+  const [selectedSupplierStatus, setSelectedSupplierStatus] = useState<SupplierStatus | ''>('');
+  const [supplierStatusNote, setSupplierStatusNote] = useState('');
+  const [isUpdatingSupplierStatus, setIsUpdatingSupplierStatus] = useState(false);
+
   // TODO: Get VVE ID from context/session
   const vveId = 'demo-vve-id';
 
   useEffect(() => {
     async function fetchTicketData() {
       try {
-        const [ticketData, commentsData, timelineData] = await Promise.all([
+        const [ticketData, commentsData, timelineData, suppliersData] = await Promise.all([
           api.getTicket(vveId, ticketId),
           api.getTicketComments(vveId, ticketId),
           api.getTicketTimeline(vveId, ticketId),
+          api.getSuppliers(vveId).catch(() => []), // Gracefully handle if suppliers API fails
         ]);
         setTicket(ticketData);
         setComments(commentsData);
         setTimeline(timelineData);
         setNewStatus(ticketData.status);
+        setSuppliers(suppliersData);
+        
+        // Set initial supplier status values
+        if (ticketData.supplier_id) {
+          setSelectedSupplierId(ticketData.supplier_id);
+        }
+        if (ticketData.supplier_status) {
+          setSelectedSupplierStatus(ticketData.supplier_status);
+        }
+        if (ticketData.supplier_status_note) {
+          setSupplierStatusNote(ticketData.supplier_status_note);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Kon ticket niet ophalen');
       } finally {
@@ -191,6 +223,39 @@ export default function BeheerderTicketDetailPage() {
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Kon bewijsstuk niet beoordelen');
+    }
+  };
+
+  // STORY-044: Handle supplier status update
+  const handleSupplierStatusUpdate = async () => {
+    if (!selectedSupplierId && !ticket?.supplier_id) {
+      setError('Selecteer eerst een leverancier');
+      return;
+    }
+
+    setIsUpdatingSupplierStatus(true);
+    setError(null);
+    
+    try {
+      const updateData: TicketSupplierStatusUpdate = {
+        supplier_id: selectedSupplierId || undefined,
+        supplier_status: selectedSupplierStatus || undefined,
+        supplier_status_note: supplierStatusNote || undefined,
+      };
+      
+      const updatedTicket = await api.updateTicketSupplierStatus(vveId, ticketId, updateData);
+      setTicket(updatedTicket);
+      
+      // Refresh timeline
+      const timelineData = await api.getTicketTimeline(vveId, ticketId);
+      setTimeline(timelineData);
+      
+      setSuccessMessage('Leveranciersstatus succesvol bijgewerkt');
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Kon leveranciersstatus niet bijwerken');
+    } finally {
+      setIsUpdatingSupplierStatus(false);
     }
   };
 
@@ -539,6 +604,105 @@ export default function BeheerderTicketDetailPage() {
                 `}
               >
                 {isUpdatingStatus ? 'Bijwerken...' : 'Status Bijwerken'}
+              </button>
+            </div>
+          </div>
+
+          {/* STORY-044: Supplier Status */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-sm font-medium text-gray-700 mb-3">🔧 Leveranciersstatus</h3>
+            
+            {/* Current supplier status display */}
+            {ticket.supplier_status && (
+              <div className="mb-4">
+                <span
+                  className={`
+                    inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
+                    ${SUPPLIER_STATUS_LABELS[ticket.supplier_status].color}
+                  `}
+                >
+                  {SUPPLIER_STATUS_LABELS[ticket.supplier_status].label}
+                </span>
+                {ticket.supplier_name && (
+                  <p className="text-sm text-gray-600 mt-2">
+                    Leverancier: <strong>{ticket.supplier_name}</strong>
+                  </p>
+                )}
+                {ticket.supplier_status_note && (
+                  <p className="text-sm text-gray-500 mt-1 italic">
+                    {ticket.supplier_status_note}
+                  </p>
+                )}
+                {ticket.supplier_status_updated_at && (
+                  <p className="text-xs text-gray-400 mt-1">
+                    Bijgewerkt: {new Date(ticket.supplier_status_updated_at).toLocaleDateString('nl-NL', {
+                      day: 'numeric',
+                      month: 'short',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                    {ticket.supplier_status_updated_by_name && ` door ${ticket.supplier_status_updated_by_name}`}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Supplier status update form */}
+            <div className={ticket.supplier_status ? 'pt-4 border-t' : ''}>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Leverancier
+              </label>
+              <select
+                value={selectedSupplierId}
+                onChange={(e) => setSelectedSupplierId(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm mb-3"
+              >
+                <option value="">-- Selecteer leverancier --</option>
+                {suppliers.map((supplier) => (
+                  <option key={supplier.id} value={supplier.id}>
+                    {supplier.name}
+                    {supplier.specialty && ` (${supplier.specialty})`}
+                  </option>
+                ))}
+              </select>
+
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Status
+              </label>
+              <select
+                value={selectedSupplierStatus}
+                onChange={(e) => setSelectedSupplierStatus(e.target.value as SupplierStatus)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm mb-3"
+              >
+                <option value="">-- Selecteer status --</option>
+                <option value="scheduled">Ingepland</option>
+                <option value="in_progress">Bezig</option>
+                <option value="completed">Afgerond</option>
+              </select>
+
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Toelichting (optioneel)
+              </label>
+              <input
+                type="text"
+                value={supplierStatusNote}
+                onChange={(e) => setSupplierStatusNote(e.target.value)}
+                placeholder="Bijv. afspraak op 15-02..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm mb-3"
+              />
+
+              <button
+                onClick={handleSupplierStatusUpdate}
+                disabled={isUpdatingSupplierStatus || (!selectedSupplierId && !ticket.supplier_id)}
+                className={`
+                  w-full px-4 py-2 rounded-lg text-sm font-medium
+                  ${isUpdatingSupplierStatus || (!selectedSupplierId && !ticket.supplier_id)
+                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    : 'bg-purple-600 text-white hover:bg-purple-700'
+                  }
+                `}
+              >
+                {isUpdatingSupplierStatus ? 'Bijwerken...' : 'Leveranciersstatus Bijwerken'}
               </button>
             </div>
           </div>
