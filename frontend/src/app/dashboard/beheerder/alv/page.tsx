@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
-import type { MeetingListItem, MeetingCreate, MeetingType, MeetingStatus, AgendaItem, AgendaItemCreate, MeetingInvitationPreview } from '@/types';
+import type { MeetingListItem, MeetingCreate, MeetingType, MeetingStatus, AgendaItem, AgendaItemCreate, MeetingInvitationPreview, MeetingRsvp, RsvpSummary, RsvpStatus } from '@/types';
 
 /**
- * ALV (Algemene Ledenvergadering) Management - STORY-069, STORY-070, STORY-071
+ * ALV (Algemene Ledenvergadering) Management - STORY-069, STORY-070, STORY-071, STORY-072
  * 
  * Allows beheerder/secretaris to:
  * - Plan new ALV meetings with date, time, type and location
@@ -63,6 +63,12 @@ export default function ALVPage() {
   const [invitationPreview, setInvitationPreview] = useState<MeetingInvitationPreview | null>(null);
   const [isLoadingInvitation, setIsLoadingInvitation] = useState(false);
   const [isSendingInvitation, setIsSendingInvitation] = useState(false);
+
+  // STORY-072: RSVP state
+  const [showRsvpModal, setShowRsvpModal] = useState(false);
+  const [rsvpList, setRsvpList] = useState<MeetingRsvp[]>([]);
+  const [rsvpSummary, setRsvpSummary] = useState<RsvpSummary | null>(null);
+  const [isLoadingRsvp, setIsLoadingRsvp] = useState(false);
 
   // TODO: Get VVE ID from context/session
   const vveId = 'demo-vve-id';
@@ -253,6 +259,38 @@ export default function ALVPage() {
     } finally {
       setIsSendingInvitation(false);
     }
+  };
+
+  // STORY-072: RSVP functions
+  const openRsvpModal = async (meeting: MeetingListItem) => {
+    setSelectedMeeting(meeting);
+    setShowRsvpModal(true);
+    setIsLoadingRsvp(true);
+    setError(null);
+    try {
+      const [rsvps, summary] = await Promise.all([
+        api.listRsvps(vveId, meeting.id),
+        api.getRsvpSummary(vveId, meeting.id),
+      ]);
+      setRsvpList(rsvps);
+      setRsvpSummary(summary);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Kon RSVP overzicht niet laden');
+    } finally {
+      setIsLoadingRsvp(false);
+    }
+  };
+
+  const closeRsvpModal = () => {
+    setShowRsvpModal(false);
+    setRsvpList([]);
+    setRsvpSummary(null);
+  };
+
+  const RSVP_STATUS_LABELS: Record<RsvpStatus, { label: string; icon: string; color: string }> = {
+    present: { label: 'Aanwezig', icon: '✅', color: 'bg-green-100 text-green-700' },
+    absent: { label: 'Afwezig', icon: '❌', color: 'bg-red-100 text-red-700' },
+    with_proxy: { label: 'Met volmacht', icon: '📝', color: 'bg-yellow-100 text-yellow-700' },
   };
 
   // Stats
@@ -534,13 +572,22 @@ export default function ALVPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    {/* STORY-070: Agenda button */}
-                    <button
-                      onClick={() => openAgendaModal(meeting)}
-                      className="text-sm text-blue-600 hover:text-blue-800"
-                    >
-                      📋 Agenda
-                    </button>
+                    <div className="flex gap-2">
+                      {/* STORY-070: Agenda button */}
+                      <button
+                        onClick={() => openAgendaModal(meeting)}
+                        className="text-sm text-blue-600 hover:text-blue-800"
+                      >
+                        📋 Agenda
+                      </button>
+                      {/* STORY-072: RSVP button */}
+                      <button
+                        onClick={() => openRsvpModal(meeting)}
+                        className="text-sm text-green-600 hover:text-green-800"
+                      >
+                        📊 RSVP
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -550,7 +597,7 @@ export default function ALVPage() {
       )}
 
       {/* STORY-070: Agenda Modal */}
-      {selectedMeeting && (
+      {selectedMeeting && !showRsvpModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
@@ -846,6 +893,125 @@ export default function ALVPage() {
                   Geen preview beschikbaar
                 </p>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* STORY-072: RSVP Modal */}
+      {showRsvpModal && selectedMeeting && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              {/* Modal Header */}
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">
+                    📊 RSVP Overzicht - {selectedMeeting.title}
+                  </h2>
+                  <p className="text-sm text-gray-600">
+                    {new Date(selectedMeeting.meeting_date).toLocaleDateString('nl-NL', {
+                      weekday: 'long',
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric',
+                    })}
+                  </p>
+                </div>
+                <button
+                  onClick={closeRsvpModal}
+                  className="text-gray-400 hover:text-gray-600 text-2xl"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {isLoadingRsvp ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+                </div>
+              ) : (
+                <>
+                  {/* RSVP Summary */}
+                  {rsvpSummary && (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                      <div className="bg-green-50 rounded-lg p-4 text-center">
+                        <p className="text-2xl font-bold text-green-700">{rsvpSummary.present_count}</p>
+                        <p className="text-sm text-green-600">Aanwezig</p>
+                      </div>
+                      <div className="bg-red-50 rounded-lg p-4 text-center">
+                        <p className="text-2xl font-bold text-red-700">{rsvpSummary.absent_count}</p>
+                        <p className="text-sm text-red-600">Afwezig</p>
+                      </div>
+                      <div className="bg-yellow-50 rounded-lg p-4 text-center">
+                        <p className="text-2xl font-bold text-yellow-700">{rsvpSummary.with_proxy_count}</p>
+                        <p className="text-sm text-yellow-600">Met volmacht</p>
+                      </div>
+                      <div className="bg-gray-50 rounded-lg p-4 text-center">
+                        <p className="text-2xl font-bold text-gray-700">{rsvpSummary.no_response_count}</p>
+                        <p className="text-sm text-gray-600">Geen reactie</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Response rate */}
+                  {rsvpSummary && (
+                    <div className="mb-6">
+                      <div className="flex justify-between text-sm mb-1">
+                        <span className="text-gray-600">Responspercentage</span>
+                        <span className="font-medium">{rsvpSummary.response_rate}%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                          className="bg-blue-600 h-2 rounded-full transition-all"
+                          style={{ width: `${rsvpSummary.response_rate}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* RSVP List */}
+                  <div className="space-y-2">
+                    {rsvpList.length === 0 ? (
+                      <p className="text-center text-gray-500 py-8">
+                        Nog geen RSVP registraties ontvangen.
+                      </p>
+                    ) : (
+                      rsvpList.map((rsvp) => (
+                        <div
+                          key={rsvp.id}
+                          className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                        >
+                          <div>
+                            <p className="font-medium text-gray-900">{rsvp.user_name || 'Onbekend'}</p>
+                            {rsvp.proxy_holder_name && (
+                              <p className="text-sm text-gray-600">
+                                Volmachthouder: {rsvp.proxy_holder_name}
+                              </p>
+                            )}
+                            {rsvp.notes && (
+                              <p className="text-sm text-gray-500 italic">{rsvp.notes}</p>
+                            )}
+                          </div>
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${RSVP_STATUS_LABELS[rsvp.status]?.color}`}>
+                            {RSVP_STATUS_LABELS[rsvp.status]?.icon} {RSVP_STATUS_LABELS[rsvp.status]?.label}
+                          </span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </>
+              )}
+
+              {/* Close button */}
+              <div className="mt-6 flex justify-end">
+                <button
+                  onClick={closeRsvpModal}
+                  className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Sluiten
+                </button>
+              </div>
             </div>
           </div>
         </div>
