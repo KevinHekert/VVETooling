@@ -57,9 +57,9 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
    - 6.1 **FEAT-011 Documentbeheer** ✅
      - 6.1.1 ✅ STORY-004 Bestuur uploadt document (Must)
      - 6.1.2 ✅ STORY-018 Document versiebeheer en rol-specifiek delen (Must)
-   - 6.2 **FEAT-012 Documenten downloaden** ⚠️
+   - 6.2 **FEAT-012 Documenten downloaden** ✅
      - 6.2.1 ✅ STORY-008 Documenten delen en downloaden (Should)
-     - 6.2.2 ⬜ STORY-019 Document download-links en notificaties (Should)
+     - 6.2.2 ✅ STORY-019 Document download-links en notificaties (Should)
    - 6.3 **FEAT-019 Splitsingsakte versiebeheer** ⚠️
      - 6.3.1 ⬜ STORY-032 Splitsingsakte versie en aanvullingen (Should)
      - 6.3.2 ✅ STORY-041 Splitsingsakte versies overzicht (Must)
@@ -101,8 +101,8 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
 | Niveau | Totaal | ✅ Gereed | ⬜ Backlog | % Gereed |
 |--------|--------|-----------|-----------|----------|
 | Epics | 10 | 5 | 5 | 50% |
-| Features | 19 | 12 | 7 | 63% |
-| Stories | 44 | 32 | 12 | 73% |
+| Features | 19 | 13 | 6 | 68% |
+| Stories | 44 | 33 | 11 | 75% |
 
 **Volledig afgeronde Epics:** EPIC-002, EPIC-003, EPIC-004, EPIC-009, EPIC-010
 
