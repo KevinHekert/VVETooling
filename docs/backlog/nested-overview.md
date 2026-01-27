@@ -102,7 +102,7 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
 |--------|--------|-----------|-----------|----------|
 | Epics | 10 | 4 | 6 | 40% |
 | Features | 19 | 10 | 9 | 53% |
-| Stories | 44 | 26 | 18 | 59% |
+| Stories | 44 | 28 | 16 | 64% |
 
 **Volledig afgeronde Epics:** EPIC-002, EPIC-003, EPIC-004, EPIC-009
 
