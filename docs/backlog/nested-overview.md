@@ -90,7 +90,7 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
       - 10.1.5 ✅ STORY-038 Ticket prioriteit en SLA (Should)
     - 10.2 **FEAT-017 Leveranciers & onderhoudsopvolging** ⚠️
       - 10.2.1 ⬜ STORY-034 Leveranciers koppelen aan tickets (Should)
-      - 10.2.2 ⬜ STORY-035 Leveranciersprofiel beheren (Should)
+      - 10.2.2 ✅ STORY-035 Leveranciersprofiel beheren (Should)
       - 10.2.3 ⬜ STORY-036 Leveranciers opvolgacties loggen (Should)
       - 10.2.4 ✅ STORY-044 Ticket supplier collaboration status (Must)
 
@@ -102,7 +102,7 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
 |--------|--------|-----------|-----------|----------|
 | Epics | 10 | 4 | 6 | 40% |
 | Features | 19 | 11 | 8 | 58% |
-| Stories | 44 | 29 | 15 | 66% |
+| Stories | 44 | 30 | 14 | 68% |
 
 **Volledig afgeronde Epics:** EPIC-002, EPIC-003, EPIC-004, EPIC-009
 
