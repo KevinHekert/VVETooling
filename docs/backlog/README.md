@@ -10,7 +10,7 @@ Deze backlog is de single source of truth voor uitvoering van VVE Tooling MVP. A
 |--------|--------|-----------|-----------|----------|
 | Epics | 10 | 4 | 6 | 40% |
 | Features | 19 | 10 | 9 | 53% |
-| Stories | 44 | 22 | 22 | 50% |
+| Stories | 44 | 26 | 18 | 59% |
 
 ## Navigatie
 - **Ways of working**

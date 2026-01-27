@@ -3,10 +3,11 @@
 ## Documentinformatie
 - **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: ⬜ Backlog
+- **Status**: ✅ Geïmplementeerd
 - **Versie**: 1.0
 - **Prioriteit**: Must (Horizon 2)
 - **Geneste nummering**: 10.1.1
+- **Implementatierapport**: [STORY-029-implementatie.md](../implementation-reports/STORY-029-implementatie.md)
 
 ## User story
 Als **bewoner** wil ik een ticket-wizard kunnen doorlopen om een klacht in te dienen, zodat ik stap voor stap de juiste informatie toevoeg en de voortgang kan volgen.

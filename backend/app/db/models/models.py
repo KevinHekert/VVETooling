@@ -508,3 +508,224 @@ class AuditLog(Base):
         Index("ix_audit_logs_user_id", "user_id"),
         Index("ix_audit_logs_created_at", "created_at"),
     )
+
+
+# ============================================================================
+# Ticket Models (EPIC-010: Serviceverzoeken & leveranciers)
+# ============================================================================
+
+
+class TicketStatus(str, Enum):
+    """Ticket status values (FEAT-016)."""
+
+    DRAFT = "draft"
+    SUBMITTED = "submitted"
+    IN_PROGRESS = "in_progress"
+    AWAITING_INFO = "awaiting_info"
+    RESOLVED = "resolved"
+    CLOSED = "closed"
+
+
+class TicketCategory(str, Enum):
+    """Ticket category values (FEAT-016)."""
+
+    MAINTENANCE = "maintenance"
+    NOISE = "noise"
+    SAFETY = "safety"
+    CLEANING = "cleaning"
+    FACILITIES = "facilities"
+    OTHER = "other"
+
+
+class TicketPriority(str, Enum):
+    """Ticket priority values (FEAT-016)."""
+
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    URGENT = "urgent"
+
+
+class Ticket(Base):
+    """Ticket for resident complaints and service requests (FEAT-016).
+
+    Implements STORY-029: Bewoner ticket wizard en tijdlijn.
+    """
+
+    __tablename__ = "tickets"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    vve_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("vves.id", ondelete="CASCADE"), nullable=False
+    )
+    unit_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("units.id", ondelete="CASCADE"), nullable=False
+    )
+    submitted_by_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    title: Mapped[str] = mapped_column(String(200), nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
+    category: Mapped[TicketCategory] = mapped_column(
+        SQLEnum(TicketCategory), nullable=False
+    )
+    location: Mapped[str | None] = mapped_column(String(200))
+    status: Mapped[TicketStatus] = mapped_column(
+        SQLEnum(TicketStatus), default=TicketStatus.SUBMITTED, nullable=False
+    )
+    priority: Mapped[TicketPriority] = mapped_column(
+        SQLEnum(TicketPriority), default=TicketPriority.MEDIUM, nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    # Relationships
+    attachments: Mapped[list["TicketAttachment"]] = relationship(
+        "TicketAttachment", back_populates="ticket", cascade="all, delete-orphan"
+    )
+    timeline: Mapped[list["TicketTimelineEntry"]] = relationship(
+        "TicketTimelineEntry", back_populates="ticket", cascade="all, delete-orphan"
+    )
+    comments: Mapped[list["TicketComment"]] = relationship(
+        "TicketComment", back_populates="ticket", cascade="all, delete-orphan"
+    )
+
+    __table_args__ = (
+        Index("ix_tickets_vve_id", "vve_id"),
+        Index("ix_tickets_unit_id", "unit_id"),
+        Index("ix_tickets_submitted_by_id", "submitted_by_id"),
+        Index("ix_tickets_status", "status"),
+    )
+
+
+class TicketAttachmentStatus(str, Enum):
+    """Attachment status values (STORY-030)."""
+
+    PENDING = "pending"
+    TIMELY = "timely"
+    LATE = "late"
+    ACCEPTED = "accepted"
+    REJECTED = "rejected"
+
+
+class TicketAttachment(Base):
+    """Attachment for a ticket (STORY-030).
+
+    Implements STORY-030: Ticket bewijsstukken (bonnen en facturen).
+    Maximum file size: 10MB per D-004.
+    """
+
+    __tablename__ = "ticket_attachments"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    ticket_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tickets.id", ondelete="CASCADE"), nullable=False
+    )
+    file_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    file_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    file_size_bytes: Mapped[int] = mapped_column(nullable=False)
+    s3_key: Mapped[str] = mapped_column(String(500), nullable=False)
+    description: Mapped[str | None] = mapped_column(String(500))
+    uploaded_by_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    # STORY-030: Status tracking for attachments
+    status: Mapped[TicketAttachmentStatus] = mapped_column(
+        SQLEnum(TicketAttachmentStatus), default=TicketAttachmentStatus.PENDING, nullable=False
+    )
+    is_timely: Mapped[bool] = mapped_column(Boolean, default=True)
+    rejection_reason: Mapped[str | None] = mapped_column(String(500))
+    reviewed_by_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    # Relationships
+    ticket: Mapped["Ticket"] = relationship("Ticket", back_populates="attachments")
+
+    __table_args__ = (Index("ix_ticket_attachments_ticket_id", "ticket_id"),)
+
+
+class TicketTimelineEntry(Base):
+    """Timeline entry for ticket history (STORY-029).
+
+    Implements STORY-029: Bewoner ticket wizard en tijdlijn.
+    Tracks status changes, comments, and other events.
+    """
+
+    __tablename__ = "ticket_timeline_entries"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    ticket_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tickets.id", ondelete="CASCADE"), nullable=False
+    )
+    action: Mapped[str] = mapped_column(String(100), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text)
+    actor_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    old_value: Mapped[str | None] = mapped_column(String(100))
+    new_value: Mapped[str | None] = mapped_column(String(100))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+    # Relationships
+    ticket: Mapped["Ticket"] = relationship("Ticket", back_populates="timeline")
+
+    __table_args__ = (Index("ix_ticket_timeline_entries_ticket_id", "ticket_id"),)
+
+
+class TicketComment(Base):
+    """Comment on a ticket (STORY-037).
+
+    Implements STORY-037: Ticket communicatie en notities.
+    Supports internal comments visible only to staff.
+    """
+
+    __tablename__ = "ticket_comments"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    ticket_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tickets.id", ondelete="CASCADE"), nullable=False
+    )
+    author_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    is_internal: Mapped[bool] = mapped_column(
+        Boolean, default=False
+    )  # Internal comments only visible to staff
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+    # STORY-037: Mark as answered
+    is_answered: Mapped[bool] = mapped_column(Boolean, default=False)
+    answered_by_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    answered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    # Relationships
+    ticket: Mapped["Ticket"] = relationship("Ticket", back_populates="comments")
+
+    __table_args__ = (Index("ix_ticket_comments_ticket_id", "ticket_id"),)

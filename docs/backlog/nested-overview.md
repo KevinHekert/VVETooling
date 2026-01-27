@@ -81,12 +81,12 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
      - 9.1.3 ✅ STORY-024 Multi-tenant toegang en context switcher (Must)
      - 9.1.4 ✅ STORY-025 Notificaties en toasts consistent raamwerk (Must)
 
-10. **EPIC-010 Serviceverzoeken & leveranciers** ⬜
-    - 10.1 **FEAT-016 Bewoner tickets & klachten** ⬜
-      - 10.1.1 ⬜ STORY-029 Bewoner ticket wizard en tijdlijn (Must)
-      - 10.1.2 ⬜ STORY-030 Ticket bewijsstukken (bonnen en facturen) (Must)
-      - 10.1.3 ⬜ STORY-031 Bestuur ticket inzicht en behandeling (Must)
-      - 10.1.4 ⬜ STORY-037 Ticket communicatie en notities (Must)
+10. **EPIC-010 Serviceverzoeken & leveranciers** ⚠️
+    - 10.1 **FEAT-016 Bewoner tickets & klachten** ⚠️
+      - 10.1.1 ✅ STORY-029 Bewoner ticket wizard en tijdlijn (Must)
+      - 10.1.2 ✅ STORY-030 Ticket bewijsstukken (bonnen en facturen) (Must)
+      - 10.1.3 ✅ STORY-031 Bestuur ticket inzicht en behandeling (Must)
+      - 10.1.4 ✅ STORY-037 Ticket communicatie en notities (Must)
       - 10.1.5 ⬜ STORY-038 Ticket prioriteit en SLA (Should)
     - 10.2 **FEAT-017 Leveranciers & onderhoudsopvolging** ⬜
       - 10.2.1 ⬜ STORY-034 Leveranciers koppelen aan tickets (Should)
@@ -102,7 +102,7 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
 |--------|--------|-----------|-----------|----------|
 | Epics | 10 | 4 | 6 | 40% |
 | Features | 19 | 10 | 9 | 53% |
-| Stories | 44 | 22 | 22 | 50% |
+| Stories | 44 | 26 | 18 | 59% |
 
 **Volledig afgeronde Epics:** EPIC-002, EPIC-003, EPIC-004, EPIC-009
 

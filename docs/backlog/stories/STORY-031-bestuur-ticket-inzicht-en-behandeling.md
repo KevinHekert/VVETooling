@@ -3,10 +3,11 @@
 ## Documentinformatie
 - **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: ⬜ Backlog
+- **Status**: ✅ Geïmplementeerd
 - **Versie**: 1.0
 - **Prioriteit**: Must (Horizon 2)
 - **Geneste nummering**: 10.1.3
+- **Implementatierapport**: [STORY-031-implementatie.md](../implementation-reports/STORY-031-implementatie.md)
 
 ## User story
 Als **bestuurslid** wil ik tickets kunnen inzien, filteren en behandelen, zodat klachten van bewoners snel en gestructureerd worden opgevolgd.
