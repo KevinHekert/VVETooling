@@ -60,9 +60,9 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
    - 6.2 **FEAT-012 Documenten downloaden** ⚠️
      - 6.2.1 ✅ STORY-008 Documenten delen en downloaden (Should)
      - 6.2.2 ⬜ STORY-019 Document download-links en notificaties (Should)
-   - 6.3 **FEAT-019 Splitsingsakte versiebeheer** ⬜
+   - 6.3 **FEAT-019 Splitsingsakte versiebeheer** ⚠️
      - 6.3.1 ⬜ STORY-032 Splitsingsakte versie en aanvullingen (Should)
-     - 6.3.2 ⬜ STORY-041 Splitsingsakte versies overzicht (Must)
+     - 6.3.2 ✅ STORY-041 Splitsingsakte versies overzicht (Must)
      - 6.3.3 ⬜ STORY-042 Splitsingsakte aanvullingen log (Should)
      - 6.3.4 ⬜ STORY-043 Splitsingsakte publicatie en toegang (Should)
 

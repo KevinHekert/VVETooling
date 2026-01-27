@@ -3,10 +3,11 @@
 ## Documentinformatie
 - **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: ⬜ Backlog
+- **Status**: ✅ Geïmplementeerd
 - **Versie**: 1.0
 - **Prioriteit**: Must (Horizon 2)
 - **Geneste nummering**: 6.3.2
+- **Implementatierapport**: [STORY-041-implementatie.md](../implementation-reports/STORY-041-implementatie.md)
 
 ## User story
 Als **bestuurslid** wil ik een overzicht van alle splitsingsakte-versies zien, zodat ik snel kan controleren welke versie actief of gearchiveerd is.
