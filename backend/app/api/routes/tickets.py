@@ -1091,11 +1091,23 @@ async def update_ticket_supplier_status(
         supplier_name = supplier.name
     elif update_data.supplier_id is None and ticket.supplier_id:
         # If explicitly set to None, remove supplier
+        old_supplier_name = ticket.supplier.name if ticket.supplier else "Onbekend"
         ticket.supplier_id = None
         ticket.supplier_status = None
         ticket.supplier_status_note = None
         ticket.supplier_status_updated_at = None
         ticket.supplier_status_updated_by_id = None
+        
+        # Create timeline entry for supplier removal
+        await _create_timeline_entry(
+            db,
+            ticket.id,
+            current_user.id,
+            "supplier_removed",
+            f"Leverancier ({old_supplier_name}) verwijderd van ticket",
+            old_value=old_supplier_name,
+            new_value=None,
+        )
 
     # Update supplier status
     old_status = ticket.supplier_status.value if ticket.supplier_status else None

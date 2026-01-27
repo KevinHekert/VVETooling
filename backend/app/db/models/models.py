@@ -858,5 +858,6 @@ class SplitsingsakteVersion(Base):
     __table_args__ = (
         Index("ix_splitsingsakte_versions_vve_id", "vve_id"),
         Index("ix_splitsingsakte_versions_status", "status"),
+        Index("ix_splitsingsakte_versions_vve_status", "vve_id", "status"),
         UniqueConstraint("vve_id", "version_number", name="uq_splitsingsakte_version"),
     )
