@@ -1,9 +1,11 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { DashboardWidget, DashboardGrid, KPICard } from '@/components/ui/RoleSwitcher';
 import Link from 'next/link';
-import type { UserRole } from '@/types';
+import { api } from '@/lib/api';
+import type { UserRole, ContractAlertResponse } from '@/types';
 
 /**
  * Main Dashboard Page - STORY-009
@@ -136,6 +138,9 @@ function BeheerderDashboard() {
         </DashboardWidget>
       </DashboardGrid>
 
+      {/* Aflopen Contracten Widget (STORY-059) */}
+      <ExpiringContractsWidget />
+
       {/* Quick Links */}
       <DashboardWidget title="Snelkoppelingen">
         <div className="flex flex-wrap gap-3">
@@ -144,6 +149,12 @@ function BeheerderDashboard() {
             className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700"
           >
             + Transactie toevoegen
+          </Link>
+          <Link 
+            href="/dashboard/beheerder/contracten" 
+            className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            📝 Contracten
           </Link>
           <Link 
             href="/instellingen/onboarding" 
@@ -160,6 +171,121 @@ function BeheerderDashboard() {
         </div>
       </DashboardWidget>
     </>
+  );
+}
+
+/**
+ * Expiring Contracts Widget - STORY-059
+ * Shows contracts with upcoming notice deadlines
+ */
+function ExpiringContractsWidget() {
+  const [alerts, setAlerts] = useState<ContractAlertResponse[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [displayCount, setDisplayCount] = useState(5);
+  
+  // TODO: Get VVE ID from context/session
+  const vveId = 'demo-vve-id';
+
+  useEffect(() => {
+    async function fetchAlerts() {
+      try {
+        const data = await api.getContractAlerts(vveId, true);
+        // Filter to only show contracts expiring within 90 days
+        const filtered = data.filter(a => a.days_until_notice <= 90);
+        setAlerts(filtered);
+      } catch (err) {
+        // Silently fail for demo - widget shows empty state
+        setAlerts([]);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchAlerts();
+  }, []);
+
+  // Color coding based on urgency
+  const getUrgencyColor = (daysUntilNotice: number) => {
+    if (daysUntilNotice < 30) return 'bg-red-100 text-red-800 border-red-200';
+    if (daysUntilNotice < 60) return 'bg-orange-100 text-orange-800 border-orange-200';
+    return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+  };
+
+  const getUrgencyDot = (daysUntilNotice: number) => {
+    if (daysUntilNotice < 30) return 'bg-red-500';
+    if (daysUntilNotice < 60) return 'bg-orange-500';
+    return 'bg-yellow-500';
+  };
+
+  const displayedAlerts = alerts.slice(0, displayCount);
+
+  return (
+    <DashboardWidget 
+      title="Aflopen Contracten" 
+      actions={
+        <div className="flex items-center gap-2">
+          <select
+            value={displayCount}
+            onChange={(e) => setDisplayCount(parseInt(e.target.value))}
+            className="text-xs border border-gray-300 rounded px-2 py-1"
+          >
+            <option value={5}>5 items</option>
+            <option value={10}>10 items</option>
+            <option value={15}>15 items</option>
+          </select>
+          <Link href="/dashboard/beheerder/contracten" className="text-blue-600 text-sm hover:underline">
+            Bekijk alle
+          </Link>
+        </div>
+      }
+    >
+      {isLoading ? (
+        <div className="flex justify-center py-4">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+        </div>
+      ) : alerts.length === 0 ? (
+        <div className="text-center py-4">
+          <div className="text-3xl mb-2">✅</div>
+          <p className="text-sm text-gray-600">Geen contracten die binnen 90 dagen aflopen</p>
+        </div>
+      ) : (
+        <ul className="space-y-2">
+          {displayedAlerts.map((alert) => (
+            <li 
+              key={alert.id} 
+              className={`flex items-center justify-between p-3 rounded-lg border ${getUrgencyColor(alert.days_until_notice)}`}
+            >
+              <div className="flex items-center gap-3">
+                <span className={`w-2 h-2 rounded-full ${getUrgencyDot(alert.days_until_notice)}`} />
+                <div>
+                  <p className="text-sm font-medium">{alert.supplier_name}</p>
+                  <p className="text-xs opacity-75">
+                    Opzeggen voor: {new Date(alert.notice_deadline).toLocaleDateString('nl-NL')}
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="text-sm font-bold">
+                  {alert.days_until_notice} dagen
+                </span>
+                {alert.is_alert_due && (
+                  <span className="block text-xs">⚠️ Alert actief</span>
+                )}
+              </div>
+            </li>
+          ))}
+          {alerts.length > displayCount && (
+            <li className="text-center py-2">
+              <Link 
+                href="/dashboard/beheerder/contracten" 
+                className="text-sm text-blue-600 hover:underline"
+              >
+                +{alerts.length - displayCount} meer bekijken
+              </Link>
+            </li>
+          )}
+        </ul>
+      )}
+    </DashboardWidget>
   );
 }
 
