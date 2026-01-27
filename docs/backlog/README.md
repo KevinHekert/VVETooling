@@ -8,8 +8,8 @@ Deze backlog is de single source of truth voor uitvoering van VVE Tooling MVP. A
 
 | Niveau | Totaal | ✅ Gereed | ⬜ Backlog | % Gereed |
 |--------|--------|-----------|-----------|----------|
-| Epics | 10 | 5 | 5 | 50% |
-| Features | 19 | 12 | 7 | 63% |
+| Epics | 11 | 5 | 6 | 45% |
+| Features | 22 | 12 | 10 | 55% |
 | Stories | 44 | 32 | 12 | 73% |
 
 ## Navigatie
@@ -35,6 +35,7 @@ Deze backlog is de single source of truth voor uitvoering van VVE Tooling MVP. A
   - [EPIC-008 Betaling & abonnement](epics/EPIC-008-betaling-en-abonnement.md)
   - [EPIC-009 Multi-user toegang & rollen](epics/EPIC-009-multi-user-toegang.md)
   - [EPIC-010 Serviceverzoeken & leveranciers](epics/EPIC-010-serviceverzoeken-en-leveranciers.md)
+  - [EPIC-011 Correspondentie & sjablonen](epics/EPIC-011-correspondentie-en-sjablonen.md)
 - **Features**
   - [FEAT-001 Transactiebeheer](features/FEAT-001-transactiebeheer.md)
   - [FEAT-002 Reserves & saldo-overzicht](features/FEAT-002-reserves-overzicht.md)
@@ -55,6 +56,9 @@ Deze backlog is de single source of truth voor uitvoering van VVE Tooling MVP. A
   - [FEAT-017 Leveranciers & onderhoudsopvolging](features/FEAT-017-leveranciers-en-onderhoud.md)
   - [FEAT-018 Reservefonds prognoses](features/FEAT-018-reservefonds-prognoses.md)
   - [FEAT-019 Splitsingsakte versiebeheer](features/FEAT-019-splitsingsakte-versiebeheer.md)
+  - [FEAT-020 Sjablonenbeheer](features/FEAT-020-sjablonenbeheer.md)
+  - [FEAT-021 Brieven genereren](features/FEAT-021-brieven-genereren.md)
+  - [FEAT-022 Multi-channel verzending](features/FEAT-022-multi-channel-verzending.md)
 - **Stories**
   - [STORY-001 Transactie toevoegen](stories/STORY-001-transactie-toevoegen.md)
   - [STORY-002 Splitsingssleutel valideren](stories/STORY-002-splitsingssleutel-valideren.md)
@@ -146,6 +150,10 @@ Deze backlog is de single source of truth voor uitvoering van VVE Tooling MVP. A
 | FEAT-017 | docs/backlog/features/FEAT-017-leveranciers-en-onderhoud.md, docs/backlog/epics/EPIC-010-serviceverzoeken-en-leveranciers.md |
 | FEAT-018 | docs/backlog/features/FEAT-018-reservefonds-prognoses.md, docs/backlog/stories/STORY-026-reserves-scenario-planning.md |
 | FEAT-019 | docs/backlog/features/FEAT-019-splitsingsakte-versiebeheer.md, docs/backlog/features/FEAT-011-documentbeheer.md |
+| EPIC-011 | docs/backlog/epics/EPIC-011-correspondentie-en-sjablonen.md, docs/marktonderzoek/09-as-communicatie.md |
+| FEAT-020 | docs/backlog/features/FEAT-020-sjablonenbeheer.md, docs/backlog/epics/EPIC-011-correspondentie-en-sjablonen.md |
+| FEAT-021 | docs/backlog/features/FEAT-021-brieven-genereren.md, docs/backlog/epics/EPIC-011-correspondentie-en-sjablonen.md |
+| FEAT-022 | docs/backlog/features/FEAT-022-multi-channel-verzending.md, docs/backlog/epics/EPIC-011-correspondentie-en-sjablonen.md |
 | STORY-001 | docs/backlog/stories/STORY-001-transactie-toevoegen.md, docs/ui/components/form-controls.md |
 | STORY-002 | docs/backlog/stories/STORY-002-splitsingssleutel-valideren.md, docs/ui/components/feedback-notifications.md |
 | STORY-003 | docs/backlog/stories/STORY-003-bewoner-ziet-eigen-status.md, docs/ux/design/02-bewoner-flows.md |

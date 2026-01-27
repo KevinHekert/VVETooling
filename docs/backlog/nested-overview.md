@@ -94,14 +94,22 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
       - 10.2.3 ✅ STORY-036 Leveranciers opvolgacties loggen (Should)
       - 10.2.4 ✅ STORY-044 Ticket supplier collaboration status (Must)
 
+11. **EPIC-011 Correspondentie & sjablonen** ⬜
+    - 11.1 **FEAT-020 Sjablonenbeheer** ⬜
+      - *Stories nog te definiëren*
+    - 11.2 **FEAT-021 Brieven genereren** ⬜
+      - *Stories nog te definiëren*
+    - 11.3 **FEAT-022 Multi-channel verzending** ⬜
+      - *Stories nog te definiëren*
+
 ---
 
 ## Voortgang Samenvatting
 
 | Niveau | Totaal | ✅ Gereed | ⬜ Backlog | % Gereed |
 |--------|--------|-----------|-----------|----------|
-| Epics | 10 | 9 | 1 | 90% |
-| Features | 19 | 18 | 1 | 95% |
+| Epics | 11 | 9 | 2 | 82% |
+| Features | 22 | 18 | 4 | 82% |
 | Stories | 44 | 41 | 3 | 93% |
 
 **Volledig afgeronde Epics:** EPIC-002, EPIC-003, EPIC-004, EPIC-005, EPIC-006, EPIC-007, EPIC-008, EPIC-009, EPIC-010
