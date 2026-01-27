@@ -3,10 +3,11 @@
 ## Documentinformatie
 - **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: ⬜ Backlog
+- **Status**: ✅ Geïmplementeerd
 - **Versie**: 1.0
 - **Prioriteit**: Must (Horizon 2)
 - **Geneste nummering**: 10.1.2
+- **Implementatierapport**: [STORY-030-implementatie.md](../implementation-reports/STORY-030-implementatie.md)
 
 ## User story
 Als **bewoner** wil ik bonnetjes of facturen aan een ticket toevoegen (mits tijdig aangevraagd), zodat het bestuur bewijsstukken kan verwerken binnen hetzelfde dossier.
