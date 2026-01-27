@@ -16,11 +16,14 @@ import type {
   SupplierStatus,
   Supplier,
   TicketSupplierStatusUpdate,
-  SlaStatus
+  SlaStatus,
+  SupplierFollowUp,
+  SupplierFollowUpCreate,
+  SupplierFollowUpChannel
 } from '@/types';
 
 /**
- * Bestuur/Beheerder Ticket Detail Page - STORY-031, STORY-044, STORY-038
+ * Bestuur/Beheerder Ticket Detail Page - STORY-031, STORY-044, STORY-038, STORY-036
  * 
  * Shows ticket details with management capabilities:
  * - View full ticket details, timeline, attachments
@@ -62,6 +65,14 @@ const ATTACHMENT_STATUS_LABELS: Record<TicketAttachmentStatus, { label: string; 
   rejected: { label: 'Afgewezen', color: 'bg-red-100 text-red-700' },
 };
 
+// STORY-036: Follow-up channel labels
+const FOLLOW_UP_CHANNEL_LABELS: Record<SupplierFollowUpChannel, { label: string; icon: string }> = {
+  phone: { label: 'Telefoon', icon: '📞' },
+  email: { label: 'E-mail', icon: '✉️' },
+  in_person: { label: 'Persoonlijk', icon: '👤' },
+  other: { label: 'Anders', icon: '📋' },
+};
+
 const CATEGORY_LABELS: Record<TicketCategory, string> = {
   maintenance: 'Onderhoud',
   noise: 'Geluidsoverlast',
@@ -88,6 +99,7 @@ const TIMELINE_ICONS: Record<string, string> = {
   attachment_reviewed: '✓',
   internal_note_added: '📋',
   supplier_status_changed: '🔧',
+  supplier_follow_up_added: '📞',
 };
 
 export default function BeheerderTicketDetailPage() {
@@ -121,23 +133,33 @@ export default function BeheerderTicketDetailPage() {
   const [supplierStatusNote, setSupplierStatusNote] = useState('');
   const [isUpdatingSupplierStatus, setIsUpdatingSupplierStatus] = useState(false);
 
+  // STORY-036: Follow-up state
+  const [followUps, setFollowUps] = useState<SupplierFollowUp[]>([]);
+  const [showFollowUpForm, setShowFollowUpForm] = useState(false);
+  const [followUpChannel, setFollowUpChannel] = useState<SupplierFollowUpChannel>('phone');
+  const [followUpSummary, setFollowUpSummary] = useState('');
+  const [followUpDate, setFollowUpDate] = useState('');
+  const [isAddingFollowUp, setIsAddingFollowUp] = useState(false);
+
   // TODO: Get VVE ID from context/session
   const vveId = 'demo-vve-id';
 
   useEffect(() => {
     async function fetchTicketData() {
       try {
-        const [ticketData, commentsData, timelineData, suppliersData] = await Promise.all([
+        const [ticketData, commentsData, timelineData, suppliersData, followUpsData] = await Promise.all([
           api.getTicket(vveId, ticketId),
           api.getTicketComments(vveId, ticketId),
           api.getTicketTimeline(vveId, ticketId),
           api.getSuppliers(vveId).catch(() => []), // Gracefully handle if suppliers API fails
+          api.getSupplierFollowUps(vveId, ticketId).catch(() => []),
         ]);
         setTicket(ticketData);
         setComments(commentsData);
         setTimeline(timelineData);
         setNewStatus(ticketData.status);
         setSuppliers(suppliersData);
+        setFollowUps(followUpsData);
         
         // Set initial supplier status values
         if (ticketData.supplier_id) {
@@ -157,6 +179,46 @@ export default function BeheerderTicketDetailPage() {
     }
     fetchTicketData();
   }, [ticketId]);
+
+  // STORY-036: Handle add follow-up
+  const handleAddFollowUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!followUpSummary.trim() || !selectedSupplierId) return;
+
+    setIsAddingFollowUp(true);
+    setError(null);
+    
+    try {
+      const followUpData: SupplierFollowUpCreate = {
+        supplier_id: selectedSupplierId,
+        channel: followUpChannel,
+        summary: followUpSummary,
+        contact_date: followUpDate || new Date().toISOString(),
+      };
+      
+      await api.createSupplierFollowUp(vveId, ticketId, followUpData);
+      
+      // Refresh follow-ups and timeline
+      const [followUpsData, timelineData] = await Promise.all([
+        api.getSupplierFollowUps(vveId, ticketId),
+        api.getTicketTimeline(vveId, ticketId),
+      ]);
+      setFollowUps(followUpsData);
+      setTimeline(timelineData);
+      
+      // Reset form
+      setFollowUpSummary('');
+      setFollowUpDate('');
+      setShowFollowUpForm(false);
+      
+      setSuccessMessage('Opvolgactie toegevoegd');
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Kon opvolgactie niet toevoegen');
+    } finally {
+      setIsAddingFollowUp(false);
+    }
+  };
 
   const handleStatusUpdate = async () => {
     if (!newStatus || newStatus === ticket?.status) return;
@@ -715,6 +777,110 @@ export default function BeheerderTicketDetailPage() {
               </button>
             </div>
           </div>
+
+          {/* STORY-036: Supplier Follow-ups */}
+          {(ticket.supplier_id || selectedSupplierId) && (
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-medium text-gray-700">📞 Opvolgacties</h3>
+                <button
+                  onClick={() => setShowFollowUpForm(!showFollowUpForm)}
+                  className="text-sm text-blue-600 hover:text-blue-800"
+                >
+                  + Toevoegen
+                </button>
+              </div>
+
+              {/* Add follow-up form */}
+              {showFollowUpForm && (
+                <form onSubmit={handleAddFollowUp} className="mb-4 p-3 bg-gray-50 rounded-lg">
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Kanaal</label>
+                      <select
+                        value={followUpChannel}
+                        onChange={(e) => setFollowUpChannel(e.target.value as SupplierFollowUpChannel)}
+                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                      >
+                        <option value="phone">📞 Telefoon</option>
+                        <option value="email">✉️ E-mail</option>
+                        <option value="in_person">👤 Persoonlijk</option>
+                        <option value="other">📋 Anders</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Datum</label>
+                      <input
+                        type="datetime-local"
+                        value={followUpDate}
+                        onChange={(e) => setFollowUpDate(e.target.value)}
+                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Samenvatting *</label>
+                      <textarea
+                        value={followUpSummary}
+                        onChange={(e) => setFollowUpSummary(e.target.value)}
+                        placeholder="Korte samenvatting van het gesprek..."
+                        rows={2}
+                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                        required
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowFollowUpForm(false)}
+                        className="flex-1 px-3 py-1 text-sm text-gray-600 border border-gray-300 rounded hover:bg-gray-50"
+                      >
+                        Annuleren
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isAddingFollowUp || !followUpSummary.trim()}
+                        className={`
+                          flex-1 px-3 py-1 text-sm rounded
+                          ${isAddingFollowUp || !followUpSummary.trim()
+                            ? 'bg-gray-200 text-gray-400'
+                            : 'bg-blue-600 text-white hover:bg-blue-700'
+                          }
+                        `}
+                      >
+                        {isAddingFollowUp ? 'Bezig...' : 'Opslaan'}
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              )}
+
+              {/* Follow-ups list */}
+              {followUps.length > 0 ? (
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {followUps.map((followUp) => (
+                    <div key={followUp.id} className="p-2 bg-gray-50 rounded text-sm">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span>{FOLLOW_UP_CHANNEL_LABELS[followUp.channel]?.icon}</span>
+                        <span className="font-medium">{followUp.supplier_name}</span>
+                        <span className="text-gray-400">•</span>
+                        <span className="text-gray-500 text-xs">
+                          {new Date(followUp.contact_date).toLocaleDateString('nl-NL', {
+                            day: 'numeric',
+                            month: 'short',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </span>
+                      </div>
+                      <p className="text-gray-700">{followUp.summary}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">Geen opvolgacties geregistreerd</p>
+              )}
+            </div>
+          )}
 
           {/* STORY-038: SLA Status */}
           <div className="bg-white rounded-lg shadow p-6">

@@ -532,6 +532,28 @@ class ApiClient {
       }
     );
   }
+
+  // STORY-036: Supplier Follow-ups
+  async getSupplierFollowUps(vveId: string, ticketId: string) {
+    return this.fetch<import('@/types').SupplierFollowUp[]>(
+      `/vves/${vveId}/tickets/${ticketId}/follow-ups`
+    );
+  }
+
+  async createSupplierFollowUp(
+    vveId: string, 
+    ticketId: string, 
+    data: import('@/types').SupplierFollowUpCreate
+  ) {
+    return this.fetch<import('@/types').SupplierFollowUp>(
+      `/vves/${vveId}/tickets/${ticketId}/follow-ups`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
   // STORY-041: Splitsingsakte Versions
   async getSplitsingsakteVersions(vveId: string, includeArchived = false) {
     const query = includeArchived ? '?include_archived=true' : '';

@@ -467,6 +467,29 @@ export interface SupplierUpdate {
   is_active?: boolean;
 }
 
+// STORY-036: Supplier follow-up types
+export type SupplierFollowUpChannel = 'phone' | 'email' | 'in_person' | 'other';
+
+export interface SupplierFollowUp {
+  id: string;
+  ticket_id: string;
+  supplier_id: string;
+  supplier_name?: string;
+  channel: SupplierFollowUpChannel;
+  summary: string;
+  contact_date: string;
+  created_by_id: string;
+  created_by_name?: string;
+  created_at: string;
+}
+
+export interface SupplierFollowUpCreate {
+  supplier_id: string;
+  channel: SupplierFollowUpChannel;
+  summary: string;
+  contact_date: string;
+}
+
 // STORY-041: Splitsingsakte version types
 export type SplitsingsakteVersionStatus = 'draft' | 'active' | 'archived';
 
