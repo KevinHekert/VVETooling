@@ -63,7 +63,7 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
    - 6.3 **FEAT-019 Splitsingsakte versiebeheer** ⚠️
      - 6.3.1 ✅ STORY-032 Splitsingsakte versie en aanvullingen (Should)
      - 6.3.2 ✅ STORY-041 Splitsingsakte versies overzicht (Must)
-     - 6.3.3 ⬜ STORY-042 Splitsingsakte aanvullingen log (Should)
+     - 6.3.3 ✅ STORY-042 Splitsingsakte aanvullingen log (Should)
      - 6.3.4 ⬜ STORY-043 Splitsingsakte publicatie en toegang (Should)
 
 7. **EPIC-007 Data export & backup** ✅
@@ -102,7 +102,7 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
 |--------|--------|-----------|-----------|----------|
 | Epics | 10 | 8 | 2 | 80% |
 | Features | 19 | 16 | 3 | 84% |
-| Stories | 44 | 37 | 7 | 84% |
+| Stories | 44 | 38 | 6 | 86% |
 
 **Volledig afgeronde Epics:** EPIC-002, EPIC-003, EPIC-004, EPIC-005, EPIC-007, EPIC-008, EPIC-009, EPIC-010
 
