@@ -26,6 +26,7 @@ export default function LeveranciersPage() {
   const [newSupplierContactPerson, setNewSupplierContactPerson] = useState('');
   const [newSupplierEmail, setNewSupplierEmail] = useState('');
   const [newSupplierPhone, setNewSupplierPhone] = useState('');
+  const [newSupplierAddress, setNewSupplierAddress] = useState('');  // STORY-060
   const [newSupplierSpecialty, setNewSupplierSpecialty] = useState('');
   const [newSupplierNotes, setNewSupplierNotes] = useState('');
   const [isCreating, setIsCreating] = useState(false);
@@ -67,6 +68,7 @@ export default function LeveranciersPage() {
         contact_person: newSupplierContactPerson || undefined,
         email: newSupplierEmail || undefined,
         phone: newSupplierPhone || undefined,
+        address: newSupplierAddress || undefined,  // STORY-060
         specialty: newSupplierSpecialty || undefined,
         notes: newSupplierNotes || undefined,
         is_active: true,
@@ -80,6 +82,7 @@ export default function LeveranciersPage() {
       setNewSupplierContactPerson('');
       setNewSupplierEmail('');
       setNewSupplierPhone('');
+      setNewSupplierAddress('');  // STORY-060
       setNewSupplierSpecialty('');
       setNewSupplierNotes('');
       setShowCreateForm(false);
@@ -212,6 +215,18 @@ export default function LeveranciersPage() {
                   value={newSupplierPhone}
                   onChange={(e) => setNewSupplierPhone(e.target.value)}
                   placeholder="06-12345678"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Adres
+                </label>
+                <input
+                  type="text"
+                  value={newSupplierAddress}
+                  onChange={(e) => setNewSupplierAddress(e.target.value)}
+                  placeholder="Straat 1, 1234 AB Plaats"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>

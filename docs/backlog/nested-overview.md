@@ -114,16 +114,16 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
       - 12.3.1 ✅ STORY-053 E-mail verzenden via geconfigureerde provider (Must)
       - 12.3.2 ✅ STORY-054 E-mail verzending monitoring en logging (Should)
 
-13. **EPIC-013 Contractbeheer** ⬜
-    - 13.1 **FEAT-026 Contractregistratie & Opslag** ⬜
-      - 13.1.1 ⬜ STORY-055 Contract registreren met metadata (Should)
-      - 13.1.2 ⬜ STORY-056 Contract document uploaden (Should)
-      - 13.1.3 ⬜ STORY-057 Contracten doorzoeken en filteren (Should)
-    - 13.2 **FEAT-027 Contract Alerts & Herinneringen** ⬜
-      - 13.2.1 ⬜ STORY-058 Opzegtermijn alert configureren (Should)
-      - 13.2.2 ⬜ STORY-059 Dashboard widget aflopen contracten (Should)
-    - 13.3 **FEAT-028 Leveranciersbeheer** ⬜
-      - 13.3.1 ⬜ STORY-060 Leverancier registreren (Should)
+13. **EPIC-013 Contractbeheer** ⚠️
+    - 13.1 **FEAT-026 Contractregistratie & Opslag** ✅
+      - 13.1.1 ✅ STORY-055 Contract registreren met metadata (Should)
+      - 13.1.2 ✅ STORY-056 Contract document uploaden (Should)
+      - 13.1.3 ✅ STORY-057 Contracten doorzoeken en filteren (Should)
+    - 13.2 **FEAT-027 Contract Alerts & Herinneringen** ✅
+      - 13.2.1 ✅ STORY-058 Opzegtermijn alert configureren (Should)
+      - 13.2.2 ✅ STORY-059 Dashboard widget aflopen contracten (Should)
+    - 13.3 **FEAT-028 Leveranciersbeheer** ⚠️
+      - 13.3.1 ✅ STORY-060 Leverancier registreren (Should)
       - 13.3.2 ⬜ STORY-061 Leverancier evaluatie (Could)
 
 14. **EPIC-014 MJOP & Onderhoudsplanning** ⬜
@@ -138,9 +138,9 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
       - 14.3.1 ⬜ STORY-067 Onderhoudstaak aanmaken en toewijzen (Should)
       - 14.3.2 ⬜ STORY-068 Onderhoudstaak status bijwerken (Should)
 
-15. **EPIC-015 ALV & Vergaderbeheer** ⬜
-    - 15.1 **FEAT-032 ALV Planning & Uitnodigingen** ⬜
-      - 15.1.1 ⬜ STORY-069 ALV plannen met datum en locatie (Must)
+15. **EPIC-015 ALV & Vergaderbeheer** ⚠️
+    - 15.1 **FEAT-032 ALV Planning & Uitnodigingen** ⚠️
+      - 15.1.1 ✅ STORY-069 ALV plannen met datum en locatie (Must)
       - 15.1.2 ⬜ STORY-070 ALV agenda opstellen (Must)
       - 15.1.3 ⬜ STORY-071 ALV uitnodiging versturen (Must)
     - 15.2 **FEAT-033 Presentie & Volmachten** ⬜

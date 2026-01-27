@@ -695,6 +695,171 @@ class ApiClient {
     const queryStr = query.toString() ? `?${query.toString()}` : '';
     return `${this.baseUrl}/vves/${vveId}/audit-logs/export/csv${queryStr}`;
   }
+
+  // Contracts (EPIC-013, STORY-055, STORY-057)
+  async getContracts(vveId: string, params?: {
+    search?: string;
+    contract_type?: import('@/types').ContractType;
+    is_active?: boolean;
+    skip?: number;
+    limit?: number;
+  }) {
+    const query = new URLSearchParams();
+    if (params?.search) query.set('search', params.search);
+    if (params?.contract_type) query.set('contract_type', params.contract_type);
+    if (params?.is_active !== undefined) query.set('is_active', String(params.is_active));
+    if (params?.skip) query.set('skip', String(params.skip));
+    if (params?.limit) query.set('limit', String(params.limit));
+    
+    const queryStr = query.toString() ? `?${query.toString()}` : '';
+    return this.fetch<import('@/types').ContractListItem[]>(
+      `/vves/${vveId}/contracts${queryStr}`
+    );
+  }
+
+  async getContract(vveId: string, contractId: string) {
+    return this.fetch<import('@/types').Contract>(
+      `/vves/${vveId}/contracts/${contractId}`
+    );
+  }
+
+  async getContractSummary(vveId: string) {
+    return this.fetch<import('@/types').ContractSummary>(
+      `/vves/${vveId}/contracts/summary`
+    );
+  }
+
+  // STORY-058: Contract alerts
+  async getContractAlerts(vveId: string, includePast = false) {
+    const query = includePast ? '?include_past=true' : '';
+    return this.fetch<import('@/types').ContractAlertResponse[]>(
+      `/vves/${vveId}/contracts/alerts${query}`
+    );
+  }
+
+  async createContract(vveId: string, data: import('@/types').ContractCreate) {
+    return this.fetch<import('@/types').Contract>(
+      `/vves/${vveId}/contracts`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async updateContract(vveId: string, contractId: string, data: import('@/types').ContractUpdate) {
+    return this.fetch<import('@/types').Contract>(
+      `/vves/${vveId}/contracts/${contractId}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async deleteContract(vveId: string, contractId: string) {
+    return this.fetch(`/vves/${vveId}/contracts/${contractId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // STORY-056: Contract document upload
+  async uploadContractDocument(
+    vveId: string,
+    contractId: string,
+    file: File,
+    description?: string
+  ): Promise<import('@/types').ContractDocumentResponse> {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (description) formData.append('description', description);
+
+    const token = typeof window !== 'undefined' 
+      ? localStorage.getItem('access_token') 
+      : null;
+
+    const response = await fetch(
+      `${this.baseUrl}/vves/${vveId}/contracts/${contractId}/document`,
+      {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: 'Upload mislukt' }));
+      throw new Error(error.detail);
+    }
+
+    return response.json();
+  }
+
+  async linkDocumentToContract(vveId: string, contractId: string, documentId: string) {
+    return this.fetch<import('@/types').Contract>(
+      `/vves/${vveId}/contracts/${contractId}/document/${documentId}`,
+      {
+        method: 'PUT',
+      }
+    );
+  }
+
+  async unlinkDocumentFromContract(vveId: string, contractId: string) {
+    return this.fetch(`/vves/${vveId}/contracts/${contractId}/document`, {
+      method: 'DELETE',
+    });
+  }
+
+  // STORY-069: ALV/Meetings API
+  async getMeetings(vveId: string, params?: {
+    status?: import('@/types').MeetingStatus;
+    upcoming_only?: boolean;
+    skip?: number;
+    limit?: number;
+  }) {
+    const query = new URLSearchParams();
+    if (params?.status) query.set('status_filter', params.status);
+    if (params?.upcoming_only !== undefined) query.set('upcoming_only', String(params.upcoming_only));
+    if (params?.skip) query.set('skip', String(params.skip));
+    if (params?.limit) query.set('limit', String(params.limit));
+    
+    const queryStr = query.toString() ? `?${query.toString()}` : '';
+    return this.fetch<import('@/types').MeetingListItem[]>(
+      `/vves/${vveId}/meetings${queryStr}`
+    );
+  }
+
+  async getMeeting(vveId: string, meetingId: string) {
+    return this.fetch<import('@/types').Meeting>(
+      `/vves/${vveId}/meetings/${meetingId}`
+    );
+  }
+
+  async createMeeting(vveId: string, data: import('@/types').MeetingCreate) {
+    return this.fetch<import('@/types').Meeting>(
+      `/vves/${vveId}/meetings`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async updateMeeting(vveId: string, meetingId: string, data: import('@/types').MeetingUpdate) {
+    return this.fetch<import('@/types').Meeting>(
+      `/vves/${vveId}/meetings/${meetingId}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async deleteMeeting(vveId: string, meetingId: string) {
+    return this.fetch(`/vves/${vveId}/meetings/${meetingId}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 export const api = new ApiClient(API_BASE_URL);

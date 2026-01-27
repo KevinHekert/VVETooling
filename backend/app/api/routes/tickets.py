@@ -1221,7 +1221,7 @@ async def list_suppliers(
     response_model=SupplierResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Leverancier toevoegen",
-    description="Voeg een nieuwe leverancier toe aan de VVE. Alleen bestuur en beheerders.",
+    description="Voeg een nieuwe leverancier toe aan de VVE. Alleen bestuur en beheerders. STORY-060: Duplicaat detectie op bedrijfsnaam.",
 )
 async def create_supplier(
     vve_id: uuid.UUID,
@@ -1229,7 +1229,7 @@ async def create_supplier(
     current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> SupplierResponse:
-    """Create a new supplier."""
+    """Create a new supplier (STORY-060)."""
     # Validate VVE exists
     vve_result = await db.execute(select(VVE).where(VVE.id == vve_id))
     if vve_result.scalar_one_or_none() is None:
@@ -1238,12 +1238,27 @@ async def create_supplier(
             detail="VVE niet gevonden",
         )
 
+    # STORY-060: Check for duplicate supplier name
+    duplicate_query = select(Supplier).where(
+        Supplier.vve_id == vve_id,
+        Supplier.name.ilike(supplier_data.name),
+    )
+    duplicate_result = await db.execute(duplicate_query)
+    existing_supplier = duplicate_result.scalar_one_or_none()
+    
+    if existing_supplier:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Een leverancier met de naam '{supplier_data.name}' bestaat al",
+        )
+
     supplier = Supplier(
         vve_id=vve_id,
         name=supplier_data.name,
         contact_person=supplier_data.contact_person,
         email=supplier_data.email,
         phone=supplier_data.phone,
+        address=supplier_data.address,
         specialty=supplier_data.specialty,
         notes=supplier_data.notes,
         is_active=supplier_data.is_active,

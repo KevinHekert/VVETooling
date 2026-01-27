@@ -576,6 +576,7 @@ class Supplier(Base):
     contact_person: Mapped[str | None] = mapped_column(String(255))
     email: Mapped[str | None] = mapped_column(String(255))
     phone: Mapped[str | None] = mapped_column(String(50))
+    address: Mapped[str | None] = mapped_column(Text)  # STORY-060: Added address field
     specialty: Mapped[str | None] = mapped_column(String(255))
     notes: Mapped[str | None] = mapped_column(Text)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
@@ -911,4 +912,158 @@ class SplitsingsakteVersion(Base):
         Index("ix_splitsingsakte_versions_status", "status"),
         Index("ix_splitsingsakte_versions_vve_status", "vve_id", "status"),
         UniqueConstraint("vve_id", "version_number", name="uq_splitsingsakte_version"),
+    )
+
+
+# ============================================================================
+# Contract Management (EPIC-013: Contractbeheer, FEAT-026)
+# ============================================================================
+
+
+class ContractType(str, Enum):
+    """Contract type categories (STORY-055).
+    
+    Predefined categories for VVE contracts.
+    """
+
+    ENERGIE = "energie"  # Energy contracts
+    VERZEKERING = "verzekering"  # Insurance contracts
+    ONDERHOUD = "onderhoud"  # Maintenance contracts
+    OVERIG = "overig"  # Other contracts
+
+
+class Contract(Base):
+    """Contract for VVE management (EPIC-013, FEAT-026, STORY-055).
+
+    Implements STORY-055: Contract registreren met metadata.
+    Stores contract information including supplier, dates, costs, and terms.
+    """
+
+    __tablename__ = "contracts"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    vve_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("vves.id", ondelete="CASCADE"), nullable=False
+    )
+    # Supplier information
+    supplier_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    supplier_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("suppliers.id", ondelete="SET NULL")
+    )
+    # Contract type (energie, verzekering, onderhoud, overig)
+    contract_type: Mapped[ContractType] = mapped_column(
+        SQLEnum(ContractType), nullable=False
+    )
+    # Contract details
+    description: Mapped[str | None] = mapped_column(Text)
+    # Dates
+    start_date: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+    end_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Notice period in days (opzegtermijn)
+    notice_period_days: Mapped[int | None] = mapped_column()
+    # Alert configuration (STORY-058)
+    alert_days_before: Mapped[int | None] = mapped_column(default=30)  # Days before notice deadline to alert
+    # Costs
+    costs: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
+    costs_period: Mapped[str | None] = mapped_column(
+        String(50)
+    )  # monthly, yearly, one-time
+    # Document reference
+    document_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("documents.id", ondelete="SET NULL")
+    )
+    # Audit fields
+    created_by_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    __table_args__ = (
+        Index("ix_contracts_vve_id", "vve_id"),
+        Index("ix_contracts_supplier_id", "supplier_id"),
+        Index("ix_contracts_contract_type", "contract_type"),
+        Index("ix_contracts_end_date", "end_date"),
+    )
+
+
+# ==============================================================================
+# EPIC-015: ALV & Vergaderbeheer
+# ==============================================================================
+
+class MeetingType(str, Enum):
+    """Type of ALV meeting (STORY-069)."""
+
+    FYSIEK = "fysiek"       # Physical meeting
+    ONLINE = "online"       # Online meeting
+    HYBRIDE = "hybride"     # Hybrid meeting
+
+
+class MeetingStatus(str, Enum):
+    """Status of an ALV meeting."""
+
+    GEPLAND = "gepland"         # Scheduled
+    UITNODIGING_VERZONDEN = "uitnodiging_verzonden"  # Invitations sent
+    ACTIEF = "actief"           # In progress
+    AFGESLOTEN = "afgesloten"   # Completed
+    GEANNULEERD = "geannuleerd" # Cancelled
+
+
+class Meeting(Base):
+    """ALV (Algemene Ledenvergadering) meeting (STORY-069).
+
+    Implements STORY-069: ALV plannen met datum en locatie.
+    Implements STORY-070: ALV agenda opstellen.
+    """
+
+    __tablename__ = "meetings"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    vve_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("vves.id", ondelete="CASCADE"), nullable=False
+    )
+    # Meeting details
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text)
+    # Date and time
+    meeting_date: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+    end_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Type and location
+    meeting_type: Mapped[MeetingType] = mapped_column(
+        SQLEnum(MeetingType), nullable=False, default=MeetingType.FYSIEK
+    )
+    location_address: Mapped[str | None] = mapped_column(String(500))  # Physical address
+    location_online_link: Mapped[str | None] = mapped_column(String(500))  # Video conference URL
+    # Status
+    status: Mapped[MeetingStatus] = mapped_column(
+        SQLEnum(MeetingStatus), nullable=False, default=MeetingStatus.GEPLAND
+    )
+    # Audit fields
+    created_by_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    __table_args__ = (
+        Index("ix_meetings_vve_id", "vve_id"),
+        Index("ix_meetings_meeting_date", "meeting_date"),
+        Index("ix_meetings_status", "status"),
     )

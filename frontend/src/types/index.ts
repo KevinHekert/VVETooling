@@ -478,7 +478,7 @@ export interface TicketSupplierStatusUpdate {
   supplier_status_note?: string;
 }
 
-// STORY-035, STORY-044: Supplier types
+// STORY-035, STORY-044, STORY-060: Supplier types
 export interface Supplier {
   id: string;
   vve_id: string;
@@ -486,6 +486,7 @@ export interface Supplier {
   contact_person?: string;
   email?: string;
   phone?: string;
+  address?: string;  // STORY-060
   specialty?: string;
   notes?: string;
   is_active: boolean;
@@ -498,6 +499,7 @@ export interface SupplierCreate {
   contact_person?: string;
   email?: string;
   phone?: string;
+  address?: string;  // STORY-060
   specialty?: string;
   notes?: string;
   is_active?: boolean;
@@ -508,6 +510,7 @@ export interface SupplierUpdate {
   contact_person?: string;
   email?: string;
   phone?: string;
+  address?: string;  // STORY-060
   specialty?: string;
   notes?: string;
   is_active?: boolean;
@@ -607,6 +610,166 @@ export interface SplitsingsakteAmendmentCreate {
   amendment_type: SplitsingsakteAmendmentType;
   effective_date: string;
   document_id?: string;
+}
+
+// EPIC-013: Contract types (STORY-055)
+export type ContractType = 'energie' | 'verzekering' | 'onderhoud' | 'overig';
+export type CostsPeriod = 'monthly' | 'yearly' | 'one_time';
+
+export interface Contract {
+  id: string;
+  vve_id: string;
+  supplier_name: string;
+  supplier_id?: string;
+  contract_type: ContractType;
+  description?: string;
+  start_date: string;
+  end_date?: string;
+  notice_period_days?: number;
+  costs?: number;
+  costs_period?: CostsPeriod;
+  document_id?: string;
+  created_by_id: string;
+  created_by_name?: string;
+  created_at: string;
+  updated_at: string;
+  is_active: boolean;
+  // STORY-058: Alert configuration
+  alert_days_before?: number;
+}
+
+export interface ContractCreate {
+  supplier_name: string;
+  supplier_id?: string;
+  contract_type: ContractType;
+  description?: string;
+  start_date: string;
+  end_date?: string;
+  notice_period_days?: number;
+  alert_days_before?: number;
+  costs?: number;
+  costs_period?: CostsPeriod;
+}
+
+export interface ContractUpdate {
+  supplier_name?: string;
+  supplier_id?: string;
+  contract_type?: ContractType;
+  description?: string;
+  start_date?: string;
+  end_date?: string;
+  notice_period_days?: number;
+  alert_days_before?: number;
+  costs?: number;
+  costs_period?: CostsPeriod;
+  is_active?: boolean;
+}
+
+export interface ContractListItem {
+  id: string;
+  vve_id: string;
+  supplier_name: string;
+  contract_type: ContractType;
+  start_date: string;
+  end_date?: string;
+  notice_period_days?: number;
+  costs?: number;
+  costs_period?: CostsPeriod;
+  is_active: boolean;
+  created_at: string;
+  days_until_end?: number;
+  days_until_notice?: number;
+  is_expiring_soon: boolean;
+}
+
+export interface ContractSummary {
+  total_contracts: number;
+  active_contracts: number;
+  expiring_soon: number;
+  by_type: Record<string, number>;
+  total_monthly_costs: number;
+  total_yearly_costs: number;
+}
+
+// STORY-056: Contract document types
+export interface ContractDocumentResponse {
+  contract_id: string;
+  document_id: string;
+  file_name: string;
+  file_type: string;
+  file_size_bytes: number;
+  created_at: string;
+}
+
+// STORY-058: Contract alert types
+export interface ContractAlertResponse {
+  id: string;
+  vve_id: string;
+  supplier_name: string;
+  contract_type: ContractType;
+  end_date: string;
+  notice_period_days: number;
+  alert_days_before: number;
+  notice_deadline: string;
+  alert_date: string;
+  days_until_alert: number;
+  days_until_notice: number;
+  is_alert_due: boolean;
+  is_notice_due: boolean;
+}
+
+// STORY-069: ALV/Meeting types
+export type MeetingType = 'fysiek' | 'online' | 'hybride';
+export type MeetingStatus = 'gepland' | 'uitnodiging_verzonden' | 'actief' | 'afgesloten' | 'geannuleerd';
+
+export interface Meeting {
+  id: string;
+  vve_id: string;
+  title: string;
+  description?: string;
+  meeting_date: string;
+  end_time?: string;
+  meeting_type: MeetingType;
+  location_address?: string;
+  location_online_link?: string;
+  status: MeetingStatus;
+  created_by_id: string;
+  created_at: string;
+  updated_at: string;
+  days_until?: number;
+  is_upcoming: boolean;
+}
+
+export interface MeetingCreate {
+  title: string;
+  description?: string;
+  meeting_date: string;
+  end_time?: string;
+  meeting_type: MeetingType;
+  location_address?: string;
+  location_online_link?: string;
+}
+
+export interface MeetingUpdate {
+  title?: string;
+  description?: string;
+  meeting_date?: string;
+  end_time?: string;
+  meeting_type?: MeetingType;
+  location_address?: string;
+  location_online_link?: string;
+  status?: MeetingStatus;
+}
+
+export interface MeetingListItem {
+  id: string;
+  vve_id: string;
+  title: string;
+  meeting_date: string;
+  meeting_type: MeetingType;
+  status: MeetingStatus;
+  days_until?: number;
+  is_upcoming: boolean;
 }
 
 // API Response types
