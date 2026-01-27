@@ -276,6 +276,42 @@ class ApiClient {
     );
   }
 
+  // STORY-019: Document download links and share links
+  async getDocumentDownloadUrl(vveId: string, documentId: string) {
+    return this.fetch<import('@/types').DocumentDownloadUrl>(
+      `/vves/${vveId}/documents/${documentId}/download`
+    );
+  }
+
+  async createDocumentShareLink(
+    vveId: string,
+    documentId: string,
+    data?: import('@/types').DocumentShareLinkRequest
+  ) {
+    return this.fetch<import('@/types').DocumentShareLink>(
+      `/vves/${vveId}/documents/${documentId}/share-links`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data || {}),
+      }
+    );
+  }
+
+  async getDocumentShareLinks(vveId: string, documentId: string) {
+    return this.fetch<import('@/types').DocumentShareLink[]>(
+      `/vves/${vveId}/documents/${documentId}/share-links`
+    );
+  }
+
+  async revokeDocumentShareLink(vveId: string, documentId: string, linkToken: string) {
+    return this.fetch(
+      `/vves/${vveId}/documents/${documentId}/share-links/${linkToken}`,
+      {
+        method: 'DELETE',
+      }
+    );
+  }
+
   // Budgets (STORY-006)
   async getBudgets(vveId: string) {
     return this.fetch<import('@/types').Budget[]>(

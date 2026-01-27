@@ -125,6 +125,53 @@ class DocumentDownloadResponse(BaseModel):
     file_type: str
 
 
+# STORY-019: Document download links and notifications
+class DocumentShareLinkRequest(BaseModel):
+    """Request for generating a share link (STORY-019)."""
+
+    expires_in_hours: int = Field(default=24, ge=1, le=168)  # 1 hour to 1 week
+    allow_download: bool = Field(default=True, description="Whether link allows downloads")
+
+
+class DocumentShareLinkResponse(BaseModel):
+    """Response for share link generation (STORY-019)."""
+
+    id: uuid.UUID
+    document_id: uuid.UUID
+    share_url: str
+    token: str
+    expires_at: datetime
+    created_by_id: uuid.UUID
+    created_by_name: str | None = None
+    allow_download: bool = True
+    view_count: int = 0
+    download_count: int = 0
+    is_active: bool = True
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DocumentShareLinkListResponse(BaseModel):
+    """List of share links for a document (STORY-019)."""
+
+    document_id: uuid.UUID
+    document_title: str
+    share_links: list[DocumentShareLinkResponse]
+
+
+class DocumentDownloadEventResponse(BaseModel):
+    """Response for download event logging (STORY-019 audit prep)."""
+
+    document_id: uuid.UUID
+    document_title: str
+    downloaded_at: datetime
+    downloaded_by_id: uuid.UUID | None = None
+    downloaded_by_name: str | None = None
+    download_type: str = "direct"  # direct, share_link, version
+    ip_address: str | None = None
+
+
 class StorageUsageResponse(BaseModel):
     """Response for VVE storage usage (D-004 limits)."""
 

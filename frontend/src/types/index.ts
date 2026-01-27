@@ -214,6 +214,34 @@ export interface StorageUsage {
   is_near_limit: boolean;
 }
 
+// STORY-019: Document share link types
+export interface DocumentShareLinkRequest {
+  expires_in_hours?: number;
+  allow_download?: boolean;
+}
+
+export interface DocumentShareLink {
+  id: string;
+  document_id: string;
+  share_url: string;
+  token: string;
+  expires_at: string;
+  created_by_id: string;
+  created_by_name?: string;
+  allow_download: boolean;
+  view_count: number;
+  download_count: number;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface DocumentDownloadUrl {
+  download_url: string;
+  expires_in_seconds: number;
+  file_name: string;
+  file_type: string;
+}
+
 // Budget types (STORY-006)
 export type BudgetStatus = 'draft' | 'approved' | 'archived';
 
