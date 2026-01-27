@@ -294,7 +294,7 @@ export interface BudgetSummary {
   item_count: number;
 }
 
-// Audit Log types (STORY-010)
+// Audit Log types (STORY-010, STORY-023)
 export interface AuditLog {
   id: string;
   vve_id: string | null;
@@ -308,6 +308,7 @@ export interface AuditLog {
   ip_address?: string;
   is_financial: boolean;
   created_at: string;
+  result?: string;
 }
 
 export interface AuditLogFilters {
@@ -317,6 +318,23 @@ export interface AuditLogFilters {
   start_date?: string;
   end_date?: string;
   is_financial?: boolean;
+}
+
+// STORY-023: Audit log list and export types
+export interface AuditLogListResponse {
+  items: AuditLog[];
+  total: number;
+  page: number;
+  size: number;
+}
+
+export interface AuditLogExportSummary {
+  export_id: string;
+  format: string;
+  record_count: number;
+  file_size_estimate: string;
+  download_url: string;
+  expires_at: string;
 }
 
 // Ticket types (STORY-029, STORY-030, STORY-037, STORY-044)

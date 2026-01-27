@@ -1,6 +1,7 @@
 """Audit Log Pydantic schemas.
 
 Implements FEAT-015 (Audit Logging) and STORY-010 (Audit logging zichtbaar in UI).
+Implements STORY-023: Audit logging filters en export.
 """
 
 from datetime import datetime
@@ -67,3 +68,27 @@ class AuditLogFilters(BaseModel):
     start_date: datetime | None = None
     end_date: datetime | None = None
     is_financial: bool | None = None
+
+
+# STORY-023: Export schemas
+class AuditLogExportRequest(BaseModel):
+    """Request for audit log export."""
+    
+    format: str = Field(default="csv", description="Export format: csv or pdf")
+    action: str | None = Field(None, description="Filter by action type")
+    entity_type: str | None = Field(None, description="Filter by entity type")
+    user_id: UUID | None = Field(None, description="Filter by user ID")
+    start_date: datetime | None = Field(None, description="Filter from date")
+    end_date: datetime | None = Field(None, description="Filter to date")
+    is_financial: bool | None = Field(None, description="Filter financial actions only")
+
+
+class AuditLogExportResponse(BaseModel):
+    """Response for audit log export preparation."""
+    
+    export_id: UUID
+    format: str
+    record_count: int
+    file_size_estimate: str
+    download_url: str
+    expires_at: datetime
