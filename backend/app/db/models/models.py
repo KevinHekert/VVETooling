@@ -650,6 +650,12 @@ class Ticket(Base):
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
     )
 
+    # STORY-038: SLA and response time tracking
+    sla_due_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    sla_response_hours: Mapped[int | None] = mapped_column()  # Expected response time in hours
+    sla_breached: Mapped[bool] = mapped_column(Boolean, default=False)
+    sla_breached_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
     # Relationships
     attachments: Mapped[list["TicketAttachment"]] = relationship(
         "TicketAttachment", back_populates="ticket", cascade="all, delete-orphan"
