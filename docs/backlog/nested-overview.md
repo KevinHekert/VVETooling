@@ -16,11 +16,11 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
      - 1.1.3 ✅ STORY-012 Transactie-overzicht met filters en widgets (Must)
    - 1.2 **FEAT-002 Reserves & saldo-overzicht** ⚠️
      - 1.2.1 ✅ STORY-013 Reserves overzicht en allocatie (Must)
-     - 1.2.2 ⬜ STORY-026 Reserves scenario-planning en prognose (Should)
+     - 1.2.2 ✅ STORY-026 Reserves scenario-planning en prognose (Should)
      - 1.2.3 ⬜ STORY-027 Reserves herclassificatie en audit trail (Should)
      - 1.2.4 ✅ STORY-028 Mobile-first reserves dashboard (Must)
-   - 1.3 **FEAT-018 Reservefonds prognoses** ⬜
-     - 1.3.1 ⬜ STORY-033 Reservefonds prognose dashboard (Should)
+   - 1.3 **FEAT-018 Reservefonds prognoses** ⚠️
+     - 1.3.1 ✅ STORY-033 Reservefonds prognose dashboard (Should)
      - 1.3.2 ⬜ STORY-039 Reservefonds prognose export en scenario (Should)
      - 1.3.3 ⬜ STORY-040 Reservefonds prognose waarschuwingen (Should)
 
@@ -101,8 +101,8 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
 | Niveau | Totaal | ✅ Gereed | ⬜ Backlog | % Gereed |
 |--------|--------|-----------|-----------|----------|
 | Epics | 10 | 9 | 1 | 90% |
-| Features | 19 | 17 | 2 | 89% |
-| Stories | 44 | 39 | 5 | 89% |
+| Features | 19 | 18 | 1 | 95% |
+| Stories | 44 | 41 | 3 | 93% |
 
 **Volledig afgeronde Epics:** EPIC-002, EPIC-003, EPIC-004, EPIC-005, EPIC-006, EPIC-007, EPIC-008, EPIC-009, EPIC-010
 
