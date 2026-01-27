@@ -399,13 +399,18 @@ export default function BeheerderTicketDetailPage() {
                       comment.is_internal ? 'bg-yellow-50 border border-yellow-200' : 'bg-gray-50'
                     }`}
                   >
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
                       <span className="font-medium text-gray-900">
                         {comment.author_name || 'Onbekend'}
                       </span>
                       {comment.is_internal && (
                         <span className="px-2 py-0.5 bg-yellow-200 text-yellow-800 text-xs rounded-full">
                           Interne notitie
+                        </span>
+                      )}
+                      {comment.is_answered && (
+                        <span className="px-2 py-0.5 bg-green-200 text-green-800 text-xs rounded-full">
+                          ✓ Beantwoord
                         </span>
                       )}
                       <span className="text-sm text-gray-500">
@@ -418,6 +423,34 @@ export default function BeheerderTicketDetailPage() {
                       </span>
                     </div>
                     <p className="text-gray-700 whitespace-pre-wrap">{comment.content}</p>
+                    
+                    {/* Mark as answered button (only for non-internal, unanswered comments) */}
+                    {!comment.is_internal && !comment.is_answered && (
+                      <div className="mt-3 pt-3 border-t">
+                        <button
+                          onClick={async () => {
+                            try {
+                              await api.updateTicketComment(vveId, ticketId, comment.id, {
+                                is_answered: true,
+                              });
+                              // Refresh comments
+                              const commentsData = await api.getTicketComments(vveId, ticketId);
+                              setComments(commentsData);
+                              // Refresh timeline
+                              const timelineData = await api.getTicketTimeline(vveId, ticketId);
+                              setTimeline(timelineData);
+                              setSuccessMessage('Reactie gemarkeerd als beantwoord');
+                              setTimeout(() => setSuccessMessage(null), 3000);
+                            } catch (err) {
+                              setError(err instanceof Error ? err.message : 'Kon reactie niet bijwerken');
+                            }
+                          }}
+                          className="text-sm text-green-600 hover:text-green-800"
+                        >
+                          ✓ Markeren als beantwoord
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
