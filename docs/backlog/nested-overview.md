@@ -53,18 +53,18 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
      - 5.2.1 ✅ STORY-010 Audit logging zichtbaar in UI (Should)
      - 5.2.2 ✅ STORY-023 Audit logging filters en export (Should)
 
-6. **EPIC-006 Documenten delen** ⚠️
+6. **EPIC-006 Documenten delen** ✅
    - 6.1 **FEAT-011 Documentbeheer** ✅
      - 6.1.1 ✅ STORY-004 Bestuur uploadt document (Must)
      - 6.1.2 ✅ STORY-018 Document versiebeheer en rol-specifiek delen (Must)
    - 6.2 **FEAT-012 Documenten downloaden** ✅
      - 6.2.1 ✅ STORY-008 Documenten delen en downloaden (Should)
      - 6.2.2 ✅ STORY-019 Document download-links en notificaties (Should)
-   - 6.3 **FEAT-019 Splitsingsakte versiebeheer** ⚠️
+   - 6.3 **FEAT-019 Splitsingsakte versiebeheer** ✅
      - 6.3.1 ✅ STORY-032 Splitsingsakte versie en aanvullingen (Should)
      - 6.3.2 ✅ STORY-041 Splitsingsakte versies overzicht (Must)
      - 6.3.3 ✅ STORY-042 Splitsingsakte aanvullingen log (Should)
-     - 6.3.4 ⬜ STORY-043 Splitsingsakte publicatie en toegang (Should)
+     - 6.3.4 ✅ STORY-043 Splitsingsakte publicatie en toegang (Should)
 
 7. **EPIC-007 Data export & backup** ✅
    - 7.1 **FEAT-013 Export & backup** ✅
@@ -100,11 +100,11 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
 
 | Niveau | Totaal | ✅ Gereed | ⬜ Backlog | % Gereed |
 |--------|--------|-----------|-----------|----------|
-| Epics | 10 | 8 | 2 | 80% |
-| Features | 19 | 16 | 3 | 84% |
-| Stories | 44 | 38 | 6 | 86% |
+| Epics | 10 | 9 | 1 | 90% |
+| Features | 19 | 17 | 2 | 89% |
+| Stories | 44 | 39 | 5 | 89% |
 
-**Volledig afgeronde Epics:** EPIC-002, EPIC-003, EPIC-004, EPIC-005, EPIC-007, EPIC-008, EPIC-009, EPIC-010
+**Volledig afgeronde Epics:** EPIC-002, EPIC-003, EPIC-004, EPIC-005, EPIC-006, EPIC-007, EPIC-008, EPIC-009, EPIC-010
 
 ---
 - Prioriteitlabels komen uit de individuele stories (Must/Should). Waar een story meerdere features raakt, is de primaire plaatsing hierboven opgenomen en gemarkeerd als *gedeeld* wanneer relevant.
