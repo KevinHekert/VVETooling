@@ -182,7 +182,9 @@ class AmazonSESProvider(EmailProvider):
             msg = MIMEMultipart("mixed")
             msg["Subject"] = subject
             msg["From"] = source
-            msg["To"] = ", ".join(destinations[:len(options.cc) - len(options.bcc) if options.cc or options.bcc else len(destinations)])
+            # Only include primary "To" recipients (not CC/BCC which are handled by SES)
+            to_count = len(destinations) - len(options.cc) - len(options.bcc)
+            msg["To"] = ", ".join(destinations[:max(to_count, 1)])
             
             if options.reply_to:
                 msg["Reply-To"] = options.reply_to

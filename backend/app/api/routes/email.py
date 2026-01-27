@@ -681,13 +681,17 @@ async def export_email_logs(
     ])
     
     for log in filtered:
+        # Normalize enum values to strings
+        provider_str = log["provider"].value if isinstance(log["provider"], EmailProviderType) else str(log["provider"])
+        status_str = log["status"].value if isinstance(log["status"], EmailStatus) else str(log["status"])
+        
         writer.writerow([
             log["created_at"].isoformat(),
             log["subject"],
             log["recipient_preview"],
             log["recipient_count"],
-            log["provider"].value if hasattr(log["provider"], "value") else log["provider"],
-            log["status"].value if hasattr(log["status"], "value") else log["status"],
+            provider_str,
+            status_str,
             log.get("error_message", ""),
         ])
     
