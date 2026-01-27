@@ -8,9 +8,9 @@ Deze backlog is de single source of truth voor uitvoering van VVE Tooling MVP. A
 
 | Niveau | Totaal | ✅ Gereed | ⬜ Backlog | % Gereed |
 |--------|--------|-----------|-----------|----------|
-| Epics | 11 | 5 | 6 | 45% |
-| Features | 22 | 12 | 10 | 55% |
-| Stories | 44 | 32 | 12 | 73% |
+| Epics | 11 | 11 | 0 | 100% |
+| Features | 22 | 22 | 0 | 100% |
+| Stories | 47 | 47 | 0 | 100% |
 
 ## Navigatie
 - **Ways of working**
@@ -104,6 +104,9 @@ Deze backlog is de single source of truth voor uitvoering van VVE Tooling MVP. A
   - [STORY-042 Splitsingsakte aanvullingen log](stories/STORY-042-splitsingsakte-aanvullingen-log.md)
   - [STORY-043 Splitsingsakte publicatie en toegang](stories/STORY-043-splitsingsakte-publicatie-en-toegang.md)
   - [STORY-044 Ticket supplier collaboration status](stories/STORY-044-ticket-supplier-collaboration-status.md)
+  - [STORY-045 Sjablonenbeheer pagina](stories/STORY-045-sjablonenbeheer-pagina.md)
+  - [STORY-046 Brieven genereren wizard](stories/STORY-046-brieven-genereren-wizard.md)
+  - [STORY-047 Multi-channel verzending](stories/STORY-047-multi-channel-verzending.md)
 - **Decision log**
   - [Open vragen](decision-log/01-open-vragen.md)
   - [Besluiten](decision-log/02-besluiten.md)
