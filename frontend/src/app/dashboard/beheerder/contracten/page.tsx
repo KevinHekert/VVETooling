@@ -33,6 +33,11 @@ export default function ContractenPage() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  
+  // Document upload state (STORY-056)
+  const [documentFile, setDocumentFile] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [isDragging, setIsDragging] = useState(false);
 
   // Filter state
   const [typeFilter, setTypeFilter] = useState<string>('all');
@@ -68,25 +73,81 @@ export default function ContractenPage() {
     fetchContracts();
   }, [typeFilter, activeFilter]);
 
+  // Document upload handlers (STORY-056)
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    const file = e.dataTransfer.files[0];
+    if (file && file.type === 'application/pdf') {
+      if (file.size <= 10 * 1024 * 1024) { // 10MB limit
+        setDocumentFile(file);
+      } else {
+        setError('Bestand is te groot. Maximaal 10MB toegestaan.');
+      }
+    } else {
+      setError('Alleen PDF bestanden zijn toegestaan.');
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.type === 'application/pdf') {
+        if (file.size <= 10 * 1024 * 1024) { // 10MB limit
+          setDocumentFile(file);
+        } else {
+          setError('Bestand is te groot. Maximaal 10MB toegestaan.');
+        }
+      } else {
+        setError('Alleen PDF bestanden zijn toegestaan.');
+      }
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError(null);
+    setUploadProgress(0);
 
     try {
-      await api.createContract(vveId, {
+      // Create contract first
+      const contract = await api.createContract(vveId, {
         ...formData,
         start_date: new Date(formData.start_date).toISOString(),
         end_date: formData.end_date ? new Date(formData.end_date).toISOString() : undefined,
       });
       
-      setSuccessMessage('Contract succesvol toegevoegd!');
+      setUploadProgress(50);
+
+      // Upload document if provided (STORY-056)
+      if (documentFile) {
+        await api.uploadContractDocument(vveId, contract.id, documentFile);
+        setUploadProgress(100);
+      }
+      
+      setSuccessMessage(documentFile 
+        ? 'Contract en document succesvol toegevoegd!' 
+        : 'Contract succesvol toegevoegd!');
       setShowAddForm(false);
       setFormData({
         supplier_name: '',
         contract_type: 'onderhoud',
         start_date: new Date().toISOString().split('T')[0],
       });
+      setDocumentFile(null);
+      setUploadProgress(0);
       fetchContracts();
       
       // Clear success message after 3 seconds
@@ -261,11 +322,84 @@ export default function ContractenPage() {
               />
             </div>
 
+            {/* Document Upload (STORY-056) */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Contract Document (PDF, max 10MB)
+              </label>
+              <div
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                className={`
+                  relative border-2 border-dashed rounded-lg p-6 text-center transition-colors
+                  ${isDragging 
+                    ? 'border-blue-500 bg-blue-50' 
+                    : documentFile 
+                      ? 'border-green-500 bg-green-50'
+                      : 'border-gray-300 hover:border-gray-400'
+                  }
+                `}
+              >
+                {documentFile ? (
+                  <div className="flex items-center justify-center gap-3">
+                    <span className="text-2xl">📄</span>
+                    <div className="text-left">
+                      <p className="font-medium text-gray-900">{documentFile.name}</p>
+                      <p className="text-sm text-gray-500">
+                        {(documentFile.size / 1024 / 1024).toFixed(2)} MB
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setDocumentFile(null)}
+                      className="ml-4 text-red-600 hover:text-red-800"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="text-4xl mb-2">📁</div>
+                    <p className="text-gray-600">
+                      Sleep een PDF bestand hierheen of{' '}
+                      <label className="text-blue-600 hover:text-blue-800 cursor-pointer underline">
+                        blader
+                        <input
+                          type="file"
+                          accept="application/pdf"
+                          onChange={handleFileSelect}
+                          className="hidden"
+                        />
+                      </label>
+                    </p>
+                    <p className="text-sm text-gray-400 mt-1">
+                      Alleen PDF, maximaal 10MB
+                    </p>
+                  </>
+                )}
+              </div>
+              {uploadProgress > 0 && uploadProgress < 100 && (
+                <div className="mt-2">
+                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-blue-600 transition-all duration-300"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                  <p className="text-sm text-gray-500 mt-1">Uploaden... {uploadProgress}%</p>
+                </div>
+              )}
+            </div>
+
             {/* Submit Button */}
             <div className="flex justify-end gap-3">
               <button
                 type="button"
-                onClick={() => setShowAddForm(false)}
+                onClick={() => {
+                  setShowAddForm(false);
+                  setDocumentFile(null);
+                }}
                 className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
               >
                 Annuleren
