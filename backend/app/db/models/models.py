@@ -798,3 +798,65 @@ class TicketComment(Base):
     ticket: Mapped["Ticket"] = relationship("Ticket", back_populates="comments")
 
     __table_args__ = (Index("ix_ticket_comments_ticket_id", "ticket_id"),)
+
+
+# ============================================================================
+# Splitsingsakte Version Management (FEAT-019, STORY-041)
+# ============================================================================
+
+
+class SplitsingsakteVersionStatus(str, Enum):
+    """Status values for splitsingsakte versions (STORY-041)."""
+
+    DRAFT = "draft"  # Concept
+    ACTIVE = "active"  # Actief
+    ARCHIVED = "archived"  # Gearchiveerd
+
+
+class SplitsingsakteVersion(Base):
+    """Splitsingsakte version for deed management (FEAT-019, STORY-041).
+
+    Implements STORY-041: Splitsingsakte versies overzicht.
+    Tracks different versions of the deed with status and validity dates.
+    """
+
+    __tablename__ = "splitsingsakte_versions"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    vve_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("vves.id", ondelete="CASCADE"), nullable=False
+    )
+    version_number: Mapped[int] = mapped_column(nullable=False)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text)
+    status: Mapped[SplitsingsakteVersionStatus] = mapped_column(
+        SQLEnum(SplitsingsakteVersionStatus), 
+        default=SplitsingsakteVersionStatus.DRAFT, 
+        nullable=False
+    )
+    effective_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    archived_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    document_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("documents.id", ondelete="SET NULL")
+    )
+    created_by_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+    activated_by_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    activated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    __table_args__ = (
+        Index("ix_splitsingsakte_versions_vve_id", "vve_id"),
+        Index("ix_splitsingsakte_versions_status", "status"),
+        UniqueConstraint("vve_id", "version_number", name="uq_splitsingsakte_version"),
+    )
