@@ -215,11 +215,24 @@ export default function ReservePrognosePage() {
       `Looptijd: ${params.years} jaar`,
     ];
 
+    // STORY-040: Add warnings to export
+    const currentWarnings = calculateWarnings();
+    const warningRows = currentWarnings.map(w => [
+      'WAARSCHUWING',
+      w.reserveName,
+      w.year.toString(),
+      w.issue === 'negative' ? 'Negatief saldo' : 'Doel niet bereikt',
+      `€${w.balance.toLocaleString('nl-NL')}`,
+      w.recommendation,
+    ]);
+
     const csvContent = [
       headers.join(';'),
       ...rows.map(row => row.join(';')),
       '',
       paramsRow.join(';'),
+      '',
+      ...(warningRows.length > 0 ? ['Waarschuwingen:', ...warningRows.map(row => row.join(';'))] : []),
     ].join('\n');
 
     const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -247,6 +260,45 @@ export default function ReservePrognosePage() {
     return { currentTotal, targetTotal, projectedTotal };
   };
 
+  // STORY-040: Calculate warnings for negative balance or target not met
+  const calculateWarnings = () => {
+    const warnings: { reserveId: string; reserveName: string; year: number; balance: number; issue: 'negative' | 'below_target'; recommendation: string }[] = [];
+    
+    prognoses.forEach(reserve => {
+      const scenarioData = reserve.prognose[selectedScenario];
+      
+      scenarioData.forEach(yearData => {
+        // Check for negative balance
+        if (yearData.projected_balance < 0) {
+          warnings.push({
+            reserveId: reserve.id,
+            reserveName: reserve.name,
+            year: yearData.year,
+            balance: yearData.projected_balance,
+            issue: 'negative',
+            recommendation: `Verhoog bijdrage of verlaag geplande uitgaven voor ${reserve.name}`,
+          });
+        }
+      });
+      
+      // Check if target is not met by target year
+      const lastYear = scenarioData.slice(-1)[0];
+      if (lastYear && lastYear.projected_balance < reserve.target_amount) {
+        warnings.push({
+          reserveId: reserve.id,
+          reserveName: reserve.name,
+          year: reserve.target_year,
+          balance: lastYear.projected_balance,
+          issue: 'below_target',
+          recommendation: `Doel voor ${reserve.name} wordt niet gehaald. Tekort: €${(reserve.target_amount - lastYear.projected_balance).toLocaleString('nl-NL')}`,
+        });
+      }
+    });
+    
+    return warnings;
+  };
+
+  const warnings = calculateWarnings();
   const totals = calculateTotals();
 
   if (isLoading) {
@@ -273,6 +325,38 @@ export default function ReservePrognosePage() {
           Exporteren
         </button>
       </div>
+
+      {/* STORY-040: Warning Alerts */}
+      {warnings.length > 0 && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl">⚠️</span>
+            <div className="flex-1">
+              <h3 className="text-sm font-semibold text-red-900">
+                {warnings.length} waarschuwing{warnings.length > 1 ? 'en' : ''} gevonden
+              </h3>
+              <p className="text-sm text-red-700 mt-1">
+                Op basis van het {SCENARIO_CONFIG[selectedScenario].label} scenario:
+              </p>
+              <ul className="mt-2 space-y-2">
+                {warnings.slice(0, 3).map((warning, idx) => (
+                  <li key={idx} className="flex items-start gap-2 text-sm text-red-800">
+                    <span className={warning.issue === 'negative' ? 'text-red-600' : 'text-orange-600'}>
+                      {warning.issue === 'negative' ? '⛔' : '📉'}
+                    </span>
+                    <span>{warning.recommendation}</span>
+                  </li>
+                ))}
+                {warnings.length > 3 && (
+                  <li className="text-sm text-red-600">
+                    +{warnings.length - 3} meer waarschuwingen...
+                  </li>
+                )}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Scenario Selector */}
       <div className="bg-white rounded-lg shadow p-4">
