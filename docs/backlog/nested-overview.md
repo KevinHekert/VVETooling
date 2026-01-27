@@ -94,13 +94,13 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
       - 10.2.3 ✅ STORY-036 Leveranciers opvolgacties loggen (Should)
       - 10.2.4 ✅ STORY-044 Ticket supplier collaboration status (Must)
 
-11. **EPIC-011 Correspondentie & sjablonen** ⬜
-    - 11.1 **FEAT-020 Sjablonenbeheer** ⬜
-      - 11.1.1 ⬜ STORY-045 Sjablonenbeheer pagina (Must)
-    - 11.2 **FEAT-021 Brieven genereren** ⬜
-      - 11.2.1 ⬜ STORY-046 Brieven genereren wizard (Must)
-    - 11.3 **FEAT-022 Multi-channel verzending** ⬜
-      - 11.3.1 ⬜ STORY-047 Multi-channel verzending (Should)
+11. **EPIC-011 Correspondentie & sjablonen** ✅
+    - 11.1 **FEAT-020 Sjablonenbeheer** ✅
+      - 11.1.1 ✅ STORY-045 Sjablonenbeheer pagina (Must)
+    - 11.2 **FEAT-021 Brieven genereren** ✅
+      - 11.2.1 ✅ STORY-046 Brieven genereren wizard (Must)
+    - 11.3 **FEAT-022 Multi-channel verzending** ✅
+      - 11.3.1 ✅ STORY-047 Multi-channel verzending (Should)
 
 ---
 
@@ -108,11 +108,11 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
 
 | Niveau | Totaal | ✅ Gereed | ⬜ Backlog | % Gereed |
 |--------|--------|-----------|-----------|----------|
-| Epics | 11 | 10 | 1 | 91% |
-| Features | 22 | 19 | 3 | 86% |
-| Stories | 47 | 44 | 3 | 94% |
+| Epics | 11 | 11 | 0 | 100% |
+| Features | 22 | 22 | 0 | 100% |
+| Stories | 47 | 47 | 0 | 100% |
 
-**Volledig afgeronde Epics:** EPIC-001, EPIC-002, EPIC-003, EPIC-004, EPIC-005, EPIC-006, EPIC-007, EPIC-008, EPIC-009, EPIC-010
+**Volledig afgeronde Epics:** EPIC-001, EPIC-002, EPIC-003, EPIC-004, EPIC-005, EPIC-006, EPIC-007, EPIC-008, EPIC-009, EPIC-010, EPIC-011
 
 ---
 - Prioriteitlabels komen uit de individuele stories (Must/Should). Waar een story meerdere features raakt, is de primaire plaatsing hierboven opgenomen en gemarkeerd als *gedeeld* wanneer relevant.
