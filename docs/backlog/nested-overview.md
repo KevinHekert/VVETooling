@@ -114,7 +114,7 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
       - 12.3.1 ✅ STORY-053 E-mail verzenden via geconfigureerde provider (Must)
       - 12.3.2 ✅ STORY-054 E-mail verzending monitoring en logging (Should)
 
-13. **EPIC-013 Contractbeheer** ⚠️
+13. **EPIC-013 Contractbeheer** ✅
     - 13.1 **FEAT-026 Contractregistratie & Opslag** ✅
       - 13.1.1 ✅ STORY-055 Contract registreren met metadata (Should)
       - 13.1.2 ✅ STORY-056 Contract document uploaden (Should)
@@ -122,9 +122,9 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
     - 13.2 **FEAT-027 Contract Alerts & Herinneringen** ✅
       - 13.2.1 ✅ STORY-058 Opzegtermijn alert configureren (Should)
       - 13.2.2 ✅ STORY-059 Dashboard widget aflopen contracten (Should)
-    - 13.3 **FEAT-028 Leveranciersbeheer** ⚠️
+    - 13.3 **FEAT-028 Leveranciersbeheer** ✅
       - 13.3.1 ✅ STORY-060 Leverancier registreren (Should)
-      - 13.3.2 ⬜ STORY-061 Leverancier evaluatie (Could)
+      - 13.3.2 ✅ STORY-061 Leverancier evaluatie (Could)
 
 14. **EPIC-014 MJOP & Onderhoudsplanning** ⬜
     - 14.1 **FEAT-029 MJOP Import & Beheer** ⬜
@@ -264,13 +264,13 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
 
 | Niveau | Totaal | ✅ Gereed | ⬜ Backlog | % Gereed |
 |--------|--------|-----------|-----------|----------|
-| Epics | 27 | 12 | 15 | 44% |
-| Features | 69 | 25 | 44 | 36% |
-| Stories | 124 | 54 | 70 | 44% |
+| Epics | 27 | 13 | 14 | 48% |
+| Features | 69 | 26 | 43 | 38% |
+| Stories | 124 | 55 | 69 | 44% |
 
-**Volledig afgeronde Epics (Horizon 1 - MVP):** EPIC-001, EPIC-002, EPIC-003, EPIC-004, EPIC-005, EPIC-006, EPIC-007, EPIC-008, EPIC-009, EPIC-010, EPIC-011, EPIC-012
+**Volledig afgeronde Epics (Horizon 1 - MVP):** EPIC-001, EPIC-002, EPIC-003, EPIC-004, EPIC-005, EPIC-006, EPIC-007, EPIC-008, EPIC-009, EPIC-010, EPIC-011, EPIC-012, EPIC-013
 
-**Nieuwe Epics (Horizon 2 - Uitbreiding):** EPIC-013, EPIC-014, EPIC-015, EPIC-016, EPIC-017, EPIC-018, EPIC-019, EPIC-020, EPIC-021, EPIC-022, EPIC-023, EPIC-024, EPIC-025, EPIC-026, EPIC-027
+**Nieuwe Epics (Horizon 2 - Uitbreiding):** EPIC-014, EPIC-015, EPIC-016, EPIC-017, EPIC-018, EPIC-019, EPIC-020, EPIC-021, EPIC-022, EPIC-023, EPIC-024, EPIC-025, EPIC-026, EPIC-027
 
 ---
 - Prioriteitlabels komen uit de individuele stories (Must/Should). Waar een story meerdere features raakt, is de primaire plaatsing hierboven opgenomen en gemarkeerd als *gedeeld* wanneer relevant.
