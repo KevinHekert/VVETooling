@@ -478,7 +478,7 @@ export interface TicketSupplierStatusUpdate {
   supplier_status_note?: string;
 }
 
-// STORY-035, STORY-044: Supplier types
+// STORY-035, STORY-044, STORY-060: Supplier types
 export interface Supplier {
   id: string;
   vve_id: string;
@@ -486,6 +486,7 @@ export interface Supplier {
   contact_person?: string;
   email?: string;
   phone?: string;
+  address?: string;  // STORY-060
   specialty?: string;
   notes?: string;
   is_active: boolean;
@@ -498,6 +499,7 @@ export interface SupplierCreate {
   contact_person?: string;
   email?: string;
   phone?: string;
+  address?: string;  // STORY-060
   specialty?: string;
   notes?: string;
   is_active?: boolean;
@@ -508,6 +510,7 @@ export interface SupplierUpdate {
   contact_person?: string;
   email?: string;
   phone?: string;
+  address?: string;  // STORY-060
   specialty?: string;
   notes?: string;
   is_active?: boolean;

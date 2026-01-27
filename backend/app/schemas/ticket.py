@@ -288,7 +288,7 @@ class TicketSupplierStatusUpdate(BaseModel):
     supplier_status_note: str | None = Field(None, max_length=500)
 
 
-# STORY-035: Supplier schemas
+# STORY-035, STORY-060: Supplier schemas
 class SupplierBase(BaseModel):
     """Base schema for suppliers."""
 
@@ -296,6 +296,7 @@ class SupplierBase(BaseModel):
     contact_person: str | None = Field(None, max_length=255)
     email: str | None = Field(None, max_length=255)
     phone: str | None = Field(None, max_length=50)
+    address: str | None = Field(None, max_length=1000)  # STORY-060: Added address field
     specialty: str | None = Field(None, max_length=255)
     notes: str | None = None
     is_active: bool = True
@@ -314,6 +315,7 @@ class SupplierUpdate(BaseModel):
     contact_person: str | None = Field(None, max_length=255)
     email: str | None = Field(None, max_length=255)
     phone: str | None = Field(None, max_length=50)
+    address: str | None = Field(None, max_length=1000)  # STORY-060: Added address field
     specialty: str | None = Field(None, max_length=255)
     notes: str | None = None
     is_active: bool | None = None
