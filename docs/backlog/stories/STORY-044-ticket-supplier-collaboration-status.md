@@ -3,10 +3,11 @@
 ## Documentinformatie
 - **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: ⬜ Backlog
+- **Status**: ✅ Geïmplementeerd
 - **Versie**: 1.0
 - **Prioriteit**: Must (Horizon 2)
 - **Geneste nummering**: 10.2.4
+- **Implementatierapport**: [STORY-044-implementatie.md](../implementation-reports/STORY-044-implementatie.md)
 
 ## User story
 Als **bestuurslid** wil ik zien welke status een leverancier heeft in de opvolging van een ticket, zodat bewoners weten waar hun verzoek staat.
