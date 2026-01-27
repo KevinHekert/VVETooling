@@ -865,6 +865,38 @@ export interface MeetingInvitationPreview {
   document_count: number;
 }
 
+// STORY-072: RSVP types
+export type RsvpStatus = 'present' | 'absent' | 'with_proxy';
+
+export interface MeetingRsvp {
+  id: string;
+  meeting_id: string;
+  user_id: string;
+  user_name?: string;
+  status: RsvpStatus;
+  proxy_holder_name?: string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RsvpCreate {
+  status: RsvpStatus;
+  proxy_holder_name?: string;
+  notes?: string;
+}
+
+export interface RsvpSummary {
+  meeting_id: string;
+  total_invited: number;
+  total_responded: number;
+  present_count: number;
+  absent_count: number;
+  with_proxy_count: number;
+  no_response_count: number;
+  response_rate: number;
+}
+
 // API Response types
 export interface ApiError {
   detail: string;

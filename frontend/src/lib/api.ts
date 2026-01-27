@@ -971,6 +971,35 @@ class ApiClient {
       }
     );
   }
+
+  // STORY-072: RSVP
+  async createOrUpdateRsvp(vveId: string, meetingId: string, data: import('@/types').RsvpCreate) {
+    return this.fetch<import('@/types').MeetingRsvp>(
+      `/vves/${vveId}/meetings/${meetingId}/rsvp`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async getMyRsvp(vveId: string, meetingId: string) {
+    return this.fetch<import('@/types').MeetingRsvp | null>(
+      `/vves/${vveId}/meetings/${meetingId}/rsvp`
+    );
+  }
+
+  async listRsvps(vveId: string, meetingId: string) {
+    return this.fetch<import('@/types').MeetingRsvp[]>(
+      `/vves/${vveId}/meetings/${meetingId}/rsvps`
+    );
+  }
+
+  async getRsvpSummary(vveId: string, meetingId: string) {
+    return this.fetch<import('@/types').RsvpSummary>(
+      `/vves/${vveId}/meetings/${meetingId}/rsvps/summary`
+    );
+  }
 }
 
 export const api = new ApiClient(API_BASE_URL);
