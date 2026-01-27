@@ -539,6 +539,37 @@ export interface SupplierFollowUpCreate {
   contact_date: string;
 }
 
+// STORY-061: Supplier Evaluation types
+export interface SupplierEvaluation {
+  id: string;
+  vve_id: string;
+  supplier_id: string;
+  supplier_name?: string;
+  contract_id?: string;
+  contract_description?: string;
+  rating: number;
+  feedback?: string;
+  is_anonymous: boolean;
+  created_by_id: string;
+  created_by_name?: string;
+  created_at: string;
+}
+
+export interface SupplierEvaluationCreate {
+  supplier_id: string;
+  contract_id?: string;
+  rating: number;
+  feedback?: string;
+  is_anonymous?: boolean;
+}
+
+export interface SupplierEvaluationSummary {
+  supplier_id: string;
+  supplier_name: string;
+  average_rating: number | null;
+  evaluation_count: number;
+}
+
 // STORY-041: Splitsingsakte version types
 export type SplitsingsakteVersionStatus = 'draft' | 'active' | 'archived';
 

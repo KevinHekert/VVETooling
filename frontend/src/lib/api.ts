@@ -590,6 +590,42 @@ class ApiClient {
     );
   }
 
+  // STORY-061: Supplier Evaluations
+  async getSupplierEvaluations(vveId: string, supplierId: string) {
+    return this.fetch<import('@/types').SupplierEvaluation[]>(
+      `/vves/${vveId}/suppliers/${supplierId}/evaluations`
+    );
+  }
+
+  async createSupplierEvaluation(
+    vveId: string,
+    supplierId: string,
+    data: import('@/types').SupplierEvaluationCreate
+  ) {
+    return this.fetch<import('@/types').SupplierEvaluation>(
+      `/vves/${vveId}/suppliers/${supplierId}/evaluations`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async getSupplierEvaluationSummary(vveId: string, supplierId: string) {
+    return this.fetch<import('@/types').SupplierEvaluationSummary>(
+      `/vves/${vveId}/suppliers/${supplierId}/evaluation-summary`
+    );
+  }
+
+  async deleteSupplierEvaluation(vveId: string, supplierId: string, evaluationId: string) {
+    return this.fetch<void>(
+      `/vves/${vveId}/suppliers/${supplierId}/evaluations/${evaluationId}`,
+      {
+        method: 'DELETE',
+      }
+    );
+  }
+
   // STORY-041: Splitsingsakte Versions
   async getSplitsingsakteVersions(vveId: string, includeArchived = false) {
     const query = includeArchived ? '?include_archived=true' : '';
