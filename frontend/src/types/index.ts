@@ -584,6 +584,27 @@ export interface SplitsingsakteVersionUpdate {
   document_id?: string;
 }
 
+// STORY-032: Splitsingsakte amendments/aanvullingen
+export interface SplitsingsakteAmendment {
+  id: string;
+  version_id: string;
+  title: string;
+  description: string;
+  effective_date: string;
+  document_id?: string;
+  document_name?: string;
+  created_by_id: string;
+  created_by_name?: string;
+  created_at: string;
+}
+
+export interface SplitsingsakteAmendmentCreate {
+  title: string;
+  description: string;
+  effective_date: string;
+  document_id?: string;
+}
+
 // API Response types
 export interface ApiError {
   detail: string;
