@@ -25,6 +25,8 @@ from app.api.dependencies.auth import (
 from app.core.security import UserRole
 from app.db.models.models import (
     Supplier,
+    SupplierFollowUp,
+    SupplierFollowUpChannel as DBSupplierFollowUpChannel,
     SupplierStatus as DBSupplierStatus,
     Ticket,
     TicketAttachment,
@@ -42,6 +44,9 @@ from app.db.models.models import (
 from app.db.session import get_db
 from app.schemas.ticket import (
     SupplierCreate,
+    SupplierFollowUpChannel,
+    SupplierFollowUpCreate,
+    SupplierFollowUpResponse,
     SupplierResponse,
     SupplierStatus,
     SupplierUpdate,
@@ -1316,3 +1321,144 @@ async def update_supplier(
     await db.refresh(supplier)
 
     return SupplierResponse.model_validate(supplier)
+
+
+# ============================================================================
+# STORY-036: Supplier Follow-Up Endpoints
+# ============================================================================
+
+
+FOLLOW_UP_CHANNEL_LABELS = {
+    "phone": "Telefoon",
+    "email": "E-mail",
+    "in_person": "Persoonlijk",
+    "other": "Anders",
+}
+
+
+@router.get(
+    "/{ticket_id}/follow-ups",
+    response_model=list[SupplierFollowUpResponse],
+    summary="Opvolgacties ophalen",
+    description="STORY-036: Haal alle opvolgacties op voor een ticket.",
+)
+async def list_follow_ups(
+    vve_id: uuid.UUID,
+    ticket_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_member)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> list[SupplierFollowUpResponse]:
+    """Get all follow-up actions for a ticket."""
+    # Verify ticket exists
+    ticket_result = await db.execute(
+        select(Ticket).where(Ticket.id == ticket_id, Ticket.vve_id == vve_id)
+    )
+    if not ticket_result.scalar_one_or_none():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Ticket niet gevonden",
+        )
+
+    result = await db.execute(
+        select(SupplierFollowUp)
+        .where(SupplierFollowUp.ticket_id == ticket_id)
+        .order_by(SupplierFollowUp.contact_date.desc())
+    )
+    follow_ups = result.scalars().all()
+
+    responses = []
+    for follow_up in follow_ups:
+        # Get supplier name
+        supplier_result = await db.execute(
+            select(Supplier).where(Supplier.id == follow_up.supplier_id)
+        )
+        supplier = supplier_result.scalar_one_or_none()
+
+        # Get creator name
+        creator_result = await db.execute(
+            select(User).where(User.id == follow_up.created_by_id)
+        )
+        creator = creator_result.scalar_one_or_none()
+
+        response = SupplierFollowUpResponse.model_validate(follow_up)
+        response.supplier_name = supplier.name if supplier else None
+        response.created_by_name = f"{creator.first_name} {creator.last_name}" if creator else None
+        responses.append(response)
+
+    return responses
+
+
+@router.post(
+    "/{ticket_id}/follow-ups",
+    response_model=SupplierFollowUpResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Opvolgactie toevoegen",
+    description="""
+    STORY-036: Voeg een nieuwe opvolgactie toe aan het ticket.
+
+    - Registreer contactmomenten met leveranciers
+    - Kanalen: telefoon, e-mail, persoonlijk, anders
+    - Wordt automatisch getoond in de ticket tijdlijn
+    """,
+)
+async def create_follow_up(
+    vve_id: uuid.UUID,
+    ticket_id: uuid.UUID,
+    follow_up_data: SupplierFollowUpCreate,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> SupplierFollowUpResponse:
+    """Create a new follow-up action for a ticket."""
+    # Verify ticket exists
+    ticket_result = await db.execute(
+        select(Ticket).where(Ticket.id == ticket_id, Ticket.vve_id == vve_id)
+    )
+    ticket = ticket_result.scalar_one_or_none()
+    if not ticket:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Ticket niet gevonden",
+        )
+
+    # Verify supplier exists
+    supplier_result = await db.execute(
+        select(Supplier).where(
+            Supplier.id == follow_up_data.supplier_id,
+            Supplier.vve_id == vve_id,
+        )
+    )
+    supplier = supplier_result.scalar_one_or_none()
+    if not supplier:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Leverancier niet gevonden",
+        )
+
+    follow_up = SupplierFollowUp(
+        ticket_id=ticket_id,
+        supplier_id=follow_up_data.supplier_id,
+        channel=DBSupplierFollowUpChannel(follow_up_data.channel.value),
+        summary=follow_up_data.summary,
+        contact_date=follow_up_data.contact_date,
+        created_by_id=current_user.id,
+    )
+    db.add(follow_up)
+
+    # Create timeline entry
+    channel_label = FOLLOW_UP_CHANNEL_LABELS.get(follow_up_data.channel.value, follow_up_data.channel.value)
+    await _create_timeline_entry(
+        db,
+        ticket_id,
+        current_user.id,
+        "supplier_follow_up_added",
+        f"Opvolgactie toegevoegd ({channel_label}) met {supplier.name}: {follow_up_data.summary[:100]}",
+    )
+
+    await db.commit()
+    await db.refresh(follow_up)
+
+    response = SupplierFollowUpResponse.model_validate(follow_up)
+    response.supplier_name = supplier.name
+    response.created_by_name = f"{current_user.first_name} {current_user.last_name}"
+
+    return response

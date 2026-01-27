@@ -328,3 +328,39 @@ class SupplierResponse(SupplierBase):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# STORY-036: Supplier Follow-Up schemas
+class SupplierFollowUpChannel(str, Enum):
+    """Communication channel for supplier follow-ups."""
+
+    PHONE = "phone"
+    EMAIL = "email"
+    IN_PERSON = "in_person"
+    OTHER = "other"
+
+
+class SupplierFollowUpCreate(BaseModel):
+    """Schema for creating a supplier follow-up."""
+
+    supplier_id: uuid.UUID
+    channel: SupplierFollowUpChannel
+    summary: str = Field(..., min_length=5, max_length=500)
+    contact_date: datetime
+
+
+class SupplierFollowUpResponse(BaseModel):
+    """Response schema for supplier follow-up."""
+
+    id: uuid.UUID
+    ticket_id: uuid.UUID
+    supplier_id: uuid.UUID
+    supplier_name: str | None = None
+    channel: SupplierFollowUpChannel
+    summary: str
+    contact_date: datetime
+    created_by_id: uuid.UUID
+    created_by_name: str | None = None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
