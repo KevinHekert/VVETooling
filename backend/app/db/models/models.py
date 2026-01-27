@@ -1108,8 +1108,61 @@ class Meeting(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
+    # Relationship to agenda items (STORY-070)
+    agenda_items: Mapped[list["MeetingAgendaItem"]] = relationship(
+        "MeetingAgendaItem", back_populates="meeting", cascade="all, delete-orphan"
+    )
+
     __table_args__ = (
         Index("ix_meetings_vve_id", "vve_id"),
         Index("ix_meetings_meeting_date", "meeting_date"),
         Index("ix_meetings_status", "status"),
+    )
+
+
+class MeetingAgendaItem(Base):
+    """Agenda item for an ALV meeting (STORY-070).
+
+    Implements STORY-070: ALV agenda opstellen.
+    Allows secretaris to create agenda with items, durations, and linked documents.
+    """
+
+    __tablename__ = "meeting_agenda_items"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    meeting_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("meetings.id", ondelete="CASCADE"), nullable=False
+    )
+    # Agenda item details
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text)
+    # Duration in minutes
+    duration_minutes: Mapped[int | None] = mapped_column(Integer)
+    # Order in agenda (for drag & drop sorting)
+    order_index: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    # Optional link to document
+    document_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("documents.id", ondelete="SET NULL")
+    )
+    # Is this a standard/template item
+    is_standard: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Audit fields
+    created_by_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    # Relationships
+    meeting: Mapped["Meeting"] = relationship("Meeting", back_populates="agenda_items")
+
+    __table_args__ = (
+        Index("ix_meeting_agenda_items_meeting_id", "meeting_id"),
+        Index("ix_meeting_agenda_items_order", "meeting_id", "order_index"),
     )
