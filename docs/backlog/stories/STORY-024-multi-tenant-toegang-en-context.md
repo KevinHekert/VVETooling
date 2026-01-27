@@ -1,11 +1,12 @@
 # STORY-024: Multi-tenant toegang en context switcher
 
 ## Documentinformatie
-- **Datum**: 2026-01-26
+- **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: Ready
-- **Versie**: 1.0
+- **Status**: ✅ Geïmplementeerd
+- **Versie**: 1.1
 - **Prioriteit**: Must (Horizon 1)
+- **Geneste nummering**: 9.1.3
 
 ## User story
 Als **beheerder** wil ik tussen VvE’s kunnen switchen via een context-switcher in het menu, zodat data en dashboards per tenant gescheiden blijven en nieuwe tenants zonder herbouw kunnen worden toegevoegd.

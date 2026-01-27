@@ -1,11 +1,12 @@
 # STORY-020: Pricing- en abonnementenbeheer UI
 
 ## Documentinformatie
-- **Datum**: 2026-01-26
+- **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: Ready
+- **Status**: ⬜ Backlog
 - **Versie**: 1.0
 - **Prioriteit**: Should (Horizon 2)
+- **Geneste nummering**: 8.1.1
 
 ## User story
 Als **beheerder** wil ik abonnementen en facturatie-instellingen beheren in een dedicated menu, zodat pricingwijzigingen en toekomstige modules (kortingen/add-ons) passen in hetzelfde UI-raamwerk.

@@ -1,11 +1,12 @@
 # STORY-009: Rol-specifiek dashboard raamwerk
 
 ## Documentinformatie
-- **Datum**: 2026-01-26
+- **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: Ready
-- **Versie**: 1.0
+- **Status**: ✅ Geïmplementeerd
+- **Versie**: 1.1
 - **Prioriteit**: Must (Horizon 1)
+- **Geneste nummering**: 9.1.1
 
 ## User story
 Als **product owner** wil ik een uitbreidbaar dashboard-raamwerk per rol, zodat beheerder, bestuur en bewoners elk hun eigen menu en widget-indeling krijgen en we nieuwe modules kunnen toevoegen zonder de navigatiestructuur te breken.

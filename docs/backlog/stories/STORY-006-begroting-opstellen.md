@@ -1,11 +1,12 @@
 # STORY-006: Begroting opstellen en exporteren
 
 ## Documentinformatie
-- **Datum**: 2026-01-26
+- **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: Ready
-- **Versie**: 1.0
+- **Status**: ✅ Geïmplementeerd
+- **Versie**: 1.1
 - **Prioriteit**: Must (Horizon 1)
+- **Geneste nummering**: 3.2.1
 
 ## User story
 Als **beheerder** wil ik een begroting kunnen opstellen, opslaan en exporteren vanuit het financieel menu, zodat het bestuur actuele plannen kan beoordelen en later uitbreidingen in dezelfde weergave kunnen landen.

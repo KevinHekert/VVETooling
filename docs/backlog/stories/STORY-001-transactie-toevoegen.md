@@ -1,10 +1,11 @@
 # STORY-001: Transactie toevoegen
 
 ## Documentinformatie
-- **Datum**: 2026-01-26
+- **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: Ready
-- **Versie**: 1.0
+- **Status**: ✅ Geïmplementeerd
+- **Versie**: 1.1
+- **Geneste nummering**: 1.1.1
 
 ## User story
 Als **penningmeester** wil ik een transactie toevoegen met bedrag, datum en categorie, zodat mijn financieel overzicht actueel blijft.

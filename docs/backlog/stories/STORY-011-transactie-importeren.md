@@ -1,11 +1,12 @@
 # STORY-011: Transacties importeren en valideren
 
 ## Documentinformatie
-- **Datum**: 2026-01-26
+- **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: Ready
-- **Versie**: 1.0
+- **Status**: ✅ Geïmplementeerd
+- **Versie**: 1.1
 - **Prioriteit**: Must (Horizon 1)
+- **Geneste nummering**: 1.1.2
 
 ## User story
 Als **penningmeester** wil ik banktransacties kunnen importeren en automatisch laten valideren op duplicaten en categorieën, zodat het financieel overzicht actueel blijft zonder handmatig overtypen.

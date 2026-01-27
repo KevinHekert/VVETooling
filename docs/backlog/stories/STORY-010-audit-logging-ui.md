@@ -1,11 +1,12 @@
 # STORY-010: Audit logging zichtbaar in UI
 
 ## Documentinformatie
-- **Datum**: 2026-01-26
+- **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: Ready
-- **Versie**: 1.0
+- **Status**: ✅ Geïmplementeerd
+- **Versie**: 1.1
 - **Prioriteit**: Should (Horizon 2)
+- **Geneste nummering**: 5.2.1
 
 ## User story
 Als **beheerder** wil ik audit logs kunnen bekijken en filteren vanuit het beheer-menu, zodat ik wijzigingen en downloadacties kan controleren en toekomstige uitbreidingen (filters, export) eenvoudig kan toevoegen.

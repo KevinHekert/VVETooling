@@ -3,9 +3,10 @@
 ## Documentinformatie
 - **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: Draft
-- **Versie**: 0.1
+- **Status**: ⬜ Backlog
+- **Versie**: 1.0
 - **Prioriteit**: Should (Horizon 2)
+- **Geneste nummering**: 10.2.1
 
 ## User story
 Als **bestuurslid** wil ik leveranciers aan tickets kunnen koppelen, zodat opvolging en communicatie centraal beschikbaar zijn.

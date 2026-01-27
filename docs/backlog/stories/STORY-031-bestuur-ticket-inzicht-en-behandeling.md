@@ -3,9 +3,10 @@
 ## Documentinformatie
 - **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: Draft
-- **Versie**: 0.1
+- **Status**: ⬜ Backlog
+- **Versie**: 1.0
 - **Prioriteit**: Must (Horizon 2)
+- **Geneste nummering**: 10.1.3
 
 ## User story
 Als **bestuurslid** wil ik tickets kunnen inzien, filteren en behandelen, zodat klachten van bewoners snel en gestructureerd worden opgevolgd.

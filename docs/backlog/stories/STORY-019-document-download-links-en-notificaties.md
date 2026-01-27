@@ -1,11 +1,12 @@
 # STORY-019: Document download-links en notificaties
 
 ## Documentinformatie
-- **Datum**: 2026-01-26
+- **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: Ready
+- **Status**: ⬜ Backlog
 - **Versie**: 1.0
 - **Prioriteit**: Should (Horizon 2)
+- **Geneste nummering**: 6.2.2
 
 ## User story
 Als **bewoner** wil ik veilige download-links ontvangen met notificaties, zodat ik documenten vanuit het bestaande menu kan openen zonder nieuwe flows en toekomstige uitbreidingen (vervaldatum, watermerk) passen in hetzelfde raamwerk.

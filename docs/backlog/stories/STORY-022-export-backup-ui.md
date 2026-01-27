@@ -1,11 +1,12 @@
 # STORY-022: Export en back-up UI
 
 ## Documentinformatie
-- **Datum**: 2026-01-26
+- **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: Ready
+- **Status**: ⬜ Backlog
 - **Versie**: 1.0
 - **Prioriteit**: Should (Horizon 2)
+- **Geneste nummering**: 7.1.1
 
 ## User story
 Als **beheerder** wil ik een export/back-up pagina binnen het instellingenmenu waarmee ik data kan exporteren of herstellen, zodat toekomstige export-formaten en schema’s passen in hetzelfde UI-raamwerk.
