@@ -14,10 +14,12 @@ from enum import Enum
 
 from sqlalchemy import (
     Boolean,
+    CheckConstraint,
     DateTime,
     Enum as SQLEnum,
     ForeignKey,
     Index,
+    Integer,
     Numeric,
     String,
     Text,
@@ -640,6 +642,50 @@ class SupplierFollowUp(Base):
     __table_args__ = (
         Index("ix_supplier_follow_ups_ticket_id", "ticket_id"),
         Index("ix_supplier_follow_ups_supplier_id", "supplier_id"),
+    )
+
+
+class SupplierEvaluation(Base):
+    """Supplier evaluation/review after project completion (STORY-061).
+
+    Implements STORY-061: Leverancier evaluatie toevoegen.
+    Allows board members to rate suppliers with stars (1-5) and feedback.
+    """
+
+    __tablename__ = "supplier_evaluations"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    vve_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("vves.id", ondelete="CASCADE"), nullable=False
+    )
+    supplier_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("suppliers.id", ondelete="CASCADE"), nullable=False
+    )
+    # Optional link to specific contract/project
+    contract_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("contracts.id", ondelete="SET NULL")
+    )
+    # Rating (1-5 stars)
+    rating: Mapped[int] = mapped_column(Integer, nullable=False)
+    # Free text feedback
+    feedback: Mapped[str | None] = mapped_column(Text)
+    # Optional: anonymous evaluation
+    is_anonymous: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Audit fields
+    created_by_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+    __table_args__ = (
+        Index("ix_supplier_evaluations_vve_id", "vve_id"),
+        Index("ix_supplier_evaluations_supplier_id", "supplier_id"),
+        Index("ix_supplier_evaluations_contract_id", "contract_id"),
+        CheckConstraint("rating >= 1 AND rating <= 5", name="check_rating_range"),
     )
 
 
