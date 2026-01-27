@@ -192,6 +192,9 @@ class TicketUpdate(BaseModel):
     location: str | None = Field(None, max_length=200)
     status: TicketStatus | None = None
     priority: TicketPriority | None = None
+    # STORY-038: SLA fields
+    sla_due_date: datetime | None = None
+    sla_response_hours: int | None = Field(None, ge=1, le=720)  # 1 hour to 30 days
 
 
 class TicketResponse(TicketBase):
@@ -214,6 +217,13 @@ class TicketResponse(TicketBase):
     supplier_status_updated_at: datetime | None = None
     supplier_status_updated_by_id: uuid.UUID | None = None
     supplier_status_updated_by_name: str | None = None
+    # STORY-038: SLA fields
+    sla_due_date: datetime | None = None
+    sla_response_hours: int | None = None
+    sla_breached: bool = False
+    sla_breached_at: datetime | None = None
+    sla_status: str | None = None  # Calculated: "on_track", "at_risk", "breached"
+    sla_remaining_hours: int | None = None  # Calculated remaining time
     attachments: list[TicketAttachmentResponse] = []
     timeline: list[TicketTimelineEntryResponse] = []
 
@@ -240,6 +250,10 @@ class TicketListResponse(BaseModel):
     supplier_id: uuid.UUID | None = None
     supplier_name: str | None = None
     supplier_status: SupplierStatus | None = None
+    # STORY-038: SLA fields
+    sla_due_date: datetime | None = None
+    sla_breached: bool = False
+    sla_status: str | None = None  # Calculated: "on_track", "at_risk", "breached"
 
     model_config = ConfigDict(from_attributes=True)
 
