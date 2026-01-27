@@ -41,7 +41,7 @@ Meer screenshots en naming conventies vind je in [docs/screenshots/README.md](do
 - **Frontend:** Next.js 14, React 18, Tailwind CSS
 - **Backend:** FastAPI, SQLAlchemy, Pydantic
 - **Database:** PostgreSQL (asyncpg)
-- **Integraties:** AWS S3 via boto3 (documentopslag)
+- **Integratie:** AWS S3 via boto3 (documentopslag)
 - **Testing:** Jest/Testing Library, Pytest
 
 ## 🚀 Lokale ontwikkeling
