@@ -1,10 +1,11 @@
 # FEAT-011: Documentbeheer
 
 ## Documentinformatie
-- **Datum**: 2026-01-26
+- **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: Ready
-- **Versie**: 1.0
+- **Status**: ✅ Geïmplementeerd
+- **Versie**: 1.1
+- **Geneste nummering**: 6.1
 
 ## Functioneel doel
 Bestuur kan documenten uploaden en organiseren; bewoners kunnen deze vinden en downloaden.

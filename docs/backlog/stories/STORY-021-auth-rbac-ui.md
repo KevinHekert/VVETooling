@@ -1,11 +1,12 @@
 # STORY-021: Auth & RBAC UI beheer
 
 ## Documentinformatie
-- **Datum**: 2026-01-26
+- **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: Ready
-- **Versie**: 1.0
+- **Status**: ✅ Geïmplementeerd
+- **Versie**: 1.1
 - **Prioriteit**: Must (Horizon 1)
+- **Geneste nummering**: 5.1.2
 
 ## User story
 Als **beheerder** wil ik rollen en permissies kunnen beheren in een centraal UI-scherm, zodat dashboards en menu’s per rol consistent blijven en toekomstige permissies kunnen worden toegevoegd zonder refactor van het raamwerk.

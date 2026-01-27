@@ -1,10 +1,12 @@
 # STORY-005: Rol-gebaseerd inloggen
 
 ## Documentinformatie
-- **Datum**: 2026-01-26
+- **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: Ready
-- **Versie**: 1.0
+- **Status**: ✅ Geïmplementeerd
+- **Versie**: 1.1
+- **Prioriteit**: Must (Horizon 1)
+- **Geneste nummering**: 5.1.1
 
 ## User story
 Als **gebruiker** wil ik veilig kunnen inloggen en direct mijn rol-specifieke dashboard zien, zodat ik zonder extra stappen kan starten.

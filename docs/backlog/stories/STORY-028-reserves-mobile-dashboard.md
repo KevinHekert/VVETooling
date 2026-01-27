@@ -1,11 +1,12 @@
 # STORY-028: Mobile-first reserves dashboard
 
 ## Documentinformatie
-- **Datum**: 2026-01-26
+- **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: Ready
-- **Versie**: 1.0
+- **Status**: ✅ Geïmplementeerd
+- **Versie**: 1.1
 - **Prioriteit**: Must (Horizon 1)
+- **Geneste nummering**: 1.2.4
 
 ## User story
 Als **bewoner** wil ik op mobiel een compact reserves-overzicht zien met alleen relevante saldi, zodat het raamwerk uitbreidbaar blijft zonder overvolle schermen.

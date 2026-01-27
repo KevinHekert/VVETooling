@@ -1,11 +1,12 @@
 # STORY-015: Jaarrekening genereren en delen
 
 ## Documentinformatie
-- **Datum**: 2026-01-26
+- **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: Ready
-- **Versie**: 1.0
+- **Status**: ✅ Geïmplementeerd
+- **Versie**: 1.1
 - **Prioriteit**: Should (Horizon 2)
+- **Geneste nummering**: 3.1.1
 
 ## User story
 Als **bestuurslid** wil ik de jaarrekening kunnen genereren en delen vanuit hetzelfde documenten- en financieel menu, zodat alle rollen in een consistent raamwerk blijven en toekomstige secties eenvoudig uitbreidbaar zijn.

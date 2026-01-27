@@ -1,11 +1,12 @@
 # STORY-026: Reserves scenario-planning en prognose
 
 ## Documentinformatie
-- **Datum**: 2026-01-26
+- **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: Ready
+- **Status**: ⬜ Backlog
 - **Versie**: 1.0
 - **Prioriteit**: Should (Horizon 2)
+- **Geneste nummering**: 1.2.2
 
 ## User story
 Als **beheerder** wil ik scenario's (basis, optimistisch, conservatief) kunnen toevoegen aan het reserves-overzicht, zodat toekomstige uitgaven zichtbaar zijn zonder het raamwerk te wijzigen.

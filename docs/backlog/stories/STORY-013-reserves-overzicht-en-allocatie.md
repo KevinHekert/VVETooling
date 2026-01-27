@@ -1,11 +1,12 @@
 # STORY-013: Reserves overzicht en allocatie
 
 ## Documentinformatie
-- **Datum**: 2026-01-26
+- **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: Ready
-- **Versie**: 1.0
+- **Status**: ✅ Geïmplementeerd
+- **Versie**: 1.1
 - **Prioriteit**: Must (Horizon 1)
+- **Geneste nummering**: 1.2.1
 
 ## User story
 Als **beheerder** wil ik een overzicht van alle reserves met allocaties en saldi, zodat ik transparant kan rapporteren en toekomstige uitbreidingen (scenario’s) kan opnemen zonder het raamwerk te wijzigen.

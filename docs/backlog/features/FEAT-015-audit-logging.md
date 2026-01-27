@@ -1,10 +1,11 @@
 # FEAT-015: Audit logging
 
 ## Documentinformatie
-- **Datum**: 2026-01-26
+- **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: Ready
-- **Versie**: 1.0
+- **Status**: ⚠️ Gedeeltelijk (1/2 stories gereed)
+- **Versie**: 1.1
+- **Geneste nummering**: 5.2
 
 ## Functioneel doel
 Audit logging voor kritieke acties met retention policies.

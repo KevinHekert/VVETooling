@@ -1,10 +1,11 @@
 # FEAT-002: Reserves & saldo-overzicht
 
 ## Documentinformatie
-- **Datum**: 2026-01-26
+- **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: Ready
-- **Versie**: 1.0
+- **Status**: ⚠️ Gedeeltelijk (2/4 stories gereed)
+- **Versie**: 1.1
+- **Geneste nummering**: 1.2
 
 ## Functioneel doel
 Penningmeester en bestuur kunnen saldo per reserve zien met basisrapportage.

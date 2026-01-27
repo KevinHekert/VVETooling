@@ -1,11 +1,12 @@
 # STORY-023: Audit logging filters en export
 
 ## Documentinformatie
-- **Datum**: 2026-01-26
+- **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: Ready
+- **Status**: ⬜ Backlog
 - **Versie**: 1.0
 - **Prioriteit**: Should (Horizon 2)
+- **Geneste nummering**: 5.2.2
 
 ## User story
 Als **beheerder** wil ik audit logs kunnen filteren en exporteren vanuit hetzelfde UI-raamwerk, zodat ik snel wijzigingen kan controleren en toekomstige kolommen of filters zonder breuk kan toevoegen.

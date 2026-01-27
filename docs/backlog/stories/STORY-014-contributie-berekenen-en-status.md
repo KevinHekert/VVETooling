@@ -1,11 +1,12 @@
 # STORY-014: Contributie berekenen en status delen
 
 ## Documentinformatie
-- **Datum**: 2026-01-26
+- **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: Ready
-- **Versie**: 1.0
+- **Status**: ✅ Geïmplementeerd
+- **Versie**: 1.1
 - **Prioriteit**: Must (Horizon 1)
+- **Geneste nummering**: 2.2.2
 
 ## User story
 Als **beheerder** wil ik contributies automatisch laten berekenen op basis van de splitsingssleutel en de status per eigenaar delen, zodat alle rollen dezelfde menu- en dashboardstructuur gebruiken en toekomstige aanpassingen eenvoudig zijn.

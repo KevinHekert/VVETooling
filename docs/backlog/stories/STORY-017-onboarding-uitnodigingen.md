@@ -1,11 +1,12 @@
 # STORY-017: Onboarding uitnodigingen en herinneringen
 
 ## Documentinformatie
-- **Datum**: 2026-01-26
+- **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: Ready
-- **Versie**: 1.0
+- **Status**: ✅ Geïmplementeerd
+- **Versie**: 1.1
 - **Prioriteit**: Must (Horizon 1)
+- **Geneste nummering**: 4.1.2
 
 ## User story
 Als **beheerder** wil ik tijdens onboarding gebruikers kunnen uitnodigen en herinneren vanuit hetzelfde wizardraamwerk, zodat rollen direct toegang hebben tot hun dashboards zonder losse flows.

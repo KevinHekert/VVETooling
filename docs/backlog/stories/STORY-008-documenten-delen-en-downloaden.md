@@ -1,11 +1,12 @@
 # STORY-008: Documenten delen en downloaden
 
 ## Documentinformatie
-- **Datum**: 2026-01-26
+- **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: Ready
-- **Versie**: 1.0
+- **Status**: ✅ Geïmplementeerd
+- **Versie**: 1.1
 - **Prioriteit**: Should (Horizon 2)
+- **Geneste nummering**: 6.2.1
 
 ## User story
 Als **bestuurslid** wil ik documenten veilig kunnen delen met bestuur en bewoners vanuit een consistent documenten-menu, zodat iedereen altijd de laatste versies kan inzien en downloaden.

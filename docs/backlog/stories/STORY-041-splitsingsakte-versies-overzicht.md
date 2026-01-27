@@ -3,9 +3,10 @@
 ## Documentinformatie
 - **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: Draft
-- **Versie**: 0.1
+- **Status**: ⬜ Backlog
+- **Versie**: 1.0
 - **Prioriteit**: Must (Horizon 2)
+- **Geneste nummering**: 6.3.2
 
 ## User story
 Als **bestuurslid** wil ik een overzicht van alle splitsingsakte-versies zien, zodat ik snel kan controleren welke versie actief of gearchiveerd is.

@@ -3,8 +3,9 @@
 ## Documentinformatie
 - **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: Draft
-- **Versie**: 0.1
+- **Status**: ⬜ Backlog
+- **Versie**: 1.0
+- **Geneste nummering**: 1.3
 
 ## Functioneel doel
 Bestuur kan prognoses van groei/afname van het reservefonds inzien met scenario’s en trends.

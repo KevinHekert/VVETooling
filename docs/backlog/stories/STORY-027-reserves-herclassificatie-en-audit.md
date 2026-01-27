@@ -1,11 +1,12 @@
 # STORY-027: Reserves herclassificatie en audit trail
 
 ## Documentinformatie
-- **Datum**: 2026-01-26
+- **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: Ready
+- **Status**: ⬜ Backlog
 - **Versie**: 1.0
 - **Prioriteit**: Should (Horizon 2)
+- **Geneste nummering**: 1.2.3
 
 ## User story
 Als **beheerder** wil ik reserves kunnen herclassificeren met audit trail, zodat wijzigingen traceerbaar zijn en toekomstige classificaties zonder nieuwe UI-patronen kunnen worden toegevoegd.

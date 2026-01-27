@@ -1,10 +1,11 @@
 # FEAT-014: Pricing & billing
 
 ## Documentinformatie
-- **Datum**: 2026-01-26
+- **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: Ready
-- **Versie**: 1.0
+- **Status**: ⬜ Backlog
+- **Versie**: 1.1
+- **Geneste nummering**: 8.1
 
 ## Functioneel doel
 VVE kan abonnement beheren en betalen via flat fee pricing.

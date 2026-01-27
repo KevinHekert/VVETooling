@@ -3,9 +3,10 @@
 ## Documentinformatie
 - **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: Draft
-- **Versie**: 0.1
+- **Status**: ⬜ Backlog
+- **Versie**: 1.0
 - **Prioriteit**: Must (Horizon 2)
+- **Geneste nummering**: 10.1.4
 
 ## User story
 Als **bewoner** wil ik aanvullende berichten en notities kunnen toevoegen aan mijn ticket, zodat ik context kan geven tijdens de opvolging.
