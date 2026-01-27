@@ -584,12 +584,15 @@ export interface SplitsingsakteVersionUpdate {
   document_id?: string;
 }
 
-// STORY-032: Splitsingsakte amendments/aanvullingen
+// STORY-032, STORY-042: Splitsingsakte amendments/aanvullingen
+export type SplitsingsakteAmendmentType = 'wijziging' | 'toevoeging' | 'correctie' | 'verduidelijking';
+
 export interface SplitsingsakteAmendment {
   id: string;
   version_id: string;
   title: string;
   description: string;
+  amendment_type: SplitsingsakteAmendmentType;
   effective_date: string;
   document_id?: string;
   document_name?: string;
@@ -601,6 +604,7 @@ export interface SplitsingsakteAmendment {
 export interface SplitsingsakteAmendmentCreate {
   title: string;
   description: string;
+  amendment_type: SplitsingsakteAmendmentType;
   effective_date: string;
   document_id?: string;
 }

@@ -8,11 +8,12 @@ import type {
   SplitsingsakteVersion,
   SplitsingsakteVersionStatus,
   SplitsingsakteVersionCreate,
-  SplitsingsakteAmendment
+  SplitsingsakteAmendment,
+  SplitsingsakteAmendmentType
 } from '@/types';
 
 /**
- * Splitsingsakte Versies Overzicht - STORY-041, STORY-032
+ * Splitsingsakte Versies Overzicht - STORY-041, STORY-032, STORY-042
  * 
  * STORY-041: Shows all splitsingsakte versions with:
  * - Status badges (draft/active/archived)
@@ -25,7 +26,20 @@ import type {
  * - Add new amendments with date and description
  * - Link amendments to documents
  * - Bewoners see only active version with amendment summary
+ * 
+ * STORY-042: Enhanced amendment logging:
+ * - Amendment type categorization (wijziging, toevoeging, correctie, verduidelijking)
+ * - Accordion/list view for amendments
+ * - Inline validation and toasts
  */
+
+// STORY-042: Amendment type labels
+const AMENDMENT_TYPE_LABELS: Record<SplitsingsakteAmendmentType, { label: string; color: string }> = {
+  wijziging: { label: 'Wijziging', color: 'bg-blue-100 text-blue-700' },
+  toevoeging: { label: 'Toevoeging', color: 'bg-green-100 text-green-700' },
+  correctie: { label: 'Correctie', color: 'bg-red-100 text-red-700' },
+  verduidelijking: { label: 'Verduidelijking', color: 'bg-purple-100 text-purple-700' },
+};
 
 const STATUS_LABELS: Record<SplitsingsakteVersionStatus, { label: string; color: string }> = {
   draft: { label: 'Concept', color: 'bg-gray-100 text-gray-700' },
@@ -51,12 +65,13 @@ export default function SplitsingsakteVersionsPage() {
   // Include archived toggle
   const [includeArchived, setIncludeArchived] = useState(false);
   
-  // STORY-032: Amendments state
+  // STORY-032, STORY-042: Amendments state
   const [amendments, setAmendments] = useState<SplitsingsakteAmendment[]>([]);
   const [showAmendmentForm, setShowAmendmentForm] = useState(false);
   const [newAmendmentTitle, setNewAmendmentTitle] = useState('');
   const [newAmendmentDescription, setNewAmendmentDescription] = useState('');
   const [newAmendmentDate, setNewAmendmentDate] = useState('');
+  const [newAmendmentType, setNewAmendmentType] = useState<SplitsingsakteAmendmentType>('wijziging');
   const [isAddingAmendment, setIsAddingAmendment] = useState(false);
 
   // TODO: Get VVE ID from context/session
@@ -88,7 +103,7 @@ export default function SplitsingsakteVersionsPage() {
     }
   };
 
-  // STORY-032: Load amendments for a version
+  // STORY-032, STORY-042: Load amendments for a version
   const loadAmendments = async (versionId: string) => {
     // Mock data for demo - in production, this would be an API call
     const mockAmendments: SplitsingsakteAmendment[] = [
@@ -97,6 +112,7 @@ export default function SplitsingsakteVersionsPage() {
         version_id: versionId,
         title: 'Wijziging artikel 5 - Gemeenschappelijke ruimtes',
         description: 'Toegevoegd: gebruik van gemeenschappelijke tuin wordt gereguleerd door huishoudelijk reglement.',
+        amendment_type: 'toevoeging',
         effective_date: '2025-06-15',
         document_id: 'doc-123',
         document_name: 'Aanvulling_2025_06.pdf',
@@ -109,16 +125,28 @@ export default function SplitsingsakteVersionsPage() {
         version_id: versionId,
         title: 'Wijziging breukdelen appartementen 4B en 4C',
         description: 'Na samenvoeging appartementen aangepaste breukdelen conform notariële akte d.d. 10-03-2025.',
+        amendment_type: 'wijziging',
         effective_date: '2025-03-15',
         created_by_id: 'user-1',
         created_by_name: 'Jan Jansen',
         created_at: '2025-03-10T14:30:00Z',
       },
+      {
+        id: 'amend-3',
+        version_id: versionId,
+        title: 'Correctie kostenverdeelsleutel bijlage 2',
+        description: 'Typefout gecorrigeerd in percentages parkeerplaatsen.',
+        amendment_type: 'correctie',
+        effective_date: '2025-01-20',
+        created_by_id: 'user-2',
+        created_by_name: 'Maria de Vries',
+        created_at: '2025-01-18T09:15:00Z',
+      },
     ];
     setAmendments(mockAmendments);
   };
 
-  // STORY-032: Add new amendment
+  // STORY-032, STORY-042: Add new amendment
   const handleAddAmendment = async () => {
     if (!selectedVersion || !newAmendmentTitle.trim() || !newAmendmentDescription.trim() || !newAmendmentDate) {
       addToast('Vul alle verplichte velden in', 'error');
@@ -133,6 +161,7 @@ export default function SplitsingsakteVersionsPage() {
         version_id: selectedVersion.id,
         title: newAmendmentTitle,
         description: newAmendmentDescription,
+        amendment_type: newAmendmentType,
         effective_date: newAmendmentDate,
         created_by_id: 'current-user',
         created_by_name: 'Huidige Gebruiker',
@@ -145,10 +174,11 @@ export default function SplitsingsakteVersionsPage() {
       setNewAmendmentTitle('');
       setNewAmendmentDescription('');
       setNewAmendmentDate('');
+      setNewAmendmentType('wijziging');
       setShowAmendmentForm(false);
       
       addToast('Aanvulling toegevoegd', 'success');
-    } catch (err) {
+    } catch {
       addToast('Kon aanvulling niet toevoegen', 'error');
     } finally {
       setIsAddingAmendment(false);
@@ -541,17 +571,34 @@ export default function SplitsingsakteVersionsPage() {
                 {showAmendmentForm && (
                   <div className="mb-4 p-4 bg-gray-50 rounded-lg">
                     <div className="space-y-3">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Titel *
-                        </label>
-                        <input
-                          type="text"
-                          value={newAmendmentTitle}
-                          onChange={(e) => setNewAmendmentTitle(e.target.value)}
-                          placeholder="Bijv. Wijziging artikel 5"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                        />
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Titel *
+                          </label>
+                          <input
+                            type="text"
+                            value={newAmendmentTitle}
+                            onChange={(e) => setNewAmendmentTitle(e.target.value)}
+                            placeholder="Bijv. Wijziging artikel 5"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Type *
+                          </label>
+                          <select
+                            value={newAmendmentType}
+                            onChange={(e) => setNewAmendmentType(e.target.value as SplitsingsakteAmendmentType)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                          >
+                            <option value="wijziging">Wijziging</option>
+                            <option value="toevoeging">Toevoeging</option>
+                            <option value="correctie">Correctie</option>
+                            <option value="verduidelijking">Verduidelijking</option>
+                          </select>
+                        </div>
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -605,10 +652,17 @@ export default function SplitsingsakteVersionsPage() {
                     {amendments.map((amendment) => (
                       <li key={amendment.id} className="p-3 bg-gray-50 rounded-lg">
                         <div className="flex items-start justify-between">
-                          <div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${
+                                AMENDMENT_TYPE_LABELS[amendment.amendment_type]?.color || 'bg-gray-100 text-gray-700'
+                              }`}>
+                                {AMENDMENT_TYPE_LABELS[amendment.amendment_type]?.label || amendment.amendment_type}
+                              </span>
+                            </div>
                             <p className="font-medium text-gray-900">{amendment.title}</p>
                             <p className="text-sm text-gray-600 mt-1">{amendment.description}</p>
-                            <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                            <div className="flex flex-wrap items-center gap-4 mt-2 text-xs text-gray-500">
                               <span>
                                 📅 {new Date(amendment.effective_date).toLocaleDateString('nl-NL')}
                               </span>
