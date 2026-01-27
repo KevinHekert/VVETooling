@@ -14,7 +14,7 @@ from uuid import UUID, uuid4
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.dependencies.auth import CurrentUser, get_current_active_user, require_role
+from app.api.dependencies.auth import CurrentUser, get_current_active_user, RoleChecker
 from app.core.security import UserRole
 from app.db.session import get_db
 from app.schemas.email import (
@@ -82,7 +82,7 @@ def _create_recipient_preview(recipients: list[str]) -> str:
     description="Get current email provider configuration for the VVE.",
 )
 async def get_email_configuration(
-    current_user: Annotated[CurrentUser, Depends(require_role([UserRole.BEHEERDER]))],
+    current_user: Annotated[CurrentUser, Depends(RoleChecker([UserRole.BEHEERDER]))],
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> EmailConfigurationResponse | None:
     """Get the email configuration for the current VVE.
@@ -128,7 +128,7 @@ async def get_email_configuration(
 )
 async def save_email_configuration(
     config_data: EmailConfigurationCreate,
-    current_user: Annotated[CurrentUser, Depends(require_role([UserRole.BEHEERDER]))],
+    current_user: Annotated[CurrentUser, Depends(RoleChecker([UserRole.BEHEERDER]))],
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> EmailConfigurationResponse:
     """Create or update email configuration.
@@ -218,7 +218,7 @@ async def save_email_configuration(
 )
 async def test_email_configuration(
     test_request: EmailTestRequest,
-    current_user: Annotated[CurrentUser, Depends(require_role([UserRole.BEHEERDER]))],
+    current_user: Annotated[CurrentUser, Depends(RoleChecker([UserRole.BEHEERDER]))],
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> EmailTestResponse:
     """Test the email configuration by sending a test email.
@@ -326,7 +326,7 @@ async def test_email_configuration(
     summary="Delete email configuration",
 )
 async def delete_email_configuration(
-    current_user: Annotated[CurrentUser, Depends(require_role([UserRole.BEHEERDER]))],
+    current_user: Annotated[CurrentUser, Depends(RoleChecker([UserRole.BEHEERDER]))],
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> None:
     """Delete the email configuration for the current VVE."""
@@ -345,7 +345,7 @@ async def delete_email_configuration(
 )
 async def send_email(
     email_request: EmailSendRequest,
-    current_user: Annotated[CurrentUser, Depends(require_role([UserRole.BEHEERDER, UserRole.BESTUURSLID]))],
+    current_user: Annotated[CurrentUser, Depends(RoleChecker([UserRole.BEHEERDER, UserRole.BESTUURSLID]))],
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> EmailSendResponse:
     """Send an email using the configured provider.
@@ -473,7 +473,7 @@ async def send_email(
 )
 async def get_email_status(
     message_id: str,
-    current_user: Annotated[CurrentUser, Depends(require_role([UserRole.BEHEERDER, UserRole.BESTUURSLID]))],
+    current_user: Annotated[CurrentUser, Depends(RoleChecker([UserRole.BEHEERDER, UserRole.BESTUURSLID]))],
 ) -> EmailStatusResponse:
     """Get the status of a sent email by message ID."""
     # Look up in logs
@@ -502,7 +502,7 @@ async def get_email_status(
     description="Get paginated list of email sending logs.",
 )
 async def get_email_logs(
-    current_user: Annotated[CurrentUser, Depends(require_role([UserRole.BEHEERDER]))],
+    current_user: Annotated[CurrentUser, Depends(RoleChecker([UserRole.BEHEERDER]))],
     page: int = 1,
     size: int = 20,
     status_filter: EmailStatus | None = None,
@@ -571,7 +571,7 @@ async def get_email_logs(
     description="Get email sending statistics for dashboard.",
 )
 async def get_email_stats(
-    current_user: Annotated[CurrentUser, Depends(require_role([UserRole.BEHEERDER]))],
+    current_user: Annotated[CurrentUser, Depends(RoleChecker([UserRole.BEHEERDER]))],
 ) -> EmailStatsResponse:
     """Get email statistics for dashboard widget.
     
@@ -643,7 +643,7 @@ async def get_email_stats(
     description="Export email logs as CSV.",
 )
 async def export_email_logs(
-    current_user: Annotated[CurrentUser, Depends(require_role([UserRole.BEHEERDER]))],
+    current_user: Annotated[CurrentUser, Depends(RoleChecker([UserRole.BEHEERDER]))],
     status_filter: EmailStatus | None = None,
     provider_filter: EmailProviderType | None = None,
     start_date: datetime | None = None,
