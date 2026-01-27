@@ -1,7 +1,7 @@
 """Meeting/ALV API routes.
 
 Implements EPIC-015 (ALV & Vergaderbeheer), FEAT-032 (ALV Planning & Uitnodigingen),
-and STORY-069 (ALV plannen met datum en locatie).
+STORY-069 (ALV plannen met datum en locatie), and STORY-070 (ALV agenda opstellen).
 """
 
 import uuid
@@ -17,19 +17,26 @@ from app.api.dependencies.auth import (
     require_bestuurslid,
 )
 from app.db.models.models import (
+    Document,
     Meeting,
+    MeetingAgendaItem,
     MeetingStatus as DBMeetingStatus,
     MeetingType as DBMeetingType,
     User,
 )
 from app.db.session import get_db
 from app.schemas.meeting import (
+    AgendaItemCreate,
+    AgendaItemReorder,
+    AgendaItemResponse,
+    AgendaItemUpdate,
     MeetingCreate,
     MeetingListResponse,
     MeetingResponse,
     MeetingStatus,
     MeetingType,
     MeetingUpdate,
+    STANDARD_AGENDA_TEMPLATE,
 )
 
 router = APIRouter(prefix="/vves/{vve_id}/meetings", tags=["meetings"])
@@ -287,4 +294,377 @@ async def delete_meeting(
         )
 
     await db.delete(meeting)
+    await db.commit()
+
+
+# ============================================================================
+# STORY-070: Agenda Item Endpoints
+# ============================================================================
+
+
+async def _get_agenda_item_response(
+    item: MeetingAgendaItem,
+    db: AsyncSession,
+) -> AgendaItemResponse:
+    """Build agenda item response with document and creator names."""
+    # Get document name if linked
+    document_name = None
+    if item.document_id:
+        doc_result = await db.execute(
+            select(Document).where(Document.id == item.document_id)
+        )
+        doc = doc_result.scalar_one_or_none()
+        if doc:
+            document_name = doc.title
+
+    # Get creator name
+    creator_name = None
+    creator_result = await db.execute(
+        select(User).where(User.id == item.created_by_id)
+    )
+    creator = creator_result.scalar_one_or_none()
+    if creator:
+        creator_name = f"{creator.first_name} {creator.last_name}"
+
+    return AgendaItemResponse(
+        id=item.id,
+        meeting_id=item.meeting_id,
+        title=item.title,
+        description=item.description,
+        duration_minutes=item.duration_minutes,
+        order_index=item.order_index,
+        document_id=item.document_id,
+        document_name=document_name,
+        is_standard=item.is_standard,
+        created_by_id=item.created_by_id,
+        created_by_name=creator_name,
+        created_at=item.created_at,
+        updated_at=item.updated_at,
+    )
+
+
+@router.get(
+    "/{meeting_id}/agenda",
+    response_model=list[AgendaItemResponse],
+    summary="Agenda ophalen",
+    description="STORY-070: Haal de agenda op voor een ALV vergadering.",
+)
+async def list_agenda_items(
+    vve_id: uuid.UUID,
+    meeting_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: AsyncSession = Depends(get_db),
+) -> list[AgendaItemResponse]:
+    """Get all agenda items for a meeting."""
+    # Verify meeting exists
+    meeting_result = await db.execute(
+        select(Meeting).where(Meeting.id == meeting_id, Meeting.vve_id == vve_id)
+    )
+    if not meeting_result.scalar_one_or_none():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Vergadering niet gevonden",
+        )
+
+    result = await db.execute(
+        select(MeetingAgendaItem)
+        .where(MeetingAgendaItem.meeting_id == meeting_id)
+        .order_by(MeetingAgendaItem.order_index)
+    )
+    items = result.scalars().all()
+
+    return [await _get_agenda_item_response(item, db) for item in items]
+
+
+@router.post(
+    "/{meeting_id}/agenda",
+    response_model=AgendaItemResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Agendapunt toevoegen",
+    description="STORY-070: Voeg een agendapunt toe aan de vergadering.",
+)
+async def create_agenda_item(
+    vve_id: uuid.UUID,
+    meeting_id: uuid.UUID,
+    item_data: AgendaItemCreate,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: AsyncSession = Depends(get_db),
+) -> AgendaItemResponse:
+    """Create a new agenda item."""
+    # Verify meeting exists
+    meeting_result = await db.execute(
+        select(Meeting).where(Meeting.id == meeting_id, Meeting.vve_id == vve_id)
+    )
+    if not meeting_result.scalar_one_or_none():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Vergadering niet gevonden",
+        )
+
+    # Validate document if provided
+    if item_data.document_id:
+        doc_result = await db.execute(
+            select(Document).where(Document.id == item_data.document_id)
+        )
+        if not doc_result.scalar_one_or_none():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Document niet gevonden",
+            )
+
+    # Get max order index
+    max_order_result = await db.execute(
+        select(MeetingAgendaItem.order_index)
+        .where(MeetingAgendaItem.meeting_id == meeting_id)
+        .order_by(MeetingAgendaItem.order_index.desc())
+        .limit(1)
+    )
+    max_order = max_order_result.scalar()
+    next_order = (max_order or 0) + 1 if item_data.order_index == 0 else item_data.order_index
+
+    item = MeetingAgendaItem(
+        meeting_id=meeting_id,
+        title=item_data.title,
+        description=item_data.description,
+        duration_minutes=item_data.duration_minutes,
+        order_index=next_order,
+        document_id=item_data.document_id,
+        is_standard=item_data.is_standard,
+        created_by_id=current_user.id,
+    )
+
+    db.add(item)
+    await db.commit()
+    await db.refresh(item)
+
+    return await _get_agenda_item_response(item, db)
+
+
+@router.post(
+    "/{meeting_id}/agenda/template",
+    response_model=list[AgendaItemResponse],
+    status_code=status.HTTP_201_CREATED,
+    summary="Standaard agenda laden",
+    description="STORY-070: Laad de standaard ALV agenda template met alle standaardpunten.",
+)
+async def create_standard_agenda(
+    vve_id: uuid.UUID,
+    meeting_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: AsyncSession = Depends(get_db),
+) -> list[AgendaItemResponse]:
+    """Create standard agenda items from template."""
+    # Verify meeting exists
+    meeting_result = await db.execute(
+        select(Meeting).where(Meeting.id == meeting_id, Meeting.vve_id == vve_id)
+    )
+    if not meeting_result.scalar_one_or_none():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Vergadering niet gevonden",
+        )
+
+    # Check if agenda already has items
+    existing_result = await db.execute(
+        select(MeetingAgendaItem).where(MeetingAgendaItem.meeting_id == meeting_id).limit(1)
+    )
+    if existing_result.scalar_one_or_none():
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Agenda bevat al agendapunten. Verwijder bestaande punten om template te laden.",
+        )
+
+    # Create standard items
+    items = []
+    for idx, template_item in enumerate(STANDARD_AGENDA_TEMPLATE):
+        item = MeetingAgendaItem(
+            meeting_id=meeting_id,
+            title=template_item["title"],
+            duration_minutes=template_item["duration_minutes"],
+            order_index=idx + 1,
+            is_standard=template_item["is_standard"],
+            created_by_id=current_user.id,
+        )
+        db.add(item)
+        items.append(item)
+
+    await db.commit()
+    
+    # Refresh all items
+    for item in items:
+        await db.refresh(item)
+
+    return [await _get_agenda_item_response(item, db) for item in items]
+
+
+@router.patch(
+    "/{meeting_id}/agenda/{item_id}",
+    response_model=AgendaItemResponse,
+    summary="Agendapunt bijwerken",
+    description="STORY-070: Werk een agendapunt bij.",
+)
+async def update_agenda_item(
+    vve_id: uuid.UUID,
+    meeting_id: uuid.UUID,
+    item_id: uuid.UUID,
+    update_data: AgendaItemUpdate,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: AsyncSession = Depends(get_db),
+) -> AgendaItemResponse:
+    """Update an agenda item."""
+    result = await db.execute(
+        select(MeetingAgendaItem).where(
+            MeetingAgendaItem.id == item_id,
+            MeetingAgendaItem.meeting_id == meeting_id,
+        )
+    )
+    item = result.scalar_one_or_none()
+
+    if not item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Agendapunt niet gevonden",
+        )
+
+    # Validate document if provided
+    if update_data.document_id:
+        doc_result = await db.execute(
+            select(Document).where(Document.id == update_data.document_id)
+        )
+        if not doc_result.scalar_one_or_none():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Document niet gevonden",
+            )
+
+    # Update fields
+    if update_data.title is not None:
+        item.title = update_data.title
+    if update_data.description is not None:
+        item.description = update_data.description
+    if update_data.duration_minutes is not None:
+        item.duration_minutes = update_data.duration_minutes
+    if update_data.order_index is not None:
+        item.order_index = update_data.order_index
+    if update_data.document_id is not None:
+        item.document_id = update_data.document_id
+
+    await db.commit()
+    await db.refresh(item)
+
+    return await _get_agenda_item_response(item, db)
+
+
+@router.put(
+    "/{meeting_id}/agenda/reorder",
+    response_model=list[AgendaItemResponse],
+    summary="Agenda herschikken",
+    description="STORY-070: Herschik de volgorde van agendapunten (drag & drop).",
+)
+async def reorder_agenda_items(
+    vve_id: uuid.UUID,
+    meeting_id: uuid.UUID,
+    reorder_data: AgendaItemReorder,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: AsyncSession = Depends(get_db),
+) -> list[AgendaItemResponse]:
+    """Reorder agenda items based on new order."""
+    # Verify meeting exists
+    meeting_result = await db.execute(
+        select(Meeting).where(Meeting.id == meeting_id, Meeting.vve_id == vve_id)
+    )
+    if not meeting_result.scalar_one_or_none():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Vergadering niet gevonden",
+        )
+
+    # Update order for each item
+    for idx, item_id in enumerate(reorder_data.item_ids):
+        result = await db.execute(
+            select(MeetingAgendaItem).where(
+                MeetingAgendaItem.id == item_id,
+                MeetingAgendaItem.meeting_id == meeting_id,
+            )
+        )
+        item = result.scalar_one_or_none()
+        if item:
+            item.order_index = idx + 1
+
+    await db.commit()
+
+    # Return updated list
+    result = await db.execute(
+        select(MeetingAgendaItem)
+        .where(MeetingAgendaItem.meeting_id == meeting_id)
+        .order_by(MeetingAgendaItem.order_index)
+    )
+    items = result.scalars().all()
+
+    return [await _get_agenda_item_response(item, db) for item in items]
+
+
+@router.delete(
+    "/{meeting_id}/agenda/{item_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Agendapunt verwijderen",
+    description="STORY-070: Verwijder een agendapunt.",
+)
+async def delete_agenda_item(
+    vve_id: uuid.UUID,
+    meeting_id: uuid.UUID,
+    item_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    """Delete an agenda item."""
+    result = await db.execute(
+        select(MeetingAgendaItem).where(
+            MeetingAgendaItem.id == item_id,
+            MeetingAgendaItem.meeting_id == meeting_id,
+        )
+    )
+    item = result.scalar_one_or_none()
+
+    if not item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Agendapunt niet gevonden",
+        )
+
+    await db.delete(item)
+    await db.commit()
+
+
+@router.delete(
+    "/{meeting_id}/agenda",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Alle agendapunten verwijderen",
+    description="STORY-070: Verwijder alle agendapunten van een vergadering.",
+)
+async def delete_all_agenda_items(
+    vve_id: uuid.UUID,
+    meeting_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    """Delete all agenda items for a meeting."""
+    # Verify meeting exists
+    meeting_result = await db.execute(
+        select(Meeting).where(Meeting.id == meeting_id, Meeting.vve_id == vve_id)
+    )
+    if not meeting_result.scalar_one_or_none():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Vergadering niet gevonden",
+        )
+
+    result = await db.execute(
+        select(MeetingAgendaItem).where(MeetingAgendaItem.meeting_id == meeting_id)
+    )
+    items = result.scalars().all()
+
+    for item in items:
+        await db.delete(item)
+
     await db.commit()
