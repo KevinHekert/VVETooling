@@ -42,6 +42,14 @@ class TicketPriority(str, Enum):
     URGENT = "urgent"
 
 
+class SupplierStatus(str, Enum):
+    """Supplier collaboration status for tickets (STORY-044)."""
+
+    SCHEDULED = "scheduled"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+
+
 # Maximum attachment size: 10MB per D-004
 MAX_ATTACHMENT_SIZE_BYTES = 10 * 1024 * 1024
 
@@ -184,6 +192,9 @@ class TicketUpdate(BaseModel):
     location: str | None = Field(None, max_length=200)
     status: TicketStatus | None = None
     priority: TicketPriority | None = None
+    # STORY-038: SLA fields
+    sla_due_date: datetime | None = None
+    sla_response_hours: int | None = Field(None, ge=1, le=720)  # 1 hour to 30 days
 
 
 class TicketResponse(TicketBase):
@@ -198,6 +209,21 @@ class TicketResponse(TicketBase):
     created_at: datetime
     updated_at: datetime
     resolved_at: datetime | None = None
+    # STORY-044: Supplier status fields
+    supplier_id: uuid.UUID | None = None
+    supplier_name: str | None = None
+    supplier_status: SupplierStatus | None = None
+    supplier_status_note: str | None = None
+    supplier_status_updated_at: datetime | None = None
+    supplier_status_updated_by_id: uuid.UUID | None = None
+    supplier_status_updated_by_name: str | None = None
+    # STORY-038: SLA fields
+    sla_due_date: datetime | None = None
+    sla_response_hours: int | None = None
+    sla_breached: bool = False
+    sla_breached_at: datetime | None = None
+    sla_status: str | None = None  # Calculated: "on_track", "at_risk", "breached"
+    sla_remaining_hours: int | None = None  # Calculated remaining time
     attachments: list[TicketAttachmentResponse] = []
     timeline: list[TicketTimelineEntryResponse] = []
 
@@ -220,6 +246,14 @@ class TicketListResponse(BaseModel):
     updated_at: datetime
     attachment_count: int = 0
     comment_count: int = 0
+    # STORY-044: Supplier status fields
+    supplier_id: uuid.UUID | None = None
+    supplier_name: str | None = None
+    supplier_status: SupplierStatus | None = None
+    # STORY-038: SLA fields
+    sla_due_date: datetime | None = None
+    sla_breached: bool = False
+    sla_status: str | None = None  # Calculated: "on_track", "at_risk", "breached"
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -243,3 +277,90 @@ class TicketSummary(BaseModel):
     resolved_tickets: int
     by_category: dict[str, int]
     by_priority: dict[str, int]
+
+
+# STORY-044: Supplier status update schema
+class TicketSupplierStatusUpdate(BaseModel):
+    """Schema for updating supplier status on a ticket (STORY-044)."""
+
+    supplier_id: uuid.UUID | None = None
+    supplier_status: SupplierStatus | None = None
+    supplier_status_note: str | None = Field(None, max_length=500)
+
+
+# STORY-035: Supplier schemas
+class SupplierBase(BaseModel):
+    """Base schema for suppliers."""
+
+    name: str = Field(..., min_length=2, max_length=255)
+    contact_person: str | None = Field(None, max_length=255)
+    email: str | None = Field(None, max_length=255)
+    phone: str | None = Field(None, max_length=50)
+    specialty: str | None = Field(None, max_length=255)
+    notes: str | None = None
+    is_active: bool = True
+
+
+class SupplierCreate(SupplierBase):
+    """Schema for creating a supplier."""
+
+    pass
+
+
+class SupplierUpdate(BaseModel):
+    """Schema for updating a supplier."""
+
+    name: str | None = Field(None, min_length=2, max_length=255)
+    contact_person: str | None = Field(None, max_length=255)
+    email: str | None = Field(None, max_length=255)
+    phone: str | None = Field(None, max_length=50)
+    specialty: str | None = Field(None, max_length=255)
+    notes: str | None = None
+    is_active: bool | None = None
+
+
+class SupplierResponse(SupplierBase):
+    """Response schema for supplier."""
+
+    id: uuid.UUID
+    vve_id: uuid.UUID
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# STORY-036: Supplier Follow-Up schemas
+class SupplierFollowUpChannel(str, Enum):
+    """Communication channel for supplier follow-ups."""
+
+    PHONE = "phone"
+    EMAIL = "email"
+    IN_PERSON = "in_person"
+    OTHER = "other"
+
+
+class SupplierFollowUpCreate(BaseModel):
+    """Schema for creating a supplier follow-up."""
+
+    supplier_id: uuid.UUID
+    channel: SupplierFollowUpChannel
+    summary: str = Field(..., min_length=5, max_length=500)
+    contact_date: datetime
+
+
+class SupplierFollowUpResponse(BaseModel):
+    """Response schema for supplier follow-up."""
+
+    id: uuid.UUID
+    ticket_id: uuid.UUID
+    supplier_id: uuid.UUID
+    supplier_name: str | None = None
+    channel: SupplierFollowUpChannel
+    summary: str
+    contact_date: datetime
+    created_by_id: uuid.UUID
+    created_by_name: str | None = None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)

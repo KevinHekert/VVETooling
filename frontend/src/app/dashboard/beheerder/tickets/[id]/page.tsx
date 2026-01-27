@@ -12,17 +12,26 @@ import type {
   TicketCategory,
   TicketCommentCreate,
   TicketUpdate,
-  TicketAttachmentStatus
+  TicketAttachmentStatus,
+  SupplierStatus,
+  Supplier,
+  TicketSupplierStatusUpdate,
+  SlaStatus,
+  SupplierFollowUp,
+  SupplierFollowUpCreate,
+  SupplierFollowUpChannel
 } from '@/types';
 
 /**
- * Bestuur/Beheerder Ticket Detail Page - STORY-031
+ * Bestuur/Beheerder Ticket Detail Page - STORY-031, STORY-044, STORY-038, STORY-036
  * 
  * Shows ticket details with management capabilities:
  * - View full ticket details, timeline, attachments
  * - Update ticket status
  * - Add internal notes (not visible to bewoner)
  * - Accept/reject attachments
+ * - STORY-044: Update supplier status
+ * - STORY-038: SLA tracking and management
  */
 
 const STATUS_LABELS: Record<TicketStatus, { label: string; color: string }> = {
@@ -34,12 +43,34 @@ const STATUS_LABELS: Record<TicketStatus, { label: string; color: string }> = {
   closed: { label: 'Gesloten', color: 'bg-gray-100 text-gray-500' },
 };
 
+// STORY-044: Supplier status labels
+const SUPPLIER_STATUS_LABELS: Record<SupplierStatus, { label: string; color: string }> = {
+  scheduled: { label: 'Ingepland', color: 'bg-purple-100 text-purple-700' },
+  in_progress: { label: 'Bezig', color: 'bg-yellow-100 text-yellow-700' },
+  completed: { label: 'Afgerond', color: 'bg-green-100 text-green-700' },
+};
+
+// STORY-038: SLA status labels
+const SLA_STATUS_LABELS: Record<string, { label: string; color: string }> = {
+  on_track: { label: 'Op schema', color: 'bg-green-100 text-green-700' },
+  at_risk: { label: 'Risico', color: 'bg-yellow-100 text-yellow-700' },
+  breached: { label: 'Overschreden', color: 'bg-red-100 text-red-700' },
+};
+
 const ATTACHMENT_STATUS_LABELS: Record<TicketAttachmentStatus, { label: string; color: string }> = {
   pending: { label: 'In afwachting', color: 'bg-gray-100 text-gray-700' },
   timely: { label: 'Tijdig', color: 'bg-green-100 text-green-700' },
   late: { label: 'Te laat', color: 'bg-orange-100 text-orange-700' },
   accepted: { label: 'Geaccepteerd', color: 'bg-green-100 text-green-700' },
   rejected: { label: 'Afgewezen', color: 'bg-red-100 text-red-700' },
+};
+
+// STORY-036: Follow-up channel labels
+const FOLLOW_UP_CHANNEL_LABELS: Record<SupplierFollowUpChannel, { label: string; icon: string }> = {
+  phone: { label: 'Telefoon', icon: '📞' },
+  email: { label: 'E-mail', icon: '✉️' },
+  in_person: { label: 'Persoonlijk', icon: '👤' },
+  other: { label: 'Anders', icon: '📋' },
 };
 
 const CATEGORY_LABELS: Record<TicketCategory, string> = {
@@ -67,6 +98,8 @@ const TIMELINE_ICONS: Record<string, string> = {
   attachment_added: '📎',
   attachment_reviewed: '✓',
   internal_note_added: '📋',
+  supplier_status_changed: '🔧',
+  supplier_follow_up_added: '📞',
 };
 
 export default function BeheerderTicketDetailPage() {
@@ -93,21 +126,51 @@ export default function BeheerderTicketDetailPage() {
   // Attachment review state
   const [rejectionReason, setRejectionReason] = useState('');
 
+  // STORY-044: Supplier status state
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [selectedSupplierId, setSelectedSupplierId] = useState<string>('');
+  const [selectedSupplierStatus, setSelectedSupplierStatus] = useState<SupplierStatus | ''>('');
+  const [supplierStatusNote, setSupplierStatusNote] = useState('');
+  const [isUpdatingSupplierStatus, setIsUpdatingSupplierStatus] = useState(false);
+
+  // STORY-036: Follow-up state
+  const [followUps, setFollowUps] = useState<SupplierFollowUp[]>([]);
+  const [showFollowUpForm, setShowFollowUpForm] = useState(false);
+  const [followUpChannel, setFollowUpChannel] = useState<SupplierFollowUpChannel>('phone');
+  const [followUpSummary, setFollowUpSummary] = useState('');
+  const [followUpDate, setFollowUpDate] = useState('');
+  const [isAddingFollowUp, setIsAddingFollowUp] = useState(false);
+
   // TODO: Get VVE ID from context/session
   const vveId = 'demo-vve-id';
 
   useEffect(() => {
     async function fetchTicketData() {
       try {
-        const [ticketData, commentsData, timelineData] = await Promise.all([
+        const [ticketData, commentsData, timelineData, suppliersData, followUpsData] = await Promise.all([
           api.getTicket(vveId, ticketId),
           api.getTicketComments(vveId, ticketId),
           api.getTicketTimeline(vveId, ticketId),
+          api.getSuppliers(vveId).catch(() => []), // Gracefully handle if suppliers API fails
+          api.getSupplierFollowUps(vveId, ticketId).catch(() => []),
         ]);
         setTicket(ticketData);
         setComments(commentsData);
         setTimeline(timelineData);
         setNewStatus(ticketData.status);
+        setSuppliers(suppliersData);
+        setFollowUps(followUpsData);
+        
+        // Set initial supplier status values
+        if (ticketData.supplier_id) {
+          setSelectedSupplierId(ticketData.supplier_id);
+        }
+        if (ticketData.supplier_status) {
+          setSelectedSupplierStatus(ticketData.supplier_status);
+        }
+        if (ticketData.supplier_status_note) {
+          setSupplierStatusNote(ticketData.supplier_status_note);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Kon ticket niet ophalen');
       } finally {
@@ -116,6 +179,46 @@ export default function BeheerderTicketDetailPage() {
     }
     fetchTicketData();
   }, [ticketId]);
+
+  // STORY-036: Handle add follow-up
+  const handleAddFollowUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!followUpSummary.trim() || !selectedSupplierId) return;
+
+    setIsAddingFollowUp(true);
+    setError(null);
+    
+    try {
+      const followUpData: SupplierFollowUpCreate = {
+        supplier_id: selectedSupplierId,
+        channel: followUpChannel,
+        summary: followUpSummary,
+        contact_date: followUpDate || new Date().toISOString(),
+      };
+      
+      await api.createSupplierFollowUp(vveId, ticketId, followUpData);
+      
+      // Refresh follow-ups and timeline
+      const [followUpsData, timelineData] = await Promise.all([
+        api.getSupplierFollowUps(vveId, ticketId),
+        api.getTicketTimeline(vveId, ticketId),
+      ]);
+      setFollowUps(followUpsData);
+      setTimeline(timelineData);
+      
+      // Reset form
+      setFollowUpSummary('');
+      setFollowUpDate('');
+      setShowFollowUpForm(false);
+      
+      setSuccessMessage('Opvolgactie toegevoegd');
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Kon opvolgactie niet toevoegen');
+    } finally {
+      setIsAddingFollowUp(false);
+    }
+  };
 
   const handleStatusUpdate = async () => {
     if (!newStatus || newStatus === ticket?.status) return;
@@ -191,6 +294,39 @@ export default function BeheerderTicketDetailPage() {
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Kon bewijsstuk niet beoordelen');
+    }
+  };
+
+  // STORY-044: Handle supplier status update
+  const handleSupplierStatusUpdate = async () => {
+    if (!selectedSupplierId && !ticket?.supplier_id) {
+      setError('Selecteer eerst een leverancier');
+      return;
+    }
+
+    setIsUpdatingSupplierStatus(true);
+    setError(null);
+    
+    try {
+      const updateData: TicketSupplierStatusUpdate = {
+        supplier_id: selectedSupplierId || undefined,
+        supplier_status: selectedSupplierStatus || undefined,
+        supplier_status_note: supplierStatusNote || undefined,
+      };
+      
+      const updatedTicket = await api.updateTicketSupplierStatus(vveId, ticketId, updateData);
+      setTicket(updatedTicket);
+      
+      // Refresh timeline
+      const timelineData = await api.getTicketTimeline(vveId, ticketId);
+      setTimeline(timelineData);
+      
+      setSuccessMessage('Leveranciersstatus succesvol bijgewerkt');
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Kon leveranciersstatus niet bijwerken');
+    } finally {
+      setIsUpdatingSupplierStatus(false);
     }
   };
 
@@ -540,6 +676,291 @@ export default function BeheerderTicketDetailPage() {
               >
                 {isUpdatingStatus ? 'Bijwerken...' : 'Status Bijwerken'}
               </button>
+            </div>
+          </div>
+
+          {/* STORY-044: Supplier Status */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-sm font-medium text-gray-700 mb-3">🔧 Leveranciersstatus</h3>
+            
+            {/* Current supplier status display */}
+            {ticket.supplier_status && (
+              <div className="mb-4">
+                <span
+                  className={`
+                    inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
+                    ${SUPPLIER_STATUS_LABELS[ticket.supplier_status].color}
+                  `}
+                >
+                  {SUPPLIER_STATUS_LABELS[ticket.supplier_status].label}
+                </span>
+                {ticket.supplier_name && (
+                  <p className="text-sm text-gray-600 mt-2">
+                    Leverancier: <strong>{ticket.supplier_name}</strong>
+                  </p>
+                )}
+                {ticket.supplier_status_note && (
+                  <p className="text-sm text-gray-500 mt-1 italic">
+                    {ticket.supplier_status_note}
+                  </p>
+                )}
+                {ticket.supplier_status_updated_at && (
+                  <p className="text-xs text-gray-400 mt-1">
+                    Bijgewerkt: {new Date(ticket.supplier_status_updated_at).toLocaleDateString('nl-NL', {
+                      day: 'numeric',
+                      month: 'short',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                    {ticket.supplier_status_updated_by_name && ` door ${ticket.supplier_status_updated_by_name}`}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Supplier status update form */}
+            <div className={ticket.supplier_status ? 'pt-4 border-t' : ''}>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Leverancier
+              </label>
+              <select
+                value={selectedSupplierId}
+                onChange={(e) => setSelectedSupplierId(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm mb-3"
+              >
+                <option value="">-- Selecteer leverancier --</option>
+                {suppliers.map((supplier) => (
+                  <option key={supplier.id} value={supplier.id}>
+                    {supplier.name}
+                    {supplier.specialty && ` (${supplier.specialty})`}
+                  </option>
+                ))}
+              </select>
+
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Status
+              </label>
+              <select
+                value={selectedSupplierStatus}
+                onChange={(e) => setSelectedSupplierStatus(e.target.value as SupplierStatus)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm mb-3"
+              >
+                <option value="">-- Selecteer status --</option>
+                <option value="scheduled">Ingepland</option>
+                <option value="in_progress">Bezig</option>
+                <option value="completed">Afgerond</option>
+              </select>
+
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Toelichting (optioneel)
+              </label>
+              <input
+                type="text"
+                value={supplierStatusNote}
+                onChange={(e) => setSupplierStatusNote(e.target.value)}
+                placeholder="Bijv. afspraak op 15-02..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm mb-3"
+              />
+
+              <button
+                onClick={handleSupplierStatusUpdate}
+                disabled={isUpdatingSupplierStatus || (!selectedSupplierId && !ticket.supplier_id)}
+                className={`
+                  w-full px-4 py-2 rounded-lg text-sm font-medium
+                  ${isUpdatingSupplierStatus || (!selectedSupplierId && !ticket.supplier_id)
+                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    : 'bg-purple-600 text-white hover:bg-purple-700'
+                  }
+                `}
+              >
+                {isUpdatingSupplierStatus ? 'Bijwerken...' : 'Leveranciersstatus Bijwerken'}
+              </button>
+            </div>
+          </div>
+
+          {/* STORY-036: Supplier Follow-ups */}
+          {(ticket.supplier_id || selectedSupplierId) && (
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-medium text-gray-700">📞 Opvolgacties</h3>
+                <button
+                  onClick={() => setShowFollowUpForm(!showFollowUpForm)}
+                  className="text-sm text-blue-600 hover:text-blue-800"
+                >
+                  + Toevoegen
+                </button>
+              </div>
+
+              {/* Add follow-up form */}
+              {showFollowUpForm && (
+                <form onSubmit={handleAddFollowUp} className="mb-4 p-3 bg-gray-50 rounded-lg">
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Kanaal</label>
+                      <select
+                        value={followUpChannel}
+                        onChange={(e) => setFollowUpChannel(e.target.value as SupplierFollowUpChannel)}
+                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                      >
+                        <option value="phone">📞 Telefoon</option>
+                        <option value="email">✉️ E-mail</option>
+                        <option value="in_person">👤 Persoonlijk</option>
+                        <option value="other">📋 Anders</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Datum</label>
+                      <input
+                        type="datetime-local"
+                        value={followUpDate}
+                        onChange={(e) => setFollowUpDate(e.target.value)}
+                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Samenvatting *</label>
+                      <textarea
+                        value={followUpSummary}
+                        onChange={(e) => setFollowUpSummary(e.target.value)}
+                        placeholder="Korte samenvatting van het gesprek..."
+                        rows={2}
+                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                        required
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowFollowUpForm(false)}
+                        className="flex-1 px-3 py-1 text-sm text-gray-600 border border-gray-300 rounded hover:bg-gray-50"
+                      >
+                        Annuleren
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isAddingFollowUp || !followUpSummary.trim()}
+                        className={`
+                          flex-1 px-3 py-1 text-sm rounded
+                          ${isAddingFollowUp || !followUpSummary.trim()
+                            ? 'bg-gray-200 text-gray-400'
+                            : 'bg-blue-600 text-white hover:bg-blue-700'
+                          }
+                        `}
+                      >
+                        {isAddingFollowUp ? 'Bezig...' : 'Opslaan'}
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              )}
+
+              {/* Follow-ups list */}
+              {followUps.length > 0 ? (
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {followUps.map((followUp) => (
+                    <div key={followUp.id} className="p-2 bg-gray-50 rounded text-sm">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span>{FOLLOW_UP_CHANNEL_LABELS[followUp.channel]?.icon}</span>
+                        <span className="font-medium">{followUp.supplier_name}</span>
+                        <span className="text-gray-400">•</span>
+                        <span className="text-gray-500 text-xs">
+                          {new Date(followUp.contact_date).toLocaleDateString('nl-NL', {
+                            day: 'numeric',
+                            month: 'short',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </span>
+                      </div>
+                      <p className="text-gray-700">{followUp.summary}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">Geen opvolgacties geregistreerd</p>
+              )}
+            </div>
+          )}
+
+          {/* STORY-038: SLA Status */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-sm font-medium text-gray-700 mb-3">⏱️ SLA Status</h3>
+            
+            {/* Current SLA status display */}
+            {ticket.sla_due_date ? (
+              <div className="mb-4">
+                <div className="flex items-center gap-2 mb-2">
+                  {ticket.sla_status && SLA_STATUS_LABELS[ticket.sla_status] && (
+                    <span
+                      className={`
+                        inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                        ${SLA_STATUS_LABELS[ticket.sla_status].color}
+                      `}
+                    >
+                      {SLA_STATUS_LABELS[ticket.sla_status].label}
+                    </span>
+                  )}
+                  {ticket.sla_breached && (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">
+                      ⚠️ SLA Overschreden
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm text-gray-600">
+                  Deadline: <strong>{new Date(ticket.sla_due_date).toLocaleDateString('nl-NL', {
+                    day: 'numeric',
+                    month: 'short',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}</strong>
+                </p>
+                {ticket.sla_remaining_hours !== undefined && ticket.sla_remaining_hours > 0 && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Nog {ticket.sla_remaining_hours} uur resterend
+                  </p>
+                )}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 mb-4">Geen SLA ingesteld</p>
+            )}
+
+            {/* SLA settings (simple inline form) */}
+            <div className="pt-3 border-t">
+              <label className="block text-xs font-medium text-gray-500 mb-1">
+                Responstermijn (uren)
+              </label>
+              <div className="flex gap-2">
+                <select
+                  className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm"
+                  defaultValue={ticket.sla_response_hours || ''}
+                  onChange={async (e) => {
+                    const hours = parseInt(e.target.value);
+                    if (!hours) return;
+                    try {
+                      const updateData: TicketUpdate = { 
+                        sla_response_hours: hours,
+                        sla_due_date: new Date(
+                          new Date(ticket.created_at).getTime() + hours * 60 * 60 * 1000
+                        ).toISOString()
+                      };
+                      const updatedTicket = await api.updateTicket(vveId, ticketId, updateData);
+                      setTicket(updatedTicket);
+                      setSuccessMessage('SLA bijgewerkt');
+                      setTimeout(() => setSuccessMessage(null), 3000);
+                    } catch (err) {
+                      setError(err instanceof Error ? err.message : 'Kon SLA niet bijwerken');
+                    }
+                  }}
+                >
+                  <option value="">-- Selecteer --</option>
+                  <option value="24">24 uur (1 dag)</option>
+                  <option value="48">48 uur (2 dagen)</option>
+                  <option value="72">72 uur (3 dagen)</option>
+                  <option value="120">120 uur (5 dagen)</option>
+                  <option value="168">168 uur (1 week)</option>
+                  <option value="336">336 uur (2 weken)</option>
+                </select>
+              </div>
             </div>
           </div>
 

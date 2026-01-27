@@ -3,10 +3,11 @@
 ## Documentinformatie
 - **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: ⬜ Backlog
+- **Status**: ✅ Geïmplementeerd
 - **Versie**: 1.0
 - **Prioriteit**: Should (Horizon 2)
 - **Geneste nummering**: 10.1.5
+- **Implementatierapport**: [STORY-038-implementatie.md](../implementation-reports/STORY-038-implementatie.md)
 
 ## User story
 Als **bestuurslid** wil ik tickets kunnen voorzien van prioriteit en responstermijn, zodat opvolging en verwachtingen per klacht helder zijn.

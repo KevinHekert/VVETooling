@@ -3,11 +3,13 @@
 Implements FEAT-016 (Bewoner tickets & klachten) and STORY-029 (Bewoner ticket wizard en tijdlijn).
 Implements STORY-030: Ticket bewijsstukken (bonnen en facturen).
 Implements STORY-037: Ticket communicatie en notities.
+Implements STORY-044: Ticket supplier collaboration status.
 """
 
 import os
 import re
 import uuid
+from datetime import datetime, timezone
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
@@ -22,6 +24,10 @@ from app.api.dependencies.auth import (
 )
 from app.core.security import UserRole
 from app.db.models.models import (
+    Supplier,
+    SupplierFollowUp,
+    SupplierFollowUpChannel as DBSupplierFollowUpChannel,
+    SupplierStatus as DBSupplierStatus,
     Ticket,
     TicketAttachment,
     TicketAttachmentStatus as DBTicketAttachmentStatus,
@@ -37,6 +43,13 @@ from app.db.models.models import (
 )
 from app.db.session import get_db
 from app.schemas.ticket import (
+    SupplierCreate,
+    SupplierFollowUpChannel,
+    SupplierFollowUpCreate,
+    SupplierFollowUpResponse,
+    SupplierResponse,
+    SupplierStatus,
+    SupplierUpdate,
     TicketAttachmentResponse,
     TicketAttachmentStatus,
     TicketAttachmentUpdate,
@@ -47,6 +60,7 @@ from app.schemas.ticket import (
     TicketListResponse,
     TicketResponse,
     TicketSummary,
+    TicketSupplierStatusUpdate,
     TicketTimelineEntryResponse,
     TicketUpdate,
     ALLOWED_ATTACHMENT_TYPES,
@@ -1017,3 +1031,440 @@ async def get_timeline(
         responses.append(response)
 
     return responses
+
+
+# ============================================================================
+# STORY-044: Supplier Status Endpoints
+# ============================================================================
+
+
+@router.put(
+    "/{ticket_id}/supplier-status",
+    response_model=TicketResponse,
+    summary="Leveranciersstatus bijwerken",
+    description="""
+    STORY-044: Als bestuurslid wil ik zien welke status een leverancier heeft in de opvolging van een ticket.
+
+    - Bestuur kan status bijwerken met datum en korte toelichting
+    - Status: scheduled (ingepland), in_progress (bezig), completed (afgerond)
+    - Maakt een tijdlijn-entry aan voor de statuswijziging
+    """,
+)
+async def update_ticket_supplier_status(
+    vve_id: uuid.UUID,
+    ticket_id: uuid.UUID,
+    update_data: TicketSupplierStatusUpdate,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> TicketResponse:
+    """Update supplier status on a ticket.
+
+    Requires bestuurslid or beheerder role.
+    """
+    # Get ticket
+    result = await db.execute(
+        select(Ticket)
+        .options(selectinload(Ticket.attachments))
+        .options(selectinload(Ticket.timeline))
+        .options(selectinload(Ticket.supplier))
+        .where(Ticket.id == ticket_id, Ticket.vve_id == vve_id)
+    )
+    ticket = result.scalar_one_or_none()
+
+    if not ticket:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Ticket niet gevonden",
+        )
+
+    # If supplier_id is provided, validate it exists
+    supplier_name = None
+    if update_data.supplier_id:
+        supplier_result = await db.execute(
+            select(Supplier).where(
+                Supplier.id == update_data.supplier_id,
+                Supplier.vve_id == vve_id,
+            )
+        )
+        supplier = supplier_result.scalar_one_or_none()
+        if not supplier:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Leverancier niet gevonden",
+            )
+        ticket.supplier_id = supplier.id
+        supplier_name = supplier.name
+    elif update_data.supplier_id is None and ticket.supplier_id:
+        # If explicitly set to None, remove supplier
+        # Query the old supplier to get the name
+        old_supplier_result = await db.execute(
+            select(Supplier).where(Supplier.id == ticket.supplier_id)
+        )
+        old_supplier = old_supplier_result.scalar_one_or_none()
+        old_supplier_name = old_supplier.name if old_supplier else "Onbekend"
+        
+        ticket.supplier_id = None
+        ticket.supplier_status = None
+        ticket.supplier_status_note = None
+        ticket.supplier_status_updated_at = None
+        ticket.supplier_status_updated_by_id = None
+        
+        # Create timeline entry for supplier removal
+        await _create_timeline_entry(
+            db,
+            ticket.id,
+            current_user.id,
+            "supplier_removed",
+            f"Leverancier ({old_supplier_name}) verwijderd van ticket",
+            old_value=old_supplier_name,
+            new_value=None,
+        )
+
+    # Update supplier status
+    old_status = ticket.supplier_status.value if ticket.supplier_status else None
+    new_status = update_data.supplier_status.value if update_data.supplier_status else None
+
+    if update_data.supplier_status:
+        ticket.supplier_status = DBSupplierStatus(update_data.supplier_status.value)
+    
+    if update_data.supplier_status_note is not None:
+        ticket.supplier_status_note = update_data.supplier_status_note
+
+    ticket.supplier_status_updated_at = datetime.now(timezone.utc)
+    ticket.supplier_status_updated_by_id = current_user.id
+
+    # Create timeline entry for status change
+    if old_status != new_status:
+        status_labels = {
+            "scheduled": "Ingepland",
+            "in_progress": "Bezig",
+            "completed": "Afgerond",
+        }
+        new_label = status_labels.get(new_status, new_status) if new_status else "Verwijderd"
+        old_label = status_labels.get(old_status, old_status) if old_status else None
+        
+        description = f"Leveranciersstatus gewijzigd naar: {new_label}"
+        if supplier_name:
+            description = f"Leverancier ({supplier_name}) status: {new_label}"
+        if update_data.supplier_status_note:
+            description += f" - {update_data.supplier_status_note}"
+
+        await _create_timeline_entry(
+            db,
+            ticket.id,
+            current_user.id,
+            "supplier_status_changed",
+            description,
+            old_value=old_label,
+            new_value=new_label,
+        )
+
+    await db.commit()
+    await db.refresh(ticket, ["attachments", "timeline", "supplier"])
+
+    # Get submitter name
+    submitter_result = await db.execute(
+        select(User).where(User.id == ticket.submitted_by_id)
+    )
+    submitter = submitter_result.scalar_one_or_none()
+
+    # Get supplier status updater name
+    updater_name = None
+    if ticket.supplier_status_updated_by_id:
+        updater_result = await db.execute(
+            select(User).where(User.id == ticket.supplier_status_updated_by_id)
+        )
+        updater = updater_result.scalar_one_or_none()
+        updater_name = f"{updater.first_name} {updater.last_name}" if updater else None
+
+    response = TicketResponse.model_validate(ticket)
+    response.submitted_by_name = f"{submitter.first_name} {submitter.last_name}" if submitter else None
+    response.supplier_name = ticket.supplier.name if ticket.supplier else None
+    response.supplier_status_updated_by_name = updater_name
+
+    return response
+
+
+# ============================================================================
+# Supplier Management Endpoints (FEAT-017/STORY-035)
+# ============================================================================
+
+supplier_router = APIRouter(prefix="/vves/{vve_id}/suppliers", tags=["suppliers"])
+
+
+@supplier_router.get(
+    "",
+    response_model=list[SupplierResponse],
+    summary="Leveranciers ophalen",
+    description="Haal alle leveranciers op voor een VVE. Alleen bestuur en beheerders.",
+)
+async def list_suppliers(
+    vve_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+    active_only: bool = Query(True, description="Alleen actieve leveranciers"),
+) -> list[SupplierResponse]:
+    """Get all suppliers for a VVE."""
+    query = select(Supplier).where(Supplier.vve_id == vve_id)
+    if active_only:
+        query = query.where(Supplier.is_active.is_(True))
+    query = query.order_by(Supplier.name)
+
+    result = await db.execute(query)
+    suppliers = result.scalars().all()
+
+    return [SupplierResponse.model_validate(s) for s in suppliers]
+
+
+@supplier_router.post(
+    "",
+    response_model=SupplierResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Leverancier toevoegen",
+    description="Voeg een nieuwe leverancier toe aan de VVE. Alleen bestuur en beheerders.",
+)
+async def create_supplier(
+    vve_id: uuid.UUID,
+    supplier_data: SupplierCreate,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> SupplierResponse:
+    """Create a new supplier."""
+    # Validate VVE exists
+    vve_result = await db.execute(select(VVE).where(VVE.id == vve_id))
+    if vve_result.scalar_one_or_none() is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="VVE niet gevonden",
+        )
+
+    supplier = Supplier(
+        vve_id=vve_id,
+        name=supplier_data.name,
+        contact_person=supplier_data.contact_person,
+        email=supplier_data.email,
+        phone=supplier_data.phone,
+        specialty=supplier_data.specialty,
+        notes=supplier_data.notes,
+        is_active=supplier_data.is_active,
+    )
+    db.add(supplier)
+    await db.commit()
+    await db.refresh(supplier)
+
+    return SupplierResponse.model_validate(supplier)
+
+
+@supplier_router.get(
+    "/{supplier_id}",
+    response_model=SupplierResponse,
+    summary="Leverancier ophalen",
+    description="Haal details op van een specifieke leverancier.",
+)
+async def get_supplier(
+    vve_id: uuid.UUID,
+    supplier_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> SupplierResponse:
+    """Get a specific supplier."""
+    result = await db.execute(
+        select(Supplier).where(Supplier.id == supplier_id, Supplier.vve_id == vve_id)
+    )
+    supplier = result.scalar_one_or_none()
+
+    if not supplier:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Leverancier niet gevonden",
+        )
+
+    return SupplierResponse.model_validate(supplier)
+
+
+@supplier_router.put(
+    "/{supplier_id}",
+    response_model=SupplierResponse,
+    summary="Leverancier bijwerken",
+    description="Werk de gegevens van een leverancier bij.",
+)
+async def update_supplier(
+    vve_id: uuid.UUID,
+    supplier_id: uuid.UUID,
+    supplier_data: SupplierUpdate,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> SupplierResponse:
+    """Update a supplier."""
+    result = await db.execute(
+        select(Supplier).where(Supplier.id == supplier_id, Supplier.vve_id == vve_id)
+    )
+    supplier = result.scalar_one_or_none()
+
+    if not supplier:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Leverancier niet gevonden",
+        )
+
+    # Update fields
+    if supplier_data.name is not None:
+        supplier.name = supplier_data.name
+    if supplier_data.contact_person is not None:
+        supplier.contact_person = supplier_data.contact_person
+    if supplier_data.email is not None:
+        supplier.email = supplier_data.email
+    if supplier_data.phone is not None:
+        supplier.phone = supplier_data.phone
+    if supplier_data.specialty is not None:
+        supplier.specialty = supplier_data.specialty
+    if supplier_data.notes is not None:
+        supplier.notes = supplier_data.notes
+    if supplier_data.is_active is not None:
+        supplier.is_active = supplier_data.is_active
+
+    await db.commit()
+    await db.refresh(supplier)
+
+    return SupplierResponse.model_validate(supplier)
+
+
+# ============================================================================
+# STORY-036: Supplier Follow-Up Endpoints
+# ============================================================================
+
+
+FOLLOW_UP_CHANNEL_LABELS = {
+    "phone": "Telefoon",
+    "email": "E-mail",
+    "in_person": "Persoonlijk",
+    "other": "Anders",
+}
+
+
+@router.get(
+    "/{ticket_id}/follow-ups",
+    response_model=list[SupplierFollowUpResponse],
+    summary="Opvolgacties ophalen",
+    description="STORY-036: Haal alle opvolgacties op voor een ticket.",
+)
+async def list_follow_ups(
+    vve_id: uuid.UUID,
+    ticket_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_member)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> list[SupplierFollowUpResponse]:
+    """Get all follow-up actions for a ticket."""
+    # Verify ticket exists
+    ticket_result = await db.execute(
+        select(Ticket).where(Ticket.id == ticket_id, Ticket.vve_id == vve_id)
+    )
+    if not ticket_result.scalar_one_or_none():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Ticket niet gevonden",
+        )
+
+    result = await db.execute(
+        select(SupplierFollowUp)
+        .where(SupplierFollowUp.ticket_id == ticket_id)
+        .order_by(SupplierFollowUp.contact_date.desc())
+    )
+    follow_ups = result.scalars().all()
+
+    responses = []
+    for follow_up in follow_ups:
+        # Get supplier name
+        supplier_result = await db.execute(
+            select(Supplier).where(Supplier.id == follow_up.supplier_id)
+        )
+        supplier = supplier_result.scalar_one_or_none()
+
+        # Get creator name
+        creator_result = await db.execute(
+            select(User).where(User.id == follow_up.created_by_id)
+        )
+        creator = creator_result.scalar_one_or_none()
+
+        response = SupplierFollowUpResponse.model_validate(follow_up)
+        response.supplier_name = supplier.name if supplier else None
+        response.created_by_name = f"{creator.first_name} {creator.last_name}" if creator else None
+        responses.append(response)
+
+    return responses
+
+
+@router.post(
+    "/{ticket_id}/follow-ups",
+    response_model=SupplierFollowUpResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Opvolgactie toevoegen",
+    description="""
+    STORY-036: Voeg een nieuwe opvolgactie toe aan het ticket.
+
+    - Registreer contactmomenten met leveranciers
+    - Kanalen: telefoon, e-mail, persoonlijk, anders
+    - Wordt automatisch getoond in de ticket tijdlijn
+    """,
+)
+async def create_follow_up(
+    vve_id: uuid.UUID,
+    ticket_id: uuid.UUID,
+    follow_up_data: SupplierFollowUpCreate,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> SupplierFollowUpResponse:
+    """Create a new follow-up action for a ticket."""
+    # Verify ticket exists
+    ticket_result = await db.execute(
+        select(Ticket).where(Ticket.id == ticket_id, Ticket.vve_id == vve_id)
+    )
+    ticket = ticket_result.scalar_one_or_none()
+    if not ticket:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Ticket niet gevonden",
+        )
+
+    # Verify supplier exists
+    supplier_result = await db.execute(
+        select(Supplier).where(
+            Supplier.id == follow_up_data.supplier_id,
+            Supplier.vve_id == vve_id,
+        )
+    )
+    supplier = supplier_result.scalar_one_or_none()
+    if not supplier:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Leverancier niet gevonden",
+        )
+
+    follow_up = SupplierFollowUp(
+        ticket_id=ticket_id,
+        supplier_id=follow_up_data.supplier_id,
+        channel=DBSupplierFollowUpChannel(follow_up_data.channel.value),
+        summary=follow_up_data.summary,
+        contact_date=follow_up_data.contact_date,
+        created_by_id=current_user.id,
+    )
+    db.add(follow_up)
+
+    # Create timeline entry
+    channel_label = FOLLOW_UP_CHANNEL_LABELS.get(follow_up_data.channel.value, follow_up_data.channel.value)
+    await _create_timeline_entry(
+        db,
+        ticket_id,
+        current_user.id,
+        "supplier_follow_up_added",
+        f"Opvolgactie toegevoegd ({channel_label}) met {supplier.name}: {follow_up_data.summary[:100]}",
+    )
+
+    await db.commit()
+    await db.refresh(follow_up)
+
+    response = SupplierFollowUpResponse.model_validate(follow_up)
+    response.supplier_name = supplier.name
+    response.created_by_name = f"{current_user.first_name} {current_user.last_name}"
+
+    return response

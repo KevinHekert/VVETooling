@@ -483,6 +483,132 @@ class ApiClient {
       }
     );
   }
+
+  // STORY-044: Ticket Supplier Status
+  async updateTicketSupplierStatus(
+    vveId: string,
+    ticketId: string,
+    data: import('@/types').TicketSupplierStatusUpdate
+  ) {
+    return this.fetch<import('@/types').Ticket>(
+      `/vves/${vveId}/tickets/${ticketId}/supplier-status`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  // Suppliers (STORY-035, STORY-044)
+  async getSuppliers(vveId: string, activeOnly = true) {
+    const query = activeOnly ? '?active_only=true' : '?active_only=false';
+    return this.fetch<import('@/types').Supplier[]>(
+      `/vves/${vveId}/suppliers${query}`
+    );
+  }
+
+  async createSupplier(vveId: string, data: import('@/types').SupplierCreate) {
+    return this.fetch<import('@/types').Supplier>(
+      `/vves/${vveId}/suppliers`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async getSupplier(vveId: string, supplierId: string) {
+    return this.fetch<import('@/types').Supplier>(
+      `/vves/${vveId}/suppliers/${supplierId}`
+    );
+  }
+
+  async updateSupplier(vveId: string, supplierId: string, data: import('@/types').SupplierUpdate) {
+    return this.fetch<import('@/types').Supplier>(
+      `/vves/${vveId}/suppliers/${supplierId}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  // STORY-036: Supplier Follow-ups
+  async getSupplierFollowUps(vveId: string, ticketId: string) {
+    return this.fetch<import('@/types').SupplierFollowUp[]>(
+      `/vves/${vveId}/tickets/${ticketId}/follow-ups`
+    );
+  }
+
+  async createSupplierFollowUp(
+    vveId: string, 
+    ticketId: string, 
+    data: import('@/types').SupplierFollowUpCreate
+  ) {
+    return this.fetch<import('@/types').SupplierFollowUp>(
+      `/vves/${vveId}/tickets/${ticketId}/follow-ups`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  // STORY-041: Splitsingsakte Versions
+  async getSplitsingsakteVersions(vveId: string, includeArchived = false) {
+    const query = includeArchived ? '?include_archived=true' : '';
+    return this.fetch<import('@/types').SplitsingsakteVersionListItem[]>(
+      `/vves/${vveId}/splitsingsakte-versions${query}`
+    );
+  }
+
+  async createSplitsingsakteVersion(vveId: string, data: import('@/types').SplitsingsakteVersionCreate) {
+    return this.fetch<import('@/types').SplitsingsakteVersion>(
+      `/vves/${vveId}/splitsingsakte-versions`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async getSplitsingsakteVersion(vveId: string, versionId: string) {
+    return this.fetch<import('@/types').SplitsingsakteVersion>(
+      `/vves/${vveId}/splitsingsakte-versions/${versionId}`
+    );
+  }
+
+  async updateSplitsingsakteVersion(
+    vveId: string, 
+    versionId: string, 
+    data: import('@/types').SplitsingsakteVersionUpdate
+  ) {
+    return this.fetch<import('@/types').SplitsingsakteVersion>(
+      `/vves/${vveId}/splitsingsakte-versions/${versionId}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async activateSplitsingsakteVersion(vveId: string, versionId: string) {
+    return this.fetch<import('@/types').SplitsingsakteVersion>(
+      `/vves/${vveId}/splitsingsakte-versions/${versionId}/activate`,
+      {
+        method: 'POST',
+      }
+    );
+  }
+
+  async archiveSplitsingsakteVersion(vveId: string, versionId: string) {
+    return this.fetch<import('@/types').SplitsingsakteVersion>(
+      `/vves/${vveId}/splitsingsakte-versions/${versionId}/archive`,
+      {
+        method: 'POST',
+      }
+    );
+  }
 }
 
 export const api = new ApiClient(API_BASE_URL);

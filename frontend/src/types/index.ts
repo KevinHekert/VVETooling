@@ -291,10 +291,14 @@ export interface AuditLogFilters {
   is_financial?: boolean;
 }
 
-// Ticket types (STORY-029, STORY-030, STORY-037)
+// Ticket types (STORY-029, STORY-030, STORY-037, STORY-044)
 export type TicketStatus = 'draft' | 'submitted' | 'in_progress' | 'awaiting_info' | 'resolved' | 'closed';
 export type TicketCategory = 'maintenance' | 'noise' | 'safety' | 'cleaning' | 'facilities' | 'other';
 export type TicketPriority = 'low' | 'medium' | 'high' | 'urgent';
+// STORY-044: Supplier collaboration status
+export type SupplierStatus = 'scheduled' | 'in_progress' | 'completed';
+// STORY-038: SLA status type
+export type SlaStatus = 'on_track' | 'at_risk' | 'breached';
 
 export interface Ticket {
   id: string;
@@ -311,6 +315,21 @@ export interface Ticket {
   created_at: string;
   updated_at: string;
   resolved_at?: string;
+  // STORY-044: Supplier status fields
+  supplier_id?: string;
+  supplier_name?: string;
+  supplier_status?: SupplierStatus;
+  supplier_status_note?: string;
+  supplier_status_updated_at?: string;
+  supplier_status_updated_by_id?: string;
+  supplier_status_updated_by_name?: string;
+  // STORY-038: SLA fields
+  sla_due_date?: string;
+  sla_response_hours?: number;
+  sla_breached?: boolean;
+  sla_breached_at?: string;
+  sla_status?: SlaStatus;
+  sla_remaining_hours?: number;
   attachments: TicketAttachment[];
   timeline: TicketTimelineEntry[];
 }
@@ -330,6 +349,9 @@ export interface TicketUpdate {
   location?: string;
   status?: TicketStatus;
   priority?: TicketPriority;
+  // STORY-038: SLA fields
+  sla_due_date?: string;
+  sla_response_hours?: number;
 }
 
 export type TicketAttachmentStatus = 'pending' | 'timely' | 'late' | 'accepted' | 'rejected';
@@ -401,6 +423,119 @@ export interface TicketDraft {
   category?: TicketCategory;
   location?: string;
   step: number;
+}
+
+// STORY-044: Supplier status update
+export interface TicketSupplierStatusUpdate {
+  supplier_id?: string | null;
+  supplier_status?: SupplierStatus;
+  supplier_status_note?: string;
+}
+
+// STORY-035, STORY-044: Supplier types
+export interface Supplier {
+  id: string;
+  vve_id: string;
+  name: string;
+  contact_person?: string;
+  email?: string;
+  phone?: string;
+  specialty?: string;
+  notes?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SupplierCreate {
+  name: string;
+  contact_person?: string;
+  email?: string;
+  phone?: string;
+  specialty?: string;
+  notes?: string;
+  is_active?: boolean;
+}
+
+export interface SupplierUpdate {
+  name?: string;
+  contact_person?: string;
+  email?: string;
+  phone?: string;
+  specialty?: string;
+  notes?: string;
+  is_active?: boolean;
+}
+
+// STORY-036: Supplier follow-up types
+export type SupplierFollowUpChannel = 'phone' | 'email' | 'in_person' | 'other';
+
+export interface SupplierFollowUp {
+  id: string;
+  ticket_id: string;
+  supplier_id: string;
+  supplier_name?: string;
+  channel: SupplierFollowUpChannel;
+  summary: string;
+  contact_date: string;
+  created_by_id: string;
+  created_by_name?: string;
+  created_at: string;
+}
+
+export interface SupplierFollowUpCreate {
+  supplier_id: string;
+  channel: SupplierFollowUpChannel;
+  summary: string;
+  contact_date: string;
+}
+
+// STORY-041: Splitsingsakte version types
+export type SplitsingsakteVersionStatus = 'draft' | 'active' | 'archived';
+
+export interface SplitsingsakteVersion {
+  id: string;
+  vve_id: string;
+  version_number: number;
+  name: string;
+  description?: string;
+  status: SplitsingsakteVersionStatus;
+  effective_date?: string;
+  archived_date?: string;
+  document_id?: string;
+  document_name?: string;
+  created_by_id: string;
+  created_by_name?: string;
+  created_at: string;
+  updated_at: string;
+  activated_by_id?: string;
+  activated_by_name?: string;
+  activated_at?: string;
+}
+
+export interface SplitsingsakteVersionListItem {
+  id: string;
+  vve_id: string;
+  version_number: number;
+  name: string;
+  status: SplitsingsakteVersionStatus;
+  effective_date?: string;
+  created_at: string;
+  is_active: boolean;
+}
+
+export interface SplitsingsakteVersionCreate {
+  name: string;
+  description?: string;
+  effective_date?: string;
+  document_id?: string;
+}
+
+export interface SplitsingsakteVersionUpdate {
+  name?: string;
+  description?: string;
+  effective_date?: string;
+  document_id?: string;
 }
 
 // API Response types

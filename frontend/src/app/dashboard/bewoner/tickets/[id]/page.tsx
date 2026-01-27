@@ -11,15 +11,21 @@ import type {
   TicketStatus, 
   TicketCategory,
   TicketCommentCreate,
-  TicketAttachmentStatus
+  TicketAttachmentStatus,
+  SupplierStatus,
+  SlaStatus
 } from '@/types';
 
 /**
  * Ticket Detail Page - STORY-029: Bewoner ticket wizard en tijdlijn
  * STORY-030: Ticket bewijsstukken (bonnen en facturen)
+ * STORY-044: Ticket supplier collaboration status (view only for bewoner)
+ * STORY-038: SLA status display (read only for bewoner)
  * 
  * Shows ticket details with:
  * - Status and priority information
+ * - Supplier status (read-only for bewoner)
+ * - SLA status (read-only for bewoner)
  * - Timeline with status changes and comments
  * - Attachments list with status badges
  * - Attachment upload functionality
@@ -33,6 +39,20 @@ const STATUS_LABELS: Record<TicketStatus, { label: string; color: string }> = {
   awaiting_info: { label: 'Wacht op info', color: 'bg-orange-100 text-orange-700' },
   resolved: { label: 'Opgelost', color: 'bg-green-100 text-green-700' },
   closed: { label: 'Gesloten', color: 'bg-gray-100 text-gray-500' },
+};
+
+// STORY-044: Supplier status labels
+const SUPPLIER_STATUS_LABELS: Record<SupplierStatus, { label: string; color: string }> = {
+  scheduled: { label: 'Ingepland', color: 'bg-purple-100 text-purple-700' },
+  in_progress: { label: 'Bezig', color: 'bg-yellow-100 text-yellow-700' },
+  completed: { label: 'Afgerond', color: 'bg-green-100 text-green-700' },
+};
+
+// STORY-038: SLA status labels
+const SLA_STATUS_LABELS: Record<string, { label: string; color: string }> = {
+  on_track: { label: 'Op schema', color: 'bg-green-100 text-green-700' },
+  at_risk: { label: 'Risico', color: 'bg-yellow-100 text-yellow-700' },
+  breached: { label: 'Overschreden', color: 'bg-red-100 text-red-700' },
 };
 
 const ATTACHMENT_STATUS_LABELS: Record<TicketAttachmentStatus, { label: string; color: string }> = {
@@ -68,6 +88,9 @@ const TIMELINE_ICONS: Record<string, string> = {
   attachment_added: '📎',
   attachment_reviewed: '✓',
   internal_note_added: '📋',
+  supplier_status_changed: '🔧',
+  supplier_follow_up_added: '📞',
+  supplier_removed: '❌',
 };
 
 export default function TicketDetailPage() {
@@ -255,6 +278,80 @@ export default function TicketDetailPage() {
             </div>
           </div>
         </div>
+
+        {/* STORY-044: Supplier Status - visible to bewoner */}
+        {ticket.supplier_status && (
+          <div className="mt-4 pt-4 border-t">
+            <h2 className="text-sm font-medium text-gray-700 mb-2">🔧 Leveranciersstatus</h2>
+            <div className="flex items-center gap-3 flex-wrap">
+              <span
+                className={`
+                  inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
+                  ${SUPPLIER_STATUS_LABELS[ticket.supplier_status].color}
+                `}
+              >
+                {SUPPLIER_STATUS_LABELS[ticket.supplier_status].label}
+              </span>
+              {ticket.supplier_name && (
+                <span className="text-sm text-gray-600">
+                  door <strong>{ticket.supplier_name}</strong>
+                </span>
+              )}
+            </div>
+            {ticket.supplier_status_note && (
+              <p className="text-sm text-gray-500 mt-2 italic">
+                {ticket.supplier_status_note}
+              </p>
+            )}
+            {ticket.supplier_status_updated_at && (
+              <p className="text-xs text-gray-400 mt-1">
+                Laatst bijgewerkt: {new Date(ticket.supplier_status_updated_at).toLocaleDateString('nl-NL', {
+                  day: 'numeric',
+                  month: 'short',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* STORY-038: SLA Status - visible to bewoner */}
+        {ticket.sla_due_date && (
+          <div className="mt-4 pt-4 border-t">
+            <h2 className="text-sm font-medium text-gray-700 mb-2">⏱️ Verwachte Responstermijn</h2>
+            <div className="flex items-center gap-3 flex-wrap">
+              {ticket.sla_status && SLA_STATUS_LABELS[ticket.sla_status] && (
+                <span
+                  className={`
+                    inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
+                    ${SLA_STATUS_LABELS[ticket.sla_status].color}
+                  `}
+                >
+                  {SLA_STATUS_LABELS[ticket.sla_status].label}
+                </span>
+              )}
+              <span className="text-sm text-gray-600">
+                Deadline: <strong>{new Date(ticket.sla_due_date).toLocaleDateString('nl-NL', {
+                  day: 'numeric',
+                  month: 'short',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}</strong>
+              </span>
+            </div>
+            {ticket.sla_remaining_hours !== undefined && ticket.sla_remaining_hours > 0 && (
+              <p className="text-xs text-gray-500 mt-1">
+                Nog {ticket.sla_remaining_hours} uur resterend
+              </p>
+            )}
+            {ticket.sla_breached && (
+              <p className="text-sm text-red-600 mt-2">
+                ⚠️ De responstermijn is overschreden
+              </p>
+            )}
+          </div>
+        )}
 
         <div className="mt-4 pt-4 border-t">
           <h2 className="text-sm font-medium text-gray-700 mb-2">Beschrijving</h2>
