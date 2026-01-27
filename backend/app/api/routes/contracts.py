@@ -145,21 +145,30 @@ async def create_contract(
     "",
     response_model=list[ContractListResponse],
     summary="List contracts",
-    description="Get all contracts for a VVE. Supports filtering by type and active status.",
+    description="Get all contracts for a VVE. Supports filtering by type, status, and search.",
 )
 async def list_contracts(
     vve_id: uuid.UUID,
     current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
     db: AsyncSession = Depends(get_db),
+    search: str | None = Query(None, description="Search by supplier name or description"),
     contract_type: ContractType | None = Query(None, description="Filter by contract type"),
     is_active: bool | None = Query(None, description="Filter by active status"),
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100),
 ) -> list[ContractListResponse]:
-    """List contracts for a VVE (STORY-055)."""
+    """List contracts for a VVE (STORY-055, STORY-057)."""
     # Build query
     query = select(Contract).where(Contract.vve_id == vve_id)
 
+    # STORY-057: Add search functionality
+    if search:
+        search_pattern = f"%{search}%"
+        query = query.where(
+            (Contract.supplier_name.ilike(search_pattern)) |
+            (Contract.description.ilike(search_pattern))
+        )
+    
     if contract_type:
         query = query.where(Contract.contract_type == DBContractType(contract_type.value))
     if is_active is not None:

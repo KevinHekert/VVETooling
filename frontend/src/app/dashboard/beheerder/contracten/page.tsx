@@ -39,7 +39,8 @@ export default function ContractenPage() {
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [isDragging, setIsDragging] = useState(false);
 
-  // Filter state
+  // Filter and search state (STORY-057)
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [activeFilter, setActiveFilter] = useState<string>('all');
 
@@ -56,7 +57,8 @@ export default function ContractenPage() {
   const fetchContracts = async () => {
     setIsLoading(true);
     try {
-      const params: { contract_type?: ContractType; is_active?: boolean } = {};
+      const params: { search?: string; contract_type?: ContractType; is_active?: boolean } = {};
+      if (searchQuery.trim()) params.search = searchQuery.trim();
       if (typeFilter !== 'all') params.contract_type = typeFilter as ContractType;
       if (activeFilter !== 'all') params.is_active = activeFilter === 'active';
 
@@ -71,7 +73,21 @@ export default function ContractenPage() {
 
   useEffect(() => {
     fetchContracts();
-  }, [typeFilter, activeFilter]);
+  }, [searchQuery, typeFilter, activeFilter]);
+
+  // Debounced search handler (STORY-057)
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  // Quick filter chips (STORY-057)
+  const clearFilters = () => {
+    setSearchQuery('');
+    setTypeFilter('all');
+    setActiveFilter('all');
+  };
+
+  const hasActiveFilters = searchQuery || typeFilter !== 'all' || activeFilter !== 'all';
 
   // Document upload handlers (STORY-056)
   const handleDragOver = (e: React.DragEvent) => {
@@ -465,6 +481,59 @@ export default function ContractenPage() {
             </select>
           </div>
         </div>
+
+        {/* Search bar (STORY-057) */}
+        <div className="mt-4">
+          <div className="relative">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={handleSearchChange}
+              placeholder="Zoek op leverancier of omschrijving..."
+              className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+            />
+            <span className="absolute left-3 top-2.5 text-gray-400">🔍</span>
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Active filter chips (STORY-057) */}
+        {hasActiveFilters && (
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <span className="text-sm text-gray-500">Actieve filters:</span>
+            {searchQuery && (
+              <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
+                Zoeken: "{searchQuery}"
+                <button onClick={() => setSearchQuery('')} className="hover:text-blue-900">✕</button>
+              </span>
+            )}
+            {typeFilter !== 'all' && (
+              <span className="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-sm">
+                Type: {typeFilter}
+                <button onClick={() => setTypeFilter('all')} className="hover:text-purple-900">✕</button>
+              </span>
+            )}
+            {activeFilter !== 'all' && (
+              <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-sm">
+                Status: {activeFilter === 'active' ? 'Actief' : 'Inactief'}
+                <button onClick={() => setActiveFilter('all')} className="hover:text-green-900">✕</button>
+              </span>
+            )}
+            <button
+              onClick={clearFilters}
+              className="text-sm text-blue-600 hover:text-blue-800 underline"
+            >
+              Wis alle filters
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Error Message */}
@@ -486,8 +555,19 @@ export default function ContractenPage() {
             Geen contracten gevonden
           </h3>
           <p className="text-gray-600">
-            Er zijn nog geen contracten geregistreerd. Voeg een nieuw contract toe om te beginnen.
+            {hasActiveFilters 
+              ? 'Geen contracten gevonden met de huidige filters. Pas de filters aan of wis ze.'
+              : 'Er zijn nog geen contracten geregistreerd. Voeg een nieuw contract toe om te beginnen.'
+            }
           </p>
+          {hasActiveFilters && (
+            <button
+              onClick={clearFilters}
+              className="mt-4 px-4 py-2 text-blue-600 hover:text-blue-800 underline"
+            >
+              Wis alle filters
+            </button>
+          )}
         </div>
       ) : (
         /* Contracts Table */

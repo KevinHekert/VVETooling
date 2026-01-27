@@ -696,14 +696,16 @@ class ApiClient {
     return `${this.baseUrl}/vves/${vveId}/audit-logs/export/csv${queryStr}`;
   }
 
-  // Contracts (EPIC-013, STORY-055)
+  // Contracts (EPIC-013, STORY-055, STORY-057)
   async getContracts(vveId: string, params?: {
+    search?: string;
     contract_type?: import('@/types').ContractType;
     is_active?: boolean;
     skip?: number;
     limit?: number;
   }) {
     const query = new URLSearchParams();
+    if (params?.search) query.set('search', params.search);
     if (params?.contract_type) query.set('contract_type', params.contract_type);
     if (params?.is_active !== undefined) query.set('is_active', String(params.is_active));
     if (params?.skip) query.set('skip', String(params.skip));
