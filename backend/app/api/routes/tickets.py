@@ -1096,7 +1096,13 @@ async def update_ticket_supplier_status(
         supplier_name = supplier.name
     elif update_data.supplier_id is None and ticket.supplier_id:
         # If explicitly set to None, remove supplier
-        old_supplier_name = ticket.supplier.name if ticket.supplier else "Onbekend"
+        # Query the old supplier to get the name
+        old_supplier_result = await db.execute(
+            select(Supplier).where(Supplier.id == ticket.supplier_id)
+        )
+        old_supplier = old_supplier_result.scalar_one_or_none()
+        old_supplier_name = old_supplier.name if old_supplier else "Onbekend"
+        
         ticket.supplier_id = None
         ticket.supplier_status = None
         ticket.supplier_status_note = None

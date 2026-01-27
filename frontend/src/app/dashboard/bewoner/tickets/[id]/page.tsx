@@ -89,6 +89,8 @@ const TIMELINE_ICONS: Record<string, string> = {
   attachment_reviewed: '✓',
   internal_note_added: '📋',
   supplier_status_changed: '🔧',
+  supplier_follow_up_added: '📞',
+  supplier_removed: '❌',
 };
 
 export default function TicketDetailPage() {
