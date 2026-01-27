@@ -28,6 +28,9 @@ Bestuur kan prognoses van groei/afname van het reservefonds inzien met scenarioâ
 - FEAT-002
 - FEAT-006
 - STORY-026
+- STORY-033
+- STORY-039
+- STORY-040
 
 ## Bronverwijzingen
 - [docs/backlog/features/FEAT-002-reserves-overzicht.md](../features/FEAT-002-reserves-overzicht.md)
