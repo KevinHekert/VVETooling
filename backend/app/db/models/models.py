@@ -546,6 +546,57 @@ class TicketPriority(str, Enum):
     URGENT = "urgent"
 
 
+class SupplierStatus(str, Enum):
+    """Supplier collaboration status for tickets (STORY-044).
+    
+    Tracks the status of a supplier's involvement in resolving a ticket.
+    """
+
+    SCHEDULED = "scheduled"  # Ingepland
+    IN_PROGRESS = "in_progress"  # Bezig
+    COMPLETED = "completed"  # Afgerond
+
+
+class Supplier(Base):
+    """Supplier/vendor for maintenance and service work (FEAT-017, STORY-044).
+
+    Implements STORY-035: Leveranciersprofiel beheren.
+    Implements STORY-044: Ticket supplier collaboration status.
+    """
+
+    __tablename__ = "suppliers"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    vve_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("vves.id", ondelete="CASCADE"), nullable=False
+    )
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    contact_person: Mapped[str | None] = mapped_column(String(255))
+    email: Mapped[str | None] = mapped_column(String(255))
+    phone: Mapped[str | None] = mapped_column(String(50))
+    specialty: Mapped[str | None] = mapped_column(String(255))
+    notes: Mapped[str | None] = mapped_column(Text)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    # Relationships
+    tickets: Mapped[list["Ticket"]] = relationship(
+        "Ticket", back_populates="supplier"
+    )
+
+    __table_args__ = (
+        Index("ix_suppliers_vve_id", "vve_id"),
+        Index("ix_suppliers_name", "name"),
+    )
+
+
 class Ticket(Base):
     """Ticket for resident complaints and service requests (FEAT-016).
 
@@ -586,6 +637,19 @@ class Ticket(Base):
     )
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
+    # STORY-044: Supplier collaboration status
+    supplier_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("suppliers.id", ondelete="SET NULL")
+    )
+    supplier_status: Mapped[SupplierStatus | None] = mapped_column(
+        SQLEnum(SupplierStatus)
+    )
+    supplier_status_note: Mapped[str | None] = mapped_column(String(500))
+    supplier_status_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    supplier_status_updated_by_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+
     # Relationships
     attachments: Mapped[list["TicketAttachment"]] = relationship(
         "TicketAttachment", back_populates="ticket", cascade="all, delete-orphan"
@@ -596,12 +660,17 @@ class Ticket(Base):
     comments: Mapped[list["TicketComment"]] = relationship(
         "TicketComment", back_populates="ticket", cascade="all, delete-orphan"
     )
+    # STORY-044: Supplier relationship
+    supplier: Mapped["Supplier | None"] = relationship(
+        "Supplier", back_populates="tickets"
+    )
 
     __table_args__ = (
         Index("ix_tickets_vve_id", "vve_id"),
         Index("ix_tickets_unit_id", "unit_id"),
         Index("ix_tickets_submitted_by_id", "submitted_by_id"),
         Index("ix_tickets_status", "status"),
+        Index("ix_tickets_supplier_id", "supplier_id"),
     )
 
 
