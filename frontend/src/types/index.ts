@@ -609,6 +609,81 @@ export interface SplitsingsakteAmendmentCreate {
   document_id?: string;
 }
 
+// EPIC-013: Contract types (STORY-055)
+export type ContractType = 'energie' | 'verzekering' | 'onderhoud' | 'overig';
+export type CostsPeriod = 'monthly' | 'yearly' | 'one_time';
+
+export interface Contract {
+  id: string;
+  vve_id: string;
+  supplier_name: string;
+  supplier_id?: string;
+  contract_type: ContractType;
+  description?: string;
+  start_date: string;
+  end_date?: string;
+  notice_period_days?: number;
+  costs?: number;
+  costs_period?: CostsPeriod;
+  document_id?: string;
+  created_by_id: string;
+  created_by_name?: string;
+  created_at: string;
+  updated_at: string;
+  is_active: boolean;
+}
+
+export interface ContractCreate {
+  supplier_name: string;
+  supplier_id?: string;
+  contract_type: ContractType;
+  description?: string;
+  start_date: string;
+  end_date?: string;
+  notice_period_days?: number;
+  costs?: number;
+  costs_period?: CostsPeriod;
+}
+
+export interface ContractUpdate {
+  supplier_name?: string;
+  supplier_id?: string;
+  contract_type?: ContractType;
+  description?: string;
+  start_date?: string;
+  end_date?: string;
+  notice_period_days?: number;
+  costs?: number;
+  costs_period?: CostsPeriod;
+  is_active?: boolean;
+}
+
+export interface ContractListItem {
+  id: string;
+  vve_id: string;
+  supplier_name: string;
+  contract_type: ContractType;
+  start_date: string;
+  end_date?: string;
+  notice_period_days?: number;
+  costs?: number;
+  costs_period?: CostsPeriod;
+  is_active: boolean;
+  created_at: string;
+  days_until_end?: number;
+  days_until_notice?: number;
+  is_expiring_soon: boolean;
+}
+
+export interface ContractSummary {
+  total_contracts: number;
+  active_contracts: number;
+  expiring_soon: number;
+  by_type: Record<string, number>;
+  total_monthly_costs: number;
+  total_yearly_costs: number;
+}
+
 // API Response types
 export interface ApiError {
   detail: string;
