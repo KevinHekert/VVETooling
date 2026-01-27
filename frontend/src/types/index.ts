@@ -291,6 +291,95 @@ export interface AuditLogFilters {
   is_financial?: boolean;
 }
 
+// Ticket types (STORY-029, STORY-030, STORY-037)
+export type TicketStatus = 'draft' | 'submitted' | 'in_progress' | 'awaiting_info' | 'resolved' | 'closed';
+export type TicketCategory = 'maintenance' | 'noise' | 'safety' | 'cleaning' | 'facilities' | 'other';
+export type TicketPriority = 'low' | 'medium' | 'high' | 'urgent';
+
+export interface Ticket {
+  id: string;
+  vve_id: string;
+  unit_id: string;
+  submitted_by_id: string;
+  submitted_by_name?: string;
+  title: string;
+  description: string;
+  category: TicketCategory;
+  location?: string;
+  status: TicketStatus;
+  priority: TicketPriority;
+  created_at: string;
+  updated_at: string;
+  resolved_at?: string;
+  attachments: TicketAttachment[];
+  timeline: TicketTimelineEntry[];
+}
+
+export interface TicketCreate {
+  title: string;
+  description: string;
+  category: TicketCategory;
+  location?: string;
+  priority?: TicketPriority;
+}
+
+export interface TicketUpdate {
+  title?: string;
+  description?: string;
+  category?: TicketCategory;
+  location?: string;
+  status?: TicketStatus;
+  priority?: TicketPriority;
+}
+
+export interface TicketAttachment {
+  id: string;
+  ticket_id: string;
+  file_name: string;
+  file_type: string;
+  file_size_bytes: number;
+  description?: string;
+  uploaded_by_id: string;
+  uploaded_by_name?: string;
+  created_at: string;
+}
+
+export interface TicketTimelineEntry {
+  id: string;
+  ticket_id: string;
+  action: string;
+  description?: string;
+  actor_id: string;
+  actor_name?: string;
+  old_value?: string;
+  new_value?: string;
+  created_at: string;
+}
+
+export interface TicketComment {
+  id: string;
+  ticket_id: string;
+  author_id: string;
+  author_name?: string;
+  content: string;
+  is_internal: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TicketCommentCreate {
+  content: string;
+  is_internal?: boolean;
+}
+
+export interface TicketDraft {
+  title?: string;
+  description?: string;
+  category?: TicketCategory;
+  location?: string;
+  step: number;
+}
+
 // API Response types
 export interface ApiError {
   detail: string;
