@@ -366,3 +366,48 @@ class SupplierFollowUpResponse(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# STORY-061: Supplier Evaluation schemas
+class SupplierEvaluationCreate(BaseModel):
+    """Schema for creating a supplier evaluation (STORY-061)."""
+
+    supplier_id: uuid.UUID
+    contract_id: uuid.UUID | None = None
+    rating: int = Field(..., ge=1, le=5, description="Rating from 1 to 5 stars")
+    feedback: str | None = Field(None, max_length=2000)
+    is_anonymous: bool = False
+
+
+class SupplierEvaluationUpdate(BaseModel):
+    """Schema for updating a supplier evaluation (STORY-061)."""
+
+    rating: int | None = Field(None, ge=1, le=5, description="Rating from 1 to 5 stars")
+    feedback: str | None = Field(None, max_length=2000)
+    is_anonymous: bool | None = None
+
+
+class SupplierEvaluationResponse(BaseModel):
+    """Response schema for supplier evaluation (STORY-061)."""
+
+    id: uuid.UUID
+    vve_id: uuid.UUID
+    supplier_id: uuid.UUID
+    supplier_name: str | None = None
+    contract_id: uuid.UUID | None = None
+    contract_description: str | None = None
+    rating: int
+    feedback: str | None = None
+    is_anonymous: bool
+    created_by_id: uuid.UUID
+    created_by_name: str | None = None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class SupplierWithEvaluationSummary(SupplierResponse):
+    """Supplier response with evaluation summary (STORY-061)."""
+
+    average_rating: float | None = None
+    evaluation_count: int = 0
