@@ -1,0 +1,459 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { api } from '@/lib/api';
+import type { ContractListItem, ContractCreate, ContractType, CostsPeriod } from '@/types';
+
+/**
+ * Contracten Overzicht - STORY-055
+ * 
+ * Displays all contracts for the VVE with:
+ * - Overview with filtering by type and status
+ * - Add new contract form
+ * - Contract details and costs
+ */
+
+const CONTRACT_TYPE_LABELS: Record<ContractType, { label: string; icon: string }> = {
+  energie: { label: 'Energie', icon: '⚡' },
+  verzekering: { label: 'Verzekering', icon: '🛡️' },
+  onderhoud: { label: 'Onderhoud', icon: '🔧' },
+  overig: { label: 'Overig', icon: '📋' },
+};
+
+const COSTS_PERIOD_LABELS: Record<CostsPeriod, string> = {
+  monthly: 'per maand',
+  yearly: 'per jaar',
+  one_time: 'eenmalig',
+};
+
+export default function ContractenPage() {
+  const [contracts, setContracts] = useState<ContractListItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // Filter state
+  const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [activeFilter, setActiveFilter] = useState<string>('all');
+
+  // Form state
+  const [formData, setFormData] = useState<ContractCreate>({
+    supplier_name: '',
+    contract_type: 'onderhoud',
+    start_date: new Date().toISOString().split('T')[0],
+  });
+
+  // TODO: Get VVE ID from context/session
+  const vveId = 'demo-vve-id';
+
+  const fetchContracts = async () => {
+    setIsLoading(true);
+    try {
+      const params: { contract_type?: ContractType; is_active?: boolean } = {};
+      if (typeFilter !== 'all') params.contract_type = typeFilter as ContractType;
+      if (activeFilter !== 'all') params.is_active = activeFilter === 'active';
+
+      const data = await api.getContracts(vveId, params);
+      setContracts(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Kon contracten niet ophalen');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchContracts();
+  }, [typeFilter, activeFilter]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      await api.createContract(vveId, {
+        ...formData,
+        start_date: new Date(formData.start_date).toISOString(),
+        end_date: formData.end_date ? new Date(formData.end_date).toISOString() : undefined,
+      });
+      
+      setSuccessMessage('Contract succesvol toegevoegd!');
+      setShowAddForm(false);
+      setFormData({
+        supplier_name: '',
+        contract_type: 'onderhoud',
+        start_date: new Date().toISOString().split('T')[0],
+      });
+      fetchContracts();
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Kon contract niet toevoegen');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Stats for quick overview
+  const stats = {
+    total: contracts.length,
+    active: contracts.filter(c => c.is_active).length,
+    expiringSoon: contracts.filter(c => c.is_expiring_soon).length,
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Contracten</h1>
+          <p className="text-gray-600">Beheer alle VVE contracten en leveranciers</p>
+        </div>
+        <button
+          onClick={() => setShowAddForm(!showAddForm)}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          {showAddForm ? 'Annuleren' : '+ Nieuw Contract'}
+        </button>
+      </div>
+
+      {/* Success Message */}
+      {successMessage && (
+        <div className="rounded-md bg-green-50 border border-green-200 p-4">
+          <p className="text-sm text-green-700">{successMessage}</p>
+        </div>
+      )}
+
+      {/* Add Contract Form */}
+      {showAddForm && (
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Nieuw Contract Toevoegen</h2>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Supplier Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Leverancier *
+                </label>
+                <input
+                  type="text"
+                  required
+                  minLength={2}
+                  maxLength={255}
+                  value={formData.supplier_name}
+                  onChange={(e) => setFormData({ ...formData, supplier_name: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Naam leverancier"
+                />
+              </div>
+
+              {/* Contract Type */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Type *
+                </label>
+                <select
+                  required
+                  value={formData.contract_type}
+                  onChange={(e) => setFormData({ ...formData, contract_type: e.target.value as ContractType })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="energie">⚡ Energie</option>
+                  <option value="verzekering">🛡️ Verzekering</option>
+                  <option value="onderhoud">🔧 Onderhoud</option>
+                  <option value="overig">📋 Overig</option>
+                </select>
+              </div>
+
+              {/* Start Date */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Ingangsdatum *
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={formData.start_date}
+                  onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              {/* End Date */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Einddatum
+                </label>
+                <input
+                  type="date"
+                  value={formData.end_date || ''}
+                  onChange={(e) => setFormData({ ...formData, end_date: e.target.value || undefined })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              {/* Notice Period */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Opzegtermijn (dagen)
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  max={365}
+                  value={formData.notice_period_days || ''}
+                  onChange={(e) => setFormData({ ...formData, notice_period_days: e.target.value ? parseInt(e.target.value) : undefined })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="bijv. 30"
+                />
+              </div>
+
+              {/* Costs */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Kosten (€)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min={0}
+                  value={formData.costs || ''}
+                  onChange={(e) => setFormData({ ...formData, costs: e.target.value ? parseFloat(e.target.value) : undefined })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="0.00"
+                />
+              </div>
+
+              {/* Costs Period */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Kosten Periode
+                </label>
+                <select
+                  value={formData.costs_period || ''}
+                  onChange={(e) => setFormData({ ...formData, costs_period: e.target.value as CostsPeriod || undefined })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">Selecteer...</option>
+                  <option value="monthly">Per maand</option>
+                  <option value="yearly">Per jaar</option>
+                  <option value="one_time">Eenmalig</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Description */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Omschrijving
+              </label>
+              <textarea
+                value={formData.description || ''}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value || undefined })}
+                rows={3}
+                maxLength={2000}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Aanvullende informatie over het contract..."
+              />
+            </div>
+
+            {/* Submit Button */}
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowAddForm(false)}
+                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Annuleren
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              >
+                {isSubmitting ? 'Opslaan...' : 'Contract Opslaan'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-3 gap-4">
+        <div className="bg-white rounded-lg shadow p-4">
+          <p className="text-sm font-medium text-gray-500">Totaal</p>
+          <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+        </div>
+        <div className="bg-green-50 rounded-lg border border-green-200 p-4">
+          <p className="text-sm font-medium text-green-700">Actief</p>
+          <p className="text-2xl font-bold text-green-900">{stats.active}</p>
+        </div>
+        <div className="bg-orange-50 rounded-lg border border-orange-200 p-4">
+          <p className="text-sm font-medium text-orange-700">Verloopt binnenkort</p>
+          <p className="text-2xl font-bold text-orange-900">{stats.expiringSoon}</p>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="bg-white rounded-lg shadow p-4">
+        <div className="flex flex-wrap gap-4">
+          {/* Type filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+            >
+              <option value="all">Alle types</option>
+              <option value="energie">⚡ Energie</option>
+              <option value="verzekering">🛡️ Verzekering</option>
+              <option value="onderhoud">🔧 Onderhoud</option>
+              <option value="overig">📋 Overig</option>
+            </select>
+          </div>
+
+          {/* Active filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <select
+              value={activeFilter}
+              onChange={(e) => setActiveFilter(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+            >
+              <option value="all">Alle</option>
+              <option value="active">Actief</option>
+              <option value="inactive">Inactief</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className="rounded-md bg-red-50 border border-red-200 p-4">
+          <p className="text-sm text-red-700">{error}</p>
+        </div>
+      )}
+
+      {/* Loading */}
+      {isLoading ? (
+        <div className="flex justify-center items-center h-32">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      ) : contracts.length === 0 ? (
+        <div className="bg-white rounded-lg shadow p-8 text-center">
+          <div className="text-4xl mb-4">📄</div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            Geen contracten gevonden
+          </h3>
+          <p className="text-gray-600">
+            Er zijn nog geen contracten geregistreerd. Voeg een nieuw contract toe om te beginnen.
+          </p>
+        </div>
+      ) : (
+        /* Contracts Table */
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Contract
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Type
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Looptijd
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Kosten
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {contracts.map((contract) => (
+                <tr key={contract.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl">
+                        {CONTRACT_TYPE_LABELS[contract.contract_type]?.icon || '📋'}
+                      </span>
+                      <div>
+                        <p className="font-medium text-gray-900">
+                          {contract.supplier_name}
+                        </p>
+                        {contract.notice_period_days && (
+                          <p className="text-sm text-gray-500">
+                            Opzegtermijn: {contract.notice_period_days} dagen
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-900">
+                    {CONTRACT_TYPE_LABELS[contract.contract_type]?.label || contract.contract_type}
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="text-sm">
+                      <p className="text-gray-900">
+                        {new Date(contract.start_date).toLocaleDateString('nl-NL')}
+                      </p>
+                      {contract.end_date && (
+                        <p className="text-gray-500">
+                          t/m {new Date(contract.end_date).toLocaleDateString('nl-NL')}
+                        </p>
+                      )}
+                      {contract.days_until_end !== null && contract.days_until_end !== undefined && (
+                        <p className={`text-xs ${contract.is_expiring_soon ? 'text-orange-600 font-medium' : 'text-gray-400'}`}>
+                          Nog {contract.days_until_end} dagen
+                        </p>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-sm">
+                    {contract.costs ? (
+                      <span className="text-gray-900">
+                        €{contract.costs.toLocaleString('nl-NL', { minimumFractionDigits: 2 })}
+                        {contract.costs_period && (
+                          <span className="text-gray-500"> {COSTS_PERIOD_LABELS[contract.costs_period]}</span>
+                        )}
+                      </span>
+                    ) : (
+                      <span className="text-gray-400">-</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4">
+                    <span
+                      className={`
+                        inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                        ${contract.is_active
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-gray-100 text-gray-500'
+                        }
+                      `}
+                    >
+                      {contract.is_active ? 'Actief' : 'Inactief'}
+                    </span>
+                    {contract.is_expiring_soon && (
+                      <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-700">
+                        ⚠️ Verloopt
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}

@@ -695,6 +695,63 @@ class ApiClient {
     const queryStr = query.toString() ? `?${query.toString()}` : '';
     return `${this.baseUrl}/vves/${vveId}/audit-logs/export/csv${queryStr}`;
   }
+
+  // Contracts (EPIC-013, STORY-055)
+  async getContracts(vveId: string, params?: {
+    contract_type?: import('@/types').ContractType;
+    is_active?: boolean;
+    skip?: number;
+    limit?: number;
+  }) {
+    const query = new URLSearchParams();
+    if (params?.contract_type) query.set('contract_type', params.contract_type);
+    if (params?.is_active !== undefined) query.set('is_active', String(params.is_active));
+    if (params?.skip) query.set('skip', String(params.skip));
+    if (params?.limit) query.set('limit', String(params.limit));
+    
+    const queryStr = query.toString() ? `?${query.toString()}` : '';
+    return this.fetch<import('@/types').ContractListItem[]>(
+      `/vves/${vveId}/contracts${queryStr}`
+    );
+  }
+
+  async getContract(vveId: string, contractId: string) {
+    return this.fetch<import('@/types').Contract>(
+      `/vves/${vveId}/contracts/${contractId}`
+    );
+  }
+
+  async getContractSummary(vveId: string) {
+    return this.fetch<import('@/types').ContractSummary>(
+      `/vves/${vveId}/contracts/summary`
+    );
+  }
+
+  async createContract(vveId: string, data: import('@/types').ContractCreate) {
+    return this.fetch<import('@/types').Contract>(
+      `/vves/${vveId}/contracts`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async updateContract(vveId: string, contractId: string, data: import('@/types').ContractUpdate) {
+    return this.fetch<import('@/types').Contract>(
+      `/vves/${vveId}/contracts/${contractId}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async deleteContract(vveId: string, contractId: string) {
+    return this.fetch(`/vves/${vveId}/contracts/${contractId}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 export const api = new ApiClient(API_BASE_URL);
