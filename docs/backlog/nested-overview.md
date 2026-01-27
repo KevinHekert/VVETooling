@@ -70,9 +70,9 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
    - 7.1 **FEAT-013 Export & backup** ✅
      - 7.1.1 ✅ STORY-022 Export en back-up UI (Should)
 
-8. **EPIC-008 Betaling & abonnement** ⬜
-   - 8.1 **FEAT-014 Pricing & billing** ⬜
-     - 8.1.1 ⬜ STORY-020 Pricing- en abonnementenbeheer UI (Should)
+8. **EPIC-008 Betaling & abonnement** ✅
+   - 8.1 **FEAT-014 Pricing & billing** ✅
+     - 8.1.1 ✅ STORY-020 Pricing- en abonnementenbeheer UI (Should)
 
 9. **EPIC-009 Multi-user toegang & dashboards** ✅
    - 9.1 **FEAT-009 Rol-specifieke dashboards** ✅
@@ -100,11 +100,11 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
 
 | Niveau | Totaal | ✅ Gereed | ⬜ Backlog | % Gereed |
 |--------|--------|-----------|-----------|----------|
-| Epics | 10 | 7 | 3 | 70% |
-| Features | 19 | 15 | 4 | 79% |
-| Stories | 44 | 35 | 9 | 80% |
+| Epics | 10 | 8 | 2 | 80% |
+| Features | 19 | 16 | 3 | 84% |
+| Stories | 44 | 36 | 8 | 82% |
 
-**Volledig afgeronde Epics:** EPIC-002, EPIC-003, EPIC-004, EPIC-005, EPIC-007, EPIC-009, EPIC-010
+**Volledig afgeronde Epics:** EPIC-002, EPIC-003, EPIC-004, EPIC-005, EPIC-007, EPIC-008, EPIC-009, EPIC-010
 
 ---
 - Prioriteitlabels komen uit de individuele stories (Must/Should). Waar een story meerdere features raakt, is de primaire plaatsing hierboven opgenomen en gemarkeerd als *gedeeld* wanneer relevant.
