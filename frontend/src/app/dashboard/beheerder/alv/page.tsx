@@ -2,16 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
-import type { MeetingListItem, MeetingCreate, MeetingType, MeetingStatus, AgendaItem, AgendaItemCreate } from '@/types';
+import type { MeetingListItem, MeetingCreate, MeetingType, MeetingStatus, AgendaItem, AgendaItemCreate, MeetingInvitationPreview } from '@/types';
 
 /**
- * ALV (Algemene Ledenvergadering) Management - STORY-069, STORY-070
+ * ALV (Algemene Ledenvergadering) Management - STORY-069, STORY-070, STORY-071
  * 
  * Allows beheerder/secretaris to:
  * - Plan new ALV meetings with date, time, type and location
  * - View list of upcoming and past meetings
  * - Update meeting status
  * - STORY-070: Manage agenda with items, durations, and drag & drop
+ * - STORY-071: Send invitations to all members
  */
 
 const MEETING_TYPE_LABELS: Record<MeetingType, { label: string; icon: string }> = {
@@ -56,6 +57,12 @@ export default function ALVPage() {
     duration_minutes: 10,
   });
   const [isSubmittingAgenda, setIsSubmittingAgenda] = useState(false);
+
+  // STORY-071: Invitation state
+  const [showInvitationModal, setShowInvitationModal] = useState(false);
+  const [invitationPreview, setInvitationPreview] = useState<MeetingInvitationPreview | null>(null);
+  const [isLoadingInvitation, setIsLoadingInvitation] = useState(false);
+  const [isSendingInvitation, setIsSendingInvitation] = useState(false);
 
   // TODO: Get VVE ID from context/session
   const vveId = 'demo-vve-id';
@@ -205,6 +212,47 @@ export default function ALVPage() {
 
   const getTotalDuration = () => {
     return agendaItems.reduce((sum, item) => sum + (item.duration_minutes || 0), 0);
+  };
+
+  // STORY-071: Invitation functions
+  const openInvitationModal = async (meeting: MeetingListItem) => {
+    setShowInvitationModal(true);
+    setIsLoadingInvitation(true);
+    setError(null);
+    try {
+      const preview = await api.previewInvitation(vveId, meeting.id);
+      setInvitationPreview(preview);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Kon uitnodiging preview niet laden');
+    } finally {
+      setIsLoadingInvitation(false);
+    }
+  };
+
+  const closeInvitationModal = () => {
+    setShowInvitationModal(false);
+    setInvitationPreview(null);
+  };
+
+  const handleSendInvitation = async () => {
+    if (!selectedMeeting) return;
+    setIsSendingInvitation(true);
+    setError(null);
+    try {
+      const result = await api.sendInvitation(vveId, selectedMeeting.id, {
+        include_agenda: true,
+        include_documents: false,
+      });
+      setSuccessMessage(`Uitnodiging verstuurd naar ${result.invitations_sent} leden`);
+      setTimeout(() => setSuccessMessage(null), 5000);
+      closeInvitationModal();
+      closeAgendaModal();
+      fetchMeetings(); // Refresh to show updated status
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Kon uitnodiging niet versturen');
+    } finally {
+      setIsSendingInvitation(false);
+    }
   };
 
   // Stats
@@ -533,7 +581,7 @@ export default function ALVPage() {
               </div>
 
               {/* Actions */}
-              <div className="flex gap-2 mb-4">
+              <div className="flex flex-wrap gap-2 mb-4">
                 {agendaItems.length === 0 && (
                   <button
                     onClick={handleLoadTemplate}
@@ -549,6 +597,15 @@ export default function ALVPage() {
                 >
                   + Agendapunt Toevoegen
                 </button>
+                {/* STORY-071: Send invitation button */}
+                {agendaItems.length > 0 && selectedMeeting?.status === 'gepland' && (
+                  <button
+                    onClick={() => openInvitationModal(selectedMeeting)}
+                    className="px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200"
+                  >
+                    ✉️ Uitnodiging Versturen
+                  </button>
+                )}
               </div>
 
               {/* Add Agenda Item Form */}
@@ -702,6 +759,93 @@ export default function ALVPage() {
                   Sluiten
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* STORY-071: Invitation Preview Modal */}
+      {showInvitationModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              {/* Modal Header */}
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-900">
+                  ✉️ Uitnodiging Versturen
+                </h2>
+                <button
+                  onClick={closeInvitationModal}
+                  className="text-gray-400 hover:text-gray-600 text-2xl"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {isLoadingInvitation ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+                </div>
+              ) : invitationPreview ? (
+                <div className="space-y-4">
+                  {/* Invitation Stats */}
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="bg-green-50 rounded-lg p-4 text-center">
+                      <p className="text-2xl font-bold text-green-700">
+                        {invitationPreview.recipient_count}
+                      </p>
+                      <p className="text-sm text-green-600">Ontvangers</p>
+                    </div>
+                    <div className="bg-blue-50 rounded-lg p-4 text-center">
+                      <p className="text-2xl font-bold text-blue-700">
+                        {invitationPreview.agenda_summary ? invitationPreview.agenda_summary.split('\n').length : 0}
+                      </p>
+                      <p className="text-sm text-blue-600">Agendapunten</p>
+                    </div>
+                    <div className="bg-purple-50 rounded-lg p-4 text-center">
+                      <p className="text-2xl font-bold text-purple-700">
+                        {invitationPreview.document_count}
+                      </p>
+                      <p className="text-sm text-purple-600">Documenten</p>
+                    </div>
+                  </div>
+
+                  {/* Email Preview */}
+                  <div className="border border-gray-200 rounded-lg">
+                    <div className="bg-gray-50 px-4 py-2 border-b border-gray-200">
+                      <p className="font-medium text-gray-700">
+                        Onderwerp: {invitationPreview.subject}
+                      </p>
+                    </div>
+                    <div className="p-4">
+                      <pre className="whitespace-pre-wrap text-sm text-gray-700 font-sans">
+                        {invitationPreview.body_preview}
+                      </pre>
+                    </div>
+                  </div>
+
+                  {/* Send button */}
+                  <div className="flex justify-end gap-3 mt-4">
+                    <button
+                      onClick={closeInvitationModal}
+                      className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+                    >
+                      Annuleren
+                    </button>
+                    <button
+                      onClick={handleSendInvitation}
+                      disabled={isSendingInvitation}
+                      className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                    >
+                      {isSendingInvitation ? 'Versturen...' : `✉️ Verstuur naar ${invitationPreview.recipient_count} leden`}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-center text-gray-500 py-8">
+                  Geen preview beschikbaar
+                </p>
+              )}
             </div>
           </div>
         </div>
