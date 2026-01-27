@@ -1,6 +1,7 @@
 """Document API routes.
 
 Implements FEAT-011 (Documentbeheer) and STORY-004 (Bestuur uploadt document).
+Implements STORY-018: Document versiebeheer en rol-specifiek delen.
 Storage limits per D-004.
 """
 
@@ -20,10 +21,12 @@ from app.db.models.models import Document, VVE
 from app.db.session import get_db
 from app.schemas.document import (
     ALLOWED_FILE_TYPES,
+    DEFAULT_VISIBLE_ROLES,
     MAX_FILE_SIZE_BYTES,
     DocumentResponse,
     DocumentUpdate,
     DocumentUploadResponse,
+    DocumentVersionResponse,
     StorageUsageResponse,
 )
 
@@ -60,6 +63,7 @@ async def upload_document(
     description: Annotated[str | None, Form(max_length=1000)] = None,
     category: Annotated[str, Form(max_length=50)] = "general",
     is_public: Annotated[bool, Form()] = False,
+    visible_to_roles: Annotated[str, Form()] = DEFAULT_VISIBLE_ROLES,
 ) -> DocumentUploadResponse:
     """Upload a document to the VVE.
 
@@ -114,7 +118,7 @@ async def upload_document(
     # For now, generate a placeholder S3 key
     s3_key = f"vves/{vve_id}/documents/{uuid.uuid4()}/{file.filename}"
 
-    # Create document record
+    # Create document record with version support (STORY-018)
     document = Document(
         vve_id=vve_id,
         title=title,
@@ -125,6 +129,9 @@ async def upload_document(
         s3_key=s3_key,
         category=category,
         is_public=is_public,
+        visible_to_roles=visible_to_roles,
+        version=1,
+        is_current_version=True,
         uploaded_by_id=current_user.id,
     )
     db.add(document)
@@ -327,3 +334,213 @@ async def delete_document(
 
     await db.delete(document)
     await db.commit()
+
+
+# ============================================================================
+# Version Management Endpoints (STORY-018)
+# ============================================================================
+
+
+@router.get(
+    "/{document_id}/versions",
+    response_model=list[DocumentVersionResponse],
+    summary="Document versies ophalen",
+    description="""
+    STORY-018: Als bestuurslid wil ik alle versies van een document zien,
+    zodat ik oudere versies kan terugzetten of downloaden.
+    """,
+)
+async def get_document_versions(
+    vve_id: uuid.UUID,
+    document_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> list[DocumentVersionResponse]:
+    """Get all versions of a document.
+
+    Requires bestuurslid or beheerder role.
+    Returns versions sorted by version number descending (newest first).
+    """
+    # First, find the document and its parent chain
+    result = await db.execute(
+        select(Document).where(
+            Document.id == document_id,
+            Document.vve_id == vve_id,
+        )
+    )
+    document = result.scalar_one_or_none()
+
+    if document is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Document niet gevonden",
+        )
+
+    # Get all versions (documents with the same parent or are the parent)
+    # Find the root document
+    root_id = document.parent_document_id or document.id
+
+    # Get all versions related to this document
+    versions_result = await db.execute(
+        select(Document).where(
+            Document.vve_id == vve_id,
+            (Document.id == root_id) | (Document.parent_document_id == root_id),
+        ).order_by(Document.version.desc())
+    )
+    versions = versions_result.scalars().all()
+
+    return [DocumentVersionResponse.model_validate(v) for v in versions]
+
+
+@router.post(
+    "/{document_id}/versions",
+    response_model=DocumentUploadResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Nieuwe versie uploaden",
+    description="""
+    STORY-018: Als bestuurslid wil ik een nieuwe versie van een document uploaden,
+    zodat de oude versie behouden blijft maar de nieuwe actief wordt.
+    """,
+)
+async def upload_new_version(
+    vve_id: uuid.UUID,
+    document_id: uuid.UUID,
+    file: Annotated[UploadFile, File(description="Nieuwe versie bestand")],
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> DocumentUploadResponse:
+    """Upload a new version of an existing document.
+
+    Requires bestuurslid or beheerder role.
+    The existing version is marked as not current, and the new version becomes current.
+    """
+    # Find the current document
+    result = await db.execute(
+        select(Document).where(
+            Document.id == document_id,
+            Document.vve_id == vve_id,
+        )
+    )
+    current_doc = result.scalar_one_or_none()
+
+    if current_doc is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Document niet gevonden",
+        )
+
+    # Validate file type
+    if file.content_type not in ALLOWED_FILE_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Bestandstype '{file.content_type}' niet toegestaan.",
+        )
+
+    # Read file content
+    content = await file.read()
+    file_size = len(content)
+
+    if file_size > MAX_FILE_SIZE_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Bestand is te groot ({file_size / (1024*1024):.1f} MB). Maximum is 50 MB.",
+        )
+
+    # Generate new S3 key
+    s3_key = f"vves/{vve_id}/documents/{uuid.uuid4()}/{file.filename}"
+
+    # Determine root document ID and new version number
+    # NOTE: Version increment is not atomic. For production use with high concurrency,
+    # consider using database-level sequences or SELECT FOR UPDATE locking.
+    root_id = current_doc.parent_document_id or current_doc.id
+    new_version = current_doc.version + 1
+
+    # Mark current version as not current
+    # NOTE: In high-concurrency scenarios, use transaction isolation to prevent
+    # multiple documents being marked as current simultaneously.
+    current_doc.is_current_version = False
+
+    # Create new version
+    new_doc = Document(
+        vve_id=vve_id,
+        title=current_doc.title,
+        description=current_doc.description,
+        file_name=file.filename or current_doc.file_name,
+        file_type=file.content_type or current_doc.file_type,
+        file_size_bytes=file_size,
+        s3_key=s3_key,
+        category=current_doc.category,
+        is_public=current_doc.is_public,
+        visible_to_roles=current_doc.visible_to_roles,
+        version=new_version,
+        parent_document_id=root_id,
+        is_current_version=True,
+        uploaded_by_id=current_user.id,
+    )
+
+    db.add(new_doc)
+    await db.commit()
+    await db.refresh(new_doc)
+
+    response = DocumentUploadResponse.model_validate(new_doc)
+    response.uploaded_by_name = current_user.full_name
+    response.message = f"Versie {new_version} succesvol geüpload"
+    return response
+
+
+@router.post(
+    "/{document_id}/versions/{version_id}/restore",
+    response_model=DocumentResponse,
+    summary="Versie herstellen",
+    description="""
+    STORY-018: Als bestuurslid wil ik een oudere versie van een document herstellen,
+    zodat deze weer de actieve versie wordt.
+    """,
+)
+async def restore_document_version(
+    vve_id: uuid.UUID,
+    document_id: uuid.UUID,
+    version_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> DocumentResponse:
+    """Restore a specific version of a document to be the current version.
+
+    Requires bestuurslid or beheerder role.
+    This marks the specified version as current and all others as not current.
+    """
+    # Find the version to restore
+    result = await db.execute(
+        select(Document).where(
+            Document.id == version_id,
+            Document.vve_id == vve_id,
+        )
+    )
+    version_to_restore = result.scalar_one_or_none()
+
+    if version_to_restore is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Versie niet gevonden",
+        )
+
+    # Find the root document
+    root_id = version_to_restore.parent_document_id or version_to_restore.id
+
+    # Mark all versions as not current
+    all_versions_result = await db.execute(
+        select(Document).where(
+            Document.vve_id == vve_id,
+            (Document.id == root_id) | (Document.parent_document_id == root_id),
+        )
+    )
+    for doc in all_versions_result.scalars().all():
+        doc.is_current_version = False
+
+    # Mark the restored version as current
+    version_to_restore.is_current_version = True
+
+    await db.commit()
+    await db.refresh(version_to_restore)
+
+    return DocumentResponse.model_validate(version_to_restore)

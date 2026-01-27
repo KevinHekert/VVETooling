@@ -1,6 +1,7 @@
 """Pydantic schemas for Documents.
 
 Based on FEAT-011 (Documentbeheer) and STORY-004 (Bestuur uploadt document).
+Implements STORY-018: Document versiebeheer en rol-specifiek delen.
 Storage limits per D-004.
 """
 
@@ -25,6 +26,9 @@ ALLOWED_FILE_TYPES = [
 # Maximum file size: 50MB
 MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024
 
+# Default roles for document visibility (STORY-018)
+DEFAULT_VISIBLE_ROLES = "bewoner,penningmeester,bestuurslid,beheerder"
+
 
 class DocumentCategory(str):
     """Document categories for organization."""
@@ -48,6 +52,10 @@ class DocumentBase(BaseModel):
     is_public: bool = Field(
         default=False, description="Visible to all VVE members when true"
     )
+    visible_to_roles: str = Field(
+        default=DEFAULT_VISIBLE_ROLES,
+        description="Comma-separated list of roles that can view this document",
+    )
 
 
 class DocumentCreate(DocumentBase):
@@ -63,6 +71,9 @@ class DocumentUpdate(BaseModel):
     description: str | None = Field(None, max_length=1000)
     category: str | None = Field(None, max_length=50)
     is_public: bool | None = None
+    visible_to_roles: str | None = Field(
+        None, description="Comma-separated list of roles that can view this document"
+    )
 
 
 class DocumentResponse(DocumentBase):
@@ -76,6 +87,24 @@ class DocumentResponse(DocumentBase):
     uploaded_by_id: uuid.UUID | None = None
     uploaded_by_name: str | None = None
     created_at: datetime
+    # Version fields (STORY-018)
+    version: int = 1
+    parent_document_id: uuid.UUID | None = None
+    is_current_version: bool = True
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DocumentVersionResponse(BaseModel):
+    """Response for document version info (STORY-018)."""
+
+    id: uuid.UUID
+    version: int
+    file_name: str
+    file_size_bytes: int
+    uploaded_by_name: str | None = None
+    created_at: datetime
+    is_current_version: bool
 
     model_config = ConfigDict(from_attributes=True)
 
