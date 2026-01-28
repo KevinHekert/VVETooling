@@ -25,6 +25,13 @@ from app.db.models.models import (
     VoteChoice as DBVoteChoice,
     Voting,
     VotingStatus as DBVotingStatus,
+    VotingProxy,
+    VotingProxyStatus as DBVotingProxyStatus,
+    Poll,
+    PollOption as DBPollOption,
+    PollVote,
+    PollStatus as DBPollStatus,
+    PollResultsVisibility as DBPollResultsVisibility,
     Unit,
     User,
     VVE,
@@ -43,6 +50,20 @@ from app.schemas.voting import (
     VotingResultsSummary,
     VotingStatus,
     VotingUpdate,
+    VotingProxyCreate,
+    VotingProxyResponse,
+    VotingProxyListResponse,
+    VotingProxyConfirmation,
+    VotingProxyStatus,
+    PollCreate,
+    PollUpdate,
+    PollResponse,
+    PollListResponse,
+    PollOptionResponse,
+    PollVoteCreate,
+    PollVoteResponse,
+    PollStatus,
+    PollResultsVisibility,
 )
 
 router = APIRouter(prefix="/vves/{vve_id}/voting", tags=["voting"])
@@ -643,3 +664,940 @@ async def close_voting(
 
     # Return results
     return await get_voting_results(vve_id, voting_id, current_user, db)
+
+
+# ============================================================================
+# Voting Proxy (STORY-117)
+# ============================================================================
+
+
+@router.post(
+    "/proxies",
+    response_model=VotingProxyResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Volmacht registreren",
+    description="""
+    STORY-117: Als eigenaar wil ik digitaal een volmacht kunnen geven.
+    
+    - Selectie van gevolmachtigde uit eigenaren-lijst
+    - Koppeling aan specifieke stemming of alle stemmingen
+    - Bevestiging naar beide partijen
+    """,
+)
+async def create_voting_proxy(
+    vve_id: uuid.UUID,
+    proxy_data: VotingProxyCreate,
+    current_user: Annotated[CurrentUser, Depends(require_member)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> VotingProxyResponse:
+    """Create a new voting proxy (STORY-117)."""
+    # Verify VVE exists
+    vve_result = await db.execute(select(VVE).where(VVE.id == vve_id))
+    if vve_result.scalar_one_or_none() is None:
+        raise HTTPException(status_code=404, detail="VVE niet gevonden")
+
+    # Verify unit belongs to VVE
+    unit_result = await db.execute(
+        select(Unit).where(Unit.id == proxy_data.unit_id, Unit.vve_id == vve_id)
+    )
+    unit = unit_result.scalar_one_or_none()
+    if unit is None:
+        raise HTTPException(status_code=404, detail="Eenheid niet gevonden")
+
+    # Verify current user is owner of the unit (has voting rights)
+    owner_check = await db.execute(
+        select(VVEMember).where(
+            VVEMember.user_id == current_user.id,
+            VVEMember.unit_id == proxy_data.unit_id,
+            VVEMember.is_active.is_(True),
+        )
+    )
+    if owner_check.scalar_one_or_none() is None:
+        raise HTTPException(
+            status_code=403,
+            detail="U kunt alleen volmachten geven voor uw eigen eenheden"
+        )
+
+    # Verify grantee exists and is member of VVE
+    grantee_result = await db.execute(select(User).where(User.id == proxy_data.grantee_id))
+    grantee = grantee_result.scalar_one_or_none()
+    if grantee is None:
+        raise HTTPException(status_code=404, detail="Gevolmachtigde niet gevonden")
+
+    grantee_member_result = await db.execute(
+        select(VVEMember).where(
+            VVEMember.user_id == proxy_data.grantee_id,
+            VVEMember.vve_id == vve_id,
+            VVEMember.is_active.is_(True),
+        )
+    )
+    if grantee_member_result.scalar_one_or_none() is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Gevolmachtigde is geen actief lid van deze VVE"
+        )
+
+    # Can't grant proxy to yourself
+    if proxy_data.grantee_id == current_user.id:
+        raise HTTPException(
+            status_code=400,
+            detail="U kunt geen volmacht aan uzelf geven"
+        )
+
+    # Check if voting exists (if specified)
+    voting_title = None
+    if proxy_data.voting_id:
+        voting_result = await db.execute(
+            select(Voting).where(
+                Voting.id == proxy_data.voting_id,
+                Voting.vve_id == vve_id,
+            )
+        )
+        voting = voting_result.scalar_one_or_none()
+        if voting is None:
+            raise HTTPException(status_code=404, detail="Stemming niet gevonden")
+        voting_title = voting.title
+
+    # Check for existing active proxy for this unit/voting combination
+    existing_query = select(VotingProxy).where(
+        VotingProxy.unit_id == proxy_data.unit_id,
+        VotingProxy.status.in_([DBVotingProxyStatus.PENDING, DBVotingProxyStatus.CONFIRMED]),
+    )
+    if proxy_data.voting_id:
+        existing_query = existing_query.where(VotingProxy.voting_id == proxy_data.voting_id)
+    else:
+        existing_query = existing_query.where(VotingProxy.voting_id.is_(None))
+
+    existing_result = await db.execute(existing_query)
+    if existing_result.scalar_one_or_none() is not None:
+        raise HTTPException(
+            status_code=400,
+            detail="Er bestaat al een actieve volmacht voor deze eenheid"
+        )
+
+    # Create proxy
+    proxy = VotingProxy(
+        grantor_id=current_user.id,
+        grantee_id=proxy_data.grantee_id,
+        unit_id=proxy_data.unit_id,
+        voting_id=proxy_data.voting_id,
+        vve_id=vve_id,
+        notes=proxy_data.notes,
+    )
+    db.add(proxy)
+    await db.commit()
+    await db.refresh(proxy)
+
+    # Get names for response
+    grantor_name = f"{current_user.first_name} {current_user.last_name}"
+    grantee_name = f"{grantee.first_name} {grantee.last_name}"
+
+    return VotingProxyResponse(
+        id=proxy.id,
+        grantor_id=proxy.grantor_id,
+        grantor_name=grantor_name,
+        grantee_id=proxy.grantee_id,
+        grantee_name=grantee_name,
+        unit_id=proxy.unit_id,
+        unit_number=unit.unit_number,
+        voting_id=proxy.voting_id,
+        voting_title=voting_title,
+        vve_id=proxy.vve_id,
+        status=VotingProxyStatus(proxy.status.value),
+        notes=proxy.notes,
+        confirmed_at=proxy.confirmed_at,
+        revoked_at=proxy.revoked_at,
+        created_at=proxy.created_at,
+        updated_at=proxy.updated_at,
+    )
+
+
+@router.get(
+    "/proxies",
+    response_model=list[VotingProxyListResponse],
+    summary="Lijst van volmachten",
+)
+async def list_voting_proxies(
+    vve_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_member)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+    status_filter: VotingProxyStatus | None = Query(None, alias="status"),
+    voting_id: uuid.UUID | None = None,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=100),
+) -> list[VotingProxyListResponse]:
+    """Get list of voting proxies for the VVE."""
+    query = select(VotingProxy).where(VotingProxy.vve_id == vve_id)
+
+    if status_filter:
+        query = query.where(VotingProxy.status == DBVotingProxyStatus(status_filter.value))
+
+    if voting_id:
+        query = query.where(VotingProxy.voting_id == voting_id)
+
+    query = query.order_by(VotingProxy.created_at.desc())
+    query = query.offset(skip).limit(limit)
+
+    result = await db.execute(query)
+    proxies = result.scalars().all()
+
+    response = []
+    for proxy in proxies:
+        # Get names
+        grantor_result = await db.execute(select(User).where(User.id == proxy.grantor_id))
+        grantor = grantor_result.scalar_one_or_none()
+        grantee_result = await db.execute(select(User).where(User.id == proxy.grantee_id))
+        grantee = grantee_result.scalar_one_or_none()
+        unit_result = await db.execute(select(Unit).where(Unit.id == proxy.unit_id))
+        unit = unit_result.scalar_one_or_none()
+
+        voting_title = None
+        if proxy.voting_id:
+            voting_result = await db.execute(select(Voting).where(Voting.id == proxy.voting_id))
+            voting = voting_result.scalar_one_or_none()
+            if voting:
+                voting_title = voting.title
+
+        response.append(
+            VotingProxyListResponse(
+                id=proxy.id,
+                grantor_name=f"{grantor.first_name} {grantor.last_name}" if grantor else "Onbekend",
+                grantee_name=f"{grantee.first_name} {grantee.last_name}" if grantee else "Onbekend",
+                unit_number=unit.unit_number if unit else "Onbekend",
+                voting_title=voting_title,
+                status=VotingProxyStatus(proxy.status.value),
+                created_at=proxy.created_at,
+            )
+        )
+
+    return response
+
+
+@router.get(
+    "/proxies/{proxy_id}",
+    response_model=VotingProxyResponse,
+    summary="Volmacht details",
+)
+async def get_voting_proxy(
+    vve_id: uuid.UUID,
+    proxy_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_member)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> VotingProxyResponse:
+    """Get voting proxy details."""
+    result = await db.execute(
+        select(VotingProxy).where(VotingProxy.id == proxy_id, VotingProxy.vve_id == vve_id)
+    )
+    proxy = result.scalar_one_or_none()
+
+    if proxy is None:
+        raise HTTPException(status_code=404, detail="Volmacht niet gevonden")
+
+    # Get related data
+    grantor_result = await db.execute(select(User).where(User.id == proxy.grantor_id))
+    grantor = grantor_result.scalar_one_or_none()
+    grantee_result = await db.execute(select(User).where(User.id == proxy.grantee_id))
+    grantee = grantee_result.scalar_one_or_none()
+    unit_result = await db.execute(select(Unit).where(Unit.id == proxy.unit_id))
+    unit = unit_result.scalar_one_or_none()
+
+    voting_title = None
+    if proxy.voting_id:
+        voting_result = await db.execute(select(Voting).where(Voting.id == proxy.voting_id))
+        voting = voting_result.scalar_one_or_none()
+        if voting:
+            voting_title = voting.title
+
+    return VotingProxyResponse(
+        id=proxy.id,
+        grantor_id=proxy.grantor_id,
+        grantor_name=f"{grantor.first_name} {grantor.last_name}" if grantor else "Onbekend",
+        grantee_id=proxy.grantee_id,
+        grantee_name=f"{grantee.first_name} {grantee.last_name}" if grantee else "Onbekend",
+        unit_id=proxy.unit_id,
+        unit_number=unit.unit_number if unit else "Onbekend",
+        voting_id=proxy.voting_id,
+        voting_title=voting_title,
+        vve_id=proxy.vve_id,
+        status=VotingProxyStatus(proxy.status.value),
+        notes=proxy.notes,
+        confirmed_at=proxy.confirmed_at,
+        revoked_at=proxy.revoked_at,
+        created_at=proxy.created_at,
+        updated_at=proxy.updated_at,
+    )
+
+
+@router.post(
+    "/proxies/{proxy_id}/confirm",
+    response_model=VotingProxyConfirmation,
+    summary="Volmacht bevestigen",
+    description="Gevolmachtigde bevestigt de ontvangen volmacht.",
+)
+async def confirm_voting_proxy(
+    vve_id: uuid.UUID,
+    proxy_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_member)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> VotingProxyConfirmation:
+    """Confirm a voting proxy (by grantee)."""
+    result = await db.execute(
+        select(VotingProxy).where(VotingProxy.id == proxy_id, VotingProxy.vve_id == vve_id)
+    )
+    proxy = result.scalar_one_or_none()
+
+    if proxy is None:
+        raise HTTPException(status_code=404, detail="Volmacht niet gevonden")
+
+    # Only grantee can confirm
+    if proxy.grantee_id != current_user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="Alleen de gevolmachtigde kan de volmacht bevestigen"
+        )
+
+    if proxy.status != DBVotingProxyStatus.PENDING:
+        raise HTTPException(
+            status_code=400,
+            detail="Volmacht kan alleen worden bevestigd als deze nog wacht op bevestiging"
+        )
+
+    proxy.status = DBVotingProxyStatus.CONFIRMED
+    proxy.confirmed_at = datetime.now(timezone.utc)
+    await db.commit()
+
+    return VotingProxyConfirmation(
+        proxy_id=proxy.id,
+        message="Volmacht succesvol bevestigd",
+        status=VotingProxyStatus(proxy.status.value),
+    )
+
+
+@router.post(
+    "/proxies/{proxy_id}/revoke",
+    response_model=VotingProxyConfirmation,
+    summary="Volmacht intrekken",
+    description="Volmachtgever trekt de volmacht in.",
+)
+async def revoke_voting_proxy(
+    vve_id: uuid.UUID,
+    proxy_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_member)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> VotingProxyConfirmation:
+    """Revoke a voting proxy (by grantor)."""
+    result = await db.execute(
+        select(VotingProxy).where(VotingProxy.id == proxy_id, VotingProxy.vve_id == vve_id)
+    )
+    proxy = result.scalar_one_or_none()
+
+    if proxy is None:
+        raise HTTPException(status_code=404, detail="Volmacht niet gevonden")
+
+    # Only grantor can revoke
+    if proxy.grantor_id != current_user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="Alleen de volmachtgever kan de volmacht intrekken"
+        )
+
+    if proxy.status == DBVotingProxyStatus.REVOKED:
+        raise HTTPException(status_code=400, detail="Volmacht is al ingetrokken")
+
+    if proxy.status == DBVotingProxyStatus.USED:
+        raise HTTPException(
+            status_code=400,
+            detail="Volmacht is al gebruikt en kan niet meer worden ingetrokken"
+        )
+
+    proxy.status = DBVotingProxyStatus.REVOKED
+    proxy.revoked_at = datetime.now(timezone.utc)
+    await db.commit()
+
+    return VotingProxyConfirmation(
+        proxy_id=proxy.id,
+        message="Volmacht succesvol ingetrokken",
+        status=VotingProxyStatus(proxy.status.value),
+    )
+
+
+@router.delete(
+    "/proxies/{proxy_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Volmacht verwijderen",
+)
+async def delete_voting_proxy(
+    vve_id: uuid.UUID,
+    proxy_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_member)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> None:
+    """Delete a voting proxy (only allowed when pending)."""
+    result = await db.execute(
+        select(VotingProxy).where(VotingProxy.id == proxy_id, VotingProxy.vve_id == vve_id)
+    )
+    proxy = result.scalar_one_or_none()
+
+    if proxy is None:
+        raise HTTPException(status_code=404, detail="Volmacht niet gevonden")
+
+    # Only grantor can delete
+    if proxy.grantor_id != current_user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="Alleen de volmachtgever kan de volmacht verwijderen"
+        )
+
+    if proxy.status != DBVotingProxyStatus.PENDING:
+        raise HTTPException(
+            status_code=400,
+            detail="Alleen volmachten met status 'wachtend' kunnen worden verwijderd"
+        )
+
+    await db.delete(proxy)
+    await db.commit()
+
+
+@router.get(
+    "/proxies/my-proxies/granted",
+    response_model=list[VotingProxyListResponse],
+    summary="Mijn afgegeven volmachten",
+)
+async def get_my_granted_proxies(
+    vve_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_member)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> list[VotingProxyListResponse]:
+    """Get proxies granted by the current user."""
+    result = await db.execute(
+        select(VotingProxy).where(
+            VotingProxy.vve_id == vve_id,
+            VotingProxy.grantor_id == current_user.id,
+        ).order_by(VotingProxy.created_at.desc())
+    )
+    proxies = result.scalars().all()
+
+    response = []
+    for proxy in proxies:
+        grantee_result = await db.execute(select(User).where(User.id == proxy.grantee_id))
+        grantee = grantee_result.scalar_one_or_none()
+        unit_result = await db.execute(select(Unit).where(Unit.id == proxy.unit_id))
+        unit = unit_result.scalar_one_or_none()
+
+        voting_title = None
+        if proxy.voting_id:
+            voting_result = await db.execute(select(Voting).where(Voting.id == proxy.voting_id))
+            voting = voting_result.scalar_one_or_none()
+            if voting:
+                voting_title = voting.title
+
+        response.append(
+            VotingProxyListResponse(
+                id=proxy.id,
+                grantor_name=f"{current_user.first_name} {current_user.last_name}",
+                grantee_name=f"{grantee.first_name} {grantee.last_name}" if grantee else "Onbekend",
+                unit_number=unit.unit_number if unit else "Onbekend",
+                voting_title=voting_title,
+                status=VotingProxyStatus(proxy.status.value),
+                created_at=proxy.created_at,
+            )
+        )
+
+    return response
+
+
+@router.get(
+    "/proxies/my-proxies/received",
+    response_model=list[VotingProxyListResponse],
+    summary="Mijn ontvangen volmachten",
+)
+async def get_my_received_proxies(
+    vve_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_member)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> list[VotingProxyListResponse]:
+    """Get proxies received by the current user."""
+    result = await db.execute(
+        select(VotingProxy).where(
+            VotingProxy.vve_id == vve_id,
+            VotingProxy.grantee_id == current_user.id,
+        ).order_by(VotingProxy.created_at.desc())
+    )
+    proxies = result.scalars().all()
+
+    response = []
+    for proxy in proxies:
+        grantor_result = await db.execute(select(User).where(User.id == proxy.grantor_id))
+        grantor = grantor_result.scalar_one_or_none()
+        unit_result = await db.execute(select(Unit).where(Unit.id == proxy.unit_id))
+        unit = unit_result.scalar_one_or_none()
+
+        voting_title = None
+        if proxy.voting_id:
+            voting_result = await db.execute(select(Voting).where(Voting.id == proxy.voting_id))
+            voting = voting_result.scalar_one_or_none()
+            if voting:
+                voting_title = voting.title
+
+        response.append(
+            VotingProxyListResponse(
+                id=proxy.id,
+                grantor_name=f"{grantor.first_name} {grantor.last_name}" if grantor else "Onbekend",
+                grantee_name=f"{current_user.first_name} {current_user.last_name}",
+                unit_number=unit.unit_number if unit else "Onbekend",
+                voting_title=voting_title,
+                status=VotingProxyStatus(proxy.status.value),
+                created_at=proxy.created_at,
+            )
+        )
+
+    return response
+
+
+
+# ============================================================================
+# Polls (STORY-116)
+# ============================================================================
+
+
+def is_poll_active(poll: Poll) -> bool:
+    """Check if poll is currently active."""
+    now = datetime.now(timezone.utc)
+    return poll.status == DBPollStatus.OPEN and poll.end_date > now
+
+
+@router.post(
+    "/polls",
+    response_model=PollResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Poll aanmaken",
+    description="""
+    STORY-116: Als bestuurslid wil ik een informele poll kunnen aanmaken.
+    
+    - Poll met vraag en multiple choice opties
+    - Geen juridische binding (informeel)
+    - Optie voor anonieme deelname
+    - Resultaten zichtbaar voor iedereen of alleen bestuur
+    """,
+)
+async def create_poll(
+    vve_id: uuid.UUID,
+    poll_data: PollCreate,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> PollResponse:
+    """Create a new poll (STORY-116)."""
+    # Verify VVE exists
+    vve_result = await db.execute(select(VVE).where(VVE.id == vve_id))
+    if vve_result.scalar_one_or_none() is None:
+        raise HTTPException(status_code=404, detail="VVE niet gevonden")
+
+    # Create poll
+    poll = Poll(
+        vve_id=vve_id,
+        title=poll_data.title,
+        description=poll_data.description,
+        end_date=poll_data.end_date,
+        allow_multiple=poll_data.allow_multiple,
+        is_anonymous=poll_data.is_anonymous,
+        results_visibility=DBPollResultsVisibility(poll_data.results_visibility.value),
+        created_by_id=current_user.id,
+    )
+    db.add(poll)
+    await db.flush()  # Get poll ID
+
+    # Create options
+    for idx, option_text in enumerate(poll_data.options):
+        option = DBPollOption(
+            poll_id=poll.id,
+            text=option_text,
+            display_order=idx,
+        )
+        db.add(option)
+
+    await db.commit()
+    await db.refresh(poll)
+
+    # Get options for response
+    options_result = await db.execute(
+        select(DBPollOption).where(DBPollOption.poll_id == poll.id).order_by(DBPollOption.display_order)
+    )
+    options = options_result.scalars().all()
+
+    return PollResponse(
+        id=poll.id,
+        vve_id=poll.vve_id,
+        title=poll.title,
+        description=poll.description,
+        options=[
+            PollOptionResponse(
+                id=opt.id,
+                text=opt.text,
+                vote_count=opt.vote_count,
+                percentage=Decimal("0.0"),
+                display_order=opt.display_order,
+            )
+            for opt in options
+        ],
+        end_date=poll.end_date,
+        allow_multiple=poll.allow_multiple,
+        is_anonymous=poll.is_anonymous,
+        results_visibility=PollResultsVisibility(poll.results_visibility.value),
+        total_votes=poll.total_votes,
+        total_participants=poll.total_participants,
+        status=PollStatus(poll.status.value),
+        created_by_id=poll.created_by_id,
+        created_by_name=f"{current_user.first_name} {current_user.last_name}",
+        created_at=poll.created_at,
+        updated_at=poll.updated_at,
+        is_active=is_poll_active(poll),
+        days_remaining=calculate_days_remaining(poll.end_date),
+    )
+
+
+@router.get(
+    "/polls",
+    response_model=list[PollListResponse],
+    summary="Lijst van polls",
+)
+async def list_polls(
+    vve_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_member)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+    status_filter: PollStatus | None = Query(None, alias="status"),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=100),
+) -> list[PollListResponse]:
+    """Get list of polls."""
+    query = select(Poll).where(Poll.vve_id == vve_id)
+
+    if status_filter:
+        query = query.where(Poll.status == DBPollStatus(status_filter.value))
+
+    query = query.order_by(Poll.end_date.desc())
+    query = query.offset(skip).limit(limit)
+
+    result = await db.execute(query)
+    polls = result.scalars().all()
+
+    return [
+        PollListResponse(
+            id=p.id,
+            vve_id=p.vve_id,
+            title=p.title,
+            status=PollStatus(p.status.value),
+            end_date=p.end_date,
+            total_participants=p.total_participants,
+            is_anonymous=p.is_anonymous,
+            is_active=is_poll_active(p),
+            days_remaining=calculate_days_remaining(p.end_date),
+        )
+        for p in polls
+    ]
+
+
+@router.get(
+    "/polls/{poll_id}",
+    response_model=PollResponse,
+    summary="Poll details",
+)
+async def get_poll(
+    vve_id: uuid.UUID,
+    poll_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_member)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> PollResponse:
+    """Get poll details."""
+    result = await db.execute(
+        select(Poll).where(Poll.id == poll_id, Poll.vve_id == vve_id)
+    )
+    poll = result.scalar_one_or_none()
+
+    if poll is None:
+        raise HTTPException(status_code=404, detail="Poll niet gevonden")
+
+    # Get options
+    options_result = await db.execute(
+        select(DBPollOption).where(DBPollOption.poll_id == poll.id).order_by(DBPollOption.display_order)
+    )
+    options = options_result.scalars().all()
+
+    # Calculate percentages
+    total_votes = poll.total_votes
+    option_responses = []
+    for opt in options:
+        percentage = (Decimal(opt.vote_count) / Decimal(total_votes) * 100) if total_votes > 0 else Decimal("0.0")
+        option_responses.append(
+            PollOptionResponse(
+                id=opt.id,
+                text=opt.text,
+                vote_count=opt.vote_count,
+                percentage=round(percentage, 1),
+                display_order=opt.display_order,
+            )
+        )
+
+    # Get creator name
+    created_by_name = None
+    if poll.created_by_id:
+        user_result = await db.execute(select(User).where(User.id == poll.created_by_id))
+        user = user_result.scalar_one_or_none()
+        if user:
+            created_by_name = f"{user.first_name} {user.last_name}"
+
+    # Check if user has voted
+    has_voted = None
+    if not poll.is_anonymous:
+        vote_result = await db.execute(
+            select(PollVote).where(PollVote.poll_id == poll.id, PollVote.user_id == current_user.id)
+        )
+        has_voted = vote_result.scalar_one_or_none() is not None
+
+    return PollResponse(
+        id=poll.id,
+        vve_id=poll.vve_id,
+        title=poll.title,
+        description=poll.description,
+        options=option_responses,
+        end_date=poll.end_date,
+        allow_multiple=poll.allow_multiple,
+        is_anonymous=poll.is_anonymous,
+        results_visibility=PollResultsVisibility(poll.results_visibility.value),
+        total_votes=poll.total_votes,
+        total_participants=poll.total_participants,
+        status=PollStatus(poll.status.value),
+        created_by_id=poll.created_by_id,
+        created_by_name=created_by_name,
+        created_at=poll.created_at,
+        updated_at=poll.updated_at,
+        is_active=is_poll_active(poll),
+        days_remaining=calculate_days_remaining(poll.end_date),
+        has_voted=has_voted,
+    )
+
+
+@router.put(
+    "/polls/{poll_id}",
+    response_model=PollResponse,
+    summary="Poll wijzigen",
+)
+async def update_poll(
+    vve_id: uuid.UUID,
+    poll_id: uuid.UUID,
+    update_data: PollUpdate,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> PollResponse:
+    """Update a poll (only allowed when in draft status)."""
+    result = await db.execute(
+        select(Poll).where(Poll.id == poll_id, Poll.vve_id == vve_id)
+    )
+    poll = result.scalar_one_or_none()
+
+    if poll is None:
+        raise HTTPException(status_code=404, detail="Poll niet gevonden")
+
+    # Can only edit draft polls (unless just changing status)
+    if poll.status != DBPollStatus.DRAFT and update_data.status is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Alleen concept-polls kunnen worden gewijzigd"
+        )
+
+    update_dict = update_data.model_dump(exclude_unset=True)
+    for field, value in update_dict.items():
+        if field == "status" and value is not None:
+            setattr(poll, field, DBPollStatus(value.value))
+        elif field == "results_visibility" and value is not None:
+            setattr(poll, field, DBPollResultsVisibility(value.value))
+        else:
+            setattr(poll, field, value)
+
+    await db.commit()
+    await db.refresh(poll)
+
+    # Return full poll response
+    return await get_poll(vve_id, poll_id, current_user, db)
+
+
+@router.post(
+    "/polls/{poll_id}/open",
+    response_model=PollResponse,
+    summary="Poll openen",
+)
+async def open_poll(
+    vve_id: uuid.UUID,
+    poll_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> PollResponse:
+    """Open a poll for votes."""
+    result = await db.execute(
+        select(Poll).where(Poll.id == poll_id, Poll.vve_id == vve_id)
+    )
+    poll = result.scalar_one_or_none()
+
+    if poll is None:
+        raise HTTPException(status_code=404, detail="Poll niet gevonden")
+
+    if poll.status != DBPollStatus.DRAFT:
+        raise HTTPException(status_code=400, detail="Alleen concept-polls kunnen worden geopend")
+
+    poll.status = DBPollStatus.OPEN
+    await db.commit()
+
+    return await get_poll(vve_id, poll_id, current_user, db)
+
+
+@router.post(
+    "/polls/{poll_id}/close",
+    response_model=PollResponse,
+    summary="Poll sluiten",
+)
+async def close_poll(
+    vve_id: uuid.UUID,
+    poll_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> PollResponse:
+    """Close a poll."""
+    result = await db.execute(
+        select(Poll).where(Poll.id == poll_id, Poll.vve_id == vve_id)
+    )
+    poll = result.scalar_one_or_none()
+
+    if poll is None:
+        raise HTTPException(status_code=404, detail="Poll niet gevonden")
+
+    if poll.status == DBPollStatus.CLOSED:
+        raise HTTPException(status_code=400, detail="Poll is al gesloten")
+
+    if poll.status == DBPollStatus.DRAFT:
+        raise HTTPException(status_code=400, detail="Concept-poll kan niet worden gesloten")
+
+    poll.status = DBPollStatus.CLOSED
+    await db.commit()
+
+    return await get_poll(vve_id, poll_id, current_user, db)
+
+
+@router.delete(
+    "/polls/{poll_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Poll verwijderen",
+)
+async def delete_poll(
+    vve_id: uuid.UUID,
+    poll_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> None:
+    """Delete a poll (only allowed when in draft status)."""
+    result = await db.execute(
+        select(Poll).where(Poll.id == poll_id, Poll.vve_id == vve_id)
+    )
+    poll = result.scalar_one_or_none()
+
+    if poll is None:
+        raise HTTPException(status_code=404, detail="Poll niet gevonden")
+
+    if poll.status != DBPollStatus.DRAFT:
+        raise HTTPException(
+            status_code=400,
+            detail="Alleen concept-polls kunnen worden verwijderd"
+        )
+
+    await db.delete(poll)
+    await db.commit()
+
+
+@router.post(
+    "/polls/{poll_id}/vote",
+    response_model=PollVoteResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Op poll stemmen",
+    description="Stem op een of meerdere opties in de poll.",
+)
+async def vote_on_poll(
+    vve_id: uuid.UUID,
+    poll_id: uuid.UUID,
+    vote_data: PollVoteCreate,
+    current_user: Annotated[CurrentUser, Depends(require_member)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> PollVoteResponse:
+    """Vote on a poll (STORY-116)."""
+    # Get poll
+    poll_result = await db.execute(
+        select(Poll).where(Poll.id == poll_id, Poll.vve_id == vve_id)
+    )
+    poll = poll_result.scalar_one_or_none()
+
+    if poll is None:
+        raise HTTPException(status_code=404, detail="Poll niet gevonden")
+
+    # Check if poll is active
+    if not is_poll_active(poll):
+        raise HTTPException(status_code=400, detail="Poll is niet actief")
+
+    # Check if already voted
+    # For anonymous polls, we still track participation to prevent double voting
+    # but don't expose the user_id in the vote record
+    existing_vote = await db.execute(
+        select(PollVote).where(
+            PollVote.poll_id == poll_id,
+            PollVote.user_id == current_user.id,
+        )
+    )
+    if existing_vote.scalar_one_or_none() is not None:
+        raise HTTPException(status_code=400, detail="U heeft al gestemd op deze poll")
+
+    # Validate options
+    if not poll.allow_multiple and len(vote_data.option_ids) > 1:
+        raise HTTPException(
+            status_code=400,
+            detail="Deze poll staat slechts één keuze toe"
+        )
+
+    # Verify all option IDs belong to this poll
+    options_result = await db.execute(
+        select(DBPollOption).where(
+            DBPollOption.poll_id == poll_id,
+            DBPollOption.id.in_(vote_data.option_ids),
+        )
+    )
+    valid_options = options_result.scalars().all()
+
+    if len(valid_options) != len(vote_data.option_ids):
+        raise HTTPException(status_code=400, detail="Ongeldige optie geselecteerd")
+
+    # Create votes
+    # Note: For anonymous polls, we still store user_id for duplicate prevention
+    # but the API responses should never expose this for anonymous polls
+    now = datetime.now(timezone.utc)
+    selected_texts = []
+    for option in valid_options:
+        vote = PollVote(
+            poll_id=poll_id,
+            option_id=option.id,
+            user_id=current_user.id,  # Always store for duplicate prevention
+            voted_at=now,
+        )
+        db.add(vote)
+
+        # Update option vote count
+        option.vote_count += 1
+        selected_texts.append(option.text)
+
+    # Update poll statistics
+    poll.total_votes += len(valid_options)
+    poll.total_participants += 1
+
+    await db.commit()
+
+    return PollVoteResponse(
+        poll_id=poll_id,
+        poll_title=poll.title,
+        selected_options=selected_texts,
+        voted_at=now,
+        message="Uw stem is succesvol geregistreerd",
+    )

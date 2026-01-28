@@ -1273,3 +1273,265 @@ export interface ReserveCalculationResponse {
   by_category: Record<string, number>;
   contingency_amount?: number;
 }
+
+// ============================================================================
+// Voting Proxy Types (STORY-117)
+// ============================================================================
+
+export type VotingProxyStatus = 'pending' | 'confirmed' | 'revoked' | 'used';
+
+export interface VotingProxy {
+  id: string;
+  grantor_id: string;
+  grantor_name: string;
+  grantee_id: string;
+  grantee_name: string;
+  unit_id: string;
+  unit_number: string;
+  voting_id?: string;
+  voting_title?: string;
+  vve_id: string;
+  status: VotingProxyStatus;
+  notes?: string;
+  confirmed_at?: string;
+  revoked_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface VotingProxyCreate {
+  grantee_id: string;
+  unit_id: string;
+  voting_id?: string;
+  notes?: string;
+}
+
+export interface VotingProxyListItem {
+  id: string;
+  grantor_name: string;
+  grantee_name: string;
+  unit_number: string;
+  voting_title?: string;
+  status: VotingProxyStatus;
+  created_at: string;
+}
+
+export interface VotingProxyConfirmation {
+  proxy_id: string;
+  message: string;
+  status: VotingProxyStatus;
+}
+
+// ============================================================================
+// Poll Types (STORY-116)
+// ============================================================================
+
+export type PollStatus = 'draft' | 'open' | 'closed';
+export type PollResultsVisibility = 'all' | 'board_only' | 'after_vote';
+
+export interface PollOption {
+  id: string;
+  text: string;
+  vote_count: number;
+  percentage: number;
+  display_order: number;
+}
+
+export interface Poll {
+  id: string;
+  vve_id: string;
+  title: string;
+  description?: string;
+  options: PollOption[];
+  end_date: string;
+  allow_multiple: boolean;
+  is_anonymous: boolean;
+  results_visibility: PollResultsVisibility;
+  total_votes: number;
+  total_participants: number;
+  status: PollStatus;
+  created_by_id?: string;
+  created_by_name?: string;
+  created_at: string;
+  updated_at: string;
+  is_active: boolean;
+  days_remaining?: number;
+  has_voted?: boolean;
+}
+
+export interface PollCreate {
+  title: string;
+  description?: string;
+  options: string[];
+  end_date: string;
+  allow_multiple?: boolean;
+  is_anonymous?: boolean;
+  results_visibility?: PollResultsVisibility;
+}
+
+export interface PollUpdate {
+  title?: string;
+  description?: string;
+  end_date?: string;
+  allow_multiple?: boolean;
+  is_anonymous?: boolean;
+  results_visibility?: PollResultsVisibility;
+  status?: PollStatus;
+}
+
+export interface PollListItem {
+  id: string;
+  vve_id: string;
+  title: string;
+  status: PollStatus;
+  end_date: string;
+  total_participants: number;
+  is_anonymous: boolean;
+  is_active: boolean;
+  days_remaining?: number;
+}
+
+export interface PollVoteCreate {
+  option_ids: string[];
+}
+
+export interface PollVoteResponse {
+  poll_id: string;
+  poll_title: string;
+  selected_options: string[];
+  voted_at: string;
+  message: string;
+}
+
+// ============================================================================
+// Privacy Statement Types (STORY-080)
+// ============================================================================
+
+export type PrivacyStatementStatus = 'draft' | 'published' | 'archived';
+
+export interface PrivacyStatement {
+  id: string;
+  vve_id: string;
+  title: string;
+  version: string;
+  vve_name: string;
+  vve_address?: string;
+  contact_email?: string;
+  contact_phone?: string;
+  dpo_name?: string;
+  dpo_email?: string;
+  introduction?: string;
+  data_collected?: string;
+  data_purpose?: string;
+  legal_basis?: string;
+  data_sharing?: string;
+  retention_period?: string;
+  rights?: string;
+  cookies?: string;
+  security?: string;
+  complaints?: string;
+  changes?: string;
+  status: PrivacyStatementStatus;
+  published_at?: string;
+  created_by_id?: string;
+  created_by_name?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PrivacyStatementCreate {
+  title?: string;
+  version?: string;
+  vve_name?: string;
+  vve_address?: string;
+  contact_email?: string;
+  contact_phone?: string;
+  dpo_name?: string;
+  dpo_email?: string;
+  introduction?: string;
+  data_collected?: string;
+  data_purpose?: string;
+  legal_basis?: string;
+  data_sharing?: string;
+  retention_period?: string;
+  rights?: string;
+  cookies?: string;
+  security?: string;
+  complaints?: string;
+  changes?: string;
+}
+
+export interface PrivacyStatementListItem {
+  id: string;
+  vve_id: string;
+  title: string;
+  version: string;
+  status: PrivacyStatementStatus;
+  published_at?: string;
+  created_at: string;
+}
+
+export interface PrivacyStatementTemplate {
+  introduction: string;
+  data_collected: string;
+  data_purpose: string;
+  legal_basis: string;
+  data_sharing: string;
+  retention_period: string;
+  rights: string;
+  cookies: string;
+  security: string;
+  complaints: string;
+  changes: string;
+}
+
+// ============================================================================
+// Data Export Types (STORY-122)
+// ============================================================================
+
+export type DataExportStatus = 'pending' | 'processing' | 'completed' | 'expired' | 'failed';
+export type DataExportFormat = 'json' | 'csv';
+
+export interface DataExportRequest {
+  id: string;
+  user_id: string;
+  vve_id?: string;
+  status: DataExportStatus;
+  export_format: DataExportFormat;
+  file_size_bytes?: number;
+  download_count: number;
+  expires_at?: string;
+  processing_started_at?: string;
+  processing_completed_at?: string;
+  error_message?: string;
+  created_at: string;
+  updated_at: string;
+  is_ready: boolean;
+  is_expired: boolean;
+  download_url?: string;
+}
+
+export interface DataExportRequestCreate {
+  vve_id?: string;
+  export_format?: DataExportFormat;
+}
+
+export interface DataExportListItem {
+  id: string;
+  vve_id?: string;
+  vve_name?: string;
+  status: DataExportStatus;
+  export_format: DataExportFormat;
+  file_size_bytes?: number;
+  expires_at?: string;
+  created_at: string;
+  is_ready: boolean;
+  is_expired: boolean;
+}
+
+export interface DataExportConfirmation {
+  request_id: string;
+  status: DataExportStatus;
+  message: string;
+  estimated_completion_minutes: number;
+}

@@ -1855,3 +1855,358 @@ class Vote(Base):
         Index("ix_votes_voting_id", "voting_id"),
         UniqueConstraint("voting_id", "unit_id", name="uq_votes_voting_unit"),
     )
+
+
+class VotingProxyStatus(str, Enum):
+    """Status of a voting proxy (STORY-117)."""
+
+    PENDING = "pending"  # Wachtend op bevestiging
+    CONFIRMED = "confirmed"  # Bevestigd door gevolmachtigde
+    REVOKED = "revoked"  # Ingetrokken door volmachtgever
+    USED = "used"  # Volmacht is gebruikt
+
+
+class VotingProxy(Base):
+    """Digital proxy (volmacht) for voting (STORY-117).
+
+    Implements FEAT-069: Volmacht Beheer.
+    Allows owners to grant proxy voting rights to another owner for digital votings.
+    """
+
+    __tablename__ = "voting_proxies"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    # The owner granting the proxy (volmachtgever)
+    grantor_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    # The unit for which the proxy is granted
+    unit_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("units.id", ondelete="CASCADE"), nullable=False
+    )
+    # The person receiving the proxy (gevolmachtigde)
+    grantee_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    # Specific voting (optional - if None, applies to all votings for this VVE)
+    voting_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("votings.id", ondelete="CASCADE")
+    )
+    # VVE reference for general proxies
+    vve_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("vves.id", ondelete="CASCADE"), nullable=False
+    )
+    # Status of the proxy
+    status: Mapped[VotingProxyStatus] = mapped_column(
+        SQLEnum(VotingProxyStatus), nullable=False, default=VotingProxyStatus.PENDING
+    )
+    # Notes from the grantor
+    notes: Mapped[str | None] = mapped_column(Text)
+    # Confirmation timestamp
+    confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Revocation timestamp
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Timestamps
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    __table_args__ = (
+        Index("ix_voting_proxies_grantor_id", "grantor_id"),
+        Index("ix_voting_proxies_grantee_id", "grantee_id"),
+        Index("ix_voting_proxies_voting_id", "voting_id"),
+        Index("ix_voting_proxies_vve_id", "vve_id"),
+        # Ensure one active proxy per unit per voting
+        UniqueConstraint(
+            "unit_id", "voting_id",
+            name="uq_voting_proxy_unit_voting"
+        ),
+    )
+
+
+# ============================================================================
+# Poll Models - STORY-116 Polls & Peilingen
+# ============================================================================
+
+
+class PollStatus(str, Enum):
+    """Status of a poll (STORY-116)."""
+
+    DRAFT = "draft"
+    OPEN = "open"
+    CLOSED = "closed"
+
+
+class PollResultsVisibility(str, Enum):
+    """Who can see poll results (STORY-116)."""
+
+    ALL = "all"  # Iedereen kan resultaten zien
+    BOARD_ONLY = "board_only"  # Alleen bestuur kan resultaten zien
+    AFTER_VOTE = "after_vote"  # Resultaten na eigen stem
+
+
+class Poll(Base):
+    """Informal poll for gauging support (STORY-116).
+
+    Implements FEAT-068: Polls & Peilingen.
+    Non-binding polls to measure support before formal voting.
+    """
+
+    __tablename__ = "polls"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    vve_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("vves.id", ondelete="CASCADE"), nullable=False
+    )
+    # Poll details
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text)
+    status: Mapped[PollStatus] = mapped_column(
+        SQLEnum(PollStatus), default=PollStatus.DRAFT
+    )
+    # Timing
+    end_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    # Settings
+    allow_multiple: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_anonymous: Mapped[bool] = mapped_column(Boolean, default=False)
+    results_visibility: Mapped[PollResultsVisibility] = mapped_column(
+        SQLEnum(PollResultsVisibility), default=PollResultsVisibility.ALL
+    )
+    # Statistics
+    total_votes: Mapped[int] = mapped_column(Integer, default=0)
+    total_participants: Mapped[int] = mapped_column(Integer, default=0)
+    # Metadata
+    created_by_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    # Relationships
+    options: Mapped[list["PollOption"]] = relationship(
+        "PollOption", back_populates="poll", cascade="all, delete-orphan"
+    )
+    votes: Mapped[list["PollVote"]] = relationship(
+        "PollVote", back_populates="poll", cascade="all, delete-orphan"
+    )
+
+    __table_args__ = (
+        Index("ix_polls_vve_id", "vve_id"),
+        Index("ix_polls_status", "status"),
+        Index("ix_polls_end_date", "end_date"),
+    )
+
+
+class PollOption(Base):
+    """Option in a poll (STORY-116)."""
+
+    __tablename__ = "poll_options"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    poll_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("polls.id", ondelete="CASCADE"), nullable=False
+    )
+    text: Mapped[str] = mapped_column(String(255), nullable=False)
+    vote_count: Mapped[int] = mapped_column(Integer, default=0)
+    display_order: Mapped[int] = mapped_column(Integer, default=0)
+
+    # Relationships
+    poll: Mapped["Poll"] = relationship("Poll", back_populates="options")
+
+    __table_args__ = (
+        Index("ix_poll_options_poll_id", "poll_id"),
+    )
+
+
+class PollVote(Base):
+    """Individual vote on a poll option (STORY-116)."""
+
+    __tablename__ = "poll_votes"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    poll_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("polls.id", ondelete="CASCADE"), nullable=False
+    )
+    option_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("poll_options.id", ondelete="CASCADE"), nullable=False
+    )
+    # User ID is nullable for anonymous polls
+    user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    # Timestamp
+    voted_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+    # Relationships
+    poll: Mapped["Poll"] = relationship("Poll", back_populates="votes")
+
+    __table_args__ = (
+        Index("ix_poll_votes_poll_id", "poll_id"),
+        Index("ix_poll_votes_user_id", "user_id"),
+    )
+
+
+# ============================================================================
+# Privacy Statement Models - STORY-080 AVG Module
+# ============================================================================
+
+
+class PrivacyStatementStatus(str, Enum):
+    """Status of a privacy statement (STORY-080)."""
+
+    DRAFT = "draft"
+    PUBLISHED = "published"
+    ARCHIVED = "archived"
+
+
+class PrivacyStatement(Base):
+    """Privacy statement for AVG compliance (STORY-080).
+
+    Implements FEAT-036: AVG Module.
+    Allows VVEs to generate and manage privacy statements.
+    """
+
+    __tablename__ = "privacy_statements"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    vve_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("vves.id", ondelete="CASCADE"), nullable=False
+    )
+    # Statement content
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    version: Mapped[str] = mapped_column(String(50), nullable=False)
+    # VVE Information (auto-filled or customized)
+    vve_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    vve_address: Mapped[str | None] = mapped_column(String(500))
+    contact_email: Mapped[str | None] = mapped_column(String(255))
+    contact_phone: Mapped[str | None] = mapped_column(String(50))
+    # Data protection officer info (optional)
+    dpo_name: Mapped[str | None] = mapped_column(String(255))
+    dpo_email: Mapped[str | None] = mapped_column(String(255))
+    # Privacy statement content sections (stored as JSON)
+    introduction: Mapped[str | None] = mapped_column(Text)  # Inleiding
+    data_collected: Mapped[str | None] = mapped_column(Text)  # Welke gegevens verzamelen we
+    data_purpose: Mapped[str | None] = mapped_column(Text)  # Doel van gegevensverwerking
+    legal_basis: Mapped[str | None] = mapped_column(Text)  # Rechtsgrond
+    data_sharing: Mapped[str | None] = mapped_column(Text)  # Met wie delen we gegevens
+    retention_period: Mapped[str | None] = mapped_column(Text)  # Bewaartermijnen
+    rights: Mapped[str | None] = mapped_column(Text)  # Rechten van betrokkenen
+    cookies: Mapped[str | None] = mapped_column(Text)  # Cookies en tracking
+    security: Mapped[str | None] = mapped_column(Text)  # Beveiliging
+    complaints: Mapped[str | None] = mapped_column(Text)  # Klachten
+    changes: Mapped[str | None] = mapped_column(Text)  # Wijzigingen
+    # Status
+    status: Mapped[PrivacyStatementStatus] = mapped_column(
+        SQLEnum(PrivacyStatementStatus), default=PrivacyStatementStatus.DRAFT
+    )
+    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Metadata
+    created_by_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    __table_args__ = (
+        Index("ix_privacy_statements_vve_id", "vve_id"),
+        Index("ix_privacy_statements_status", "status"),
+    )
+
+
+# ============================================================================
+# Data Export Models - STORY-122 AVG Data Export
+# ============================================================================
+
+
+class DataExportStatus(str, Enum):
+    """Status of a data export request (STORY-122)."""
+
+    PENDING = "pending"  # Aanvraag ontvangen
+    PROCESSING = "processing"  # Export wordt gegenereerd
+    COMPLETED = "completed"  # Export beschikbaar
+    EXPIRED = "expired"  # Download link verlopen
+    FAILED = "failed"  # Export mislukt
+
+
+class DataExportFormat(str, Enum):
+    """Format of the exported data."""
+
+    JSON = "json"
+    CSV = "csv"
+
+
+class DataExportRequest(Base):
+    """AVG data export request from an owner (STORY-122).
+
+    Implements FEAT-036: AVG Module - Right of access.
+    Allows owners to request an export of all their personal data.
+    """
+
+    __tablename__ = "data_export_requests"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    # The user requesting the export
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    # VVE context (optional - if None, export all VVEs)
+    vve_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("vves.id", ondelete="SET NULL")
+    )
+    # Request details
+    status: Mapped[DataExportStatus] = mapped_column(
+        SQLEnum(DataExportStatus), default=DataExportStatus.PENDING
+    )
+    export_format: Mapped[DataExportFormat] = mapped_column(
+        SQLEnum(DataExportFormat), default=DataExportFormat.JSON
+    )
+    # File storage
+    file_path: Mapped[str | None] = mapped_column(String(500))  # S3 path or local path
+    file_size_bytes: Mapped[int | None] = mapped_column(Integer)
+    # Download tracking
+    download_token: Mapped[str | None] = mapped_column(String(255), unique=True)
+    download_count: Mapped[int] = mapped_column(Integer, default=0)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Processing timestamps
+    processing_started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    processing_completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Error tracking
+    error_message: Mapped[str | None] = mapped_column(Text)
+    # Timestamps
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    __table_args__ = (
+        Index("ix_data_export_requests_user_id", "user_id"),
+        Index("ix_data_export_requests_status", "status"),
+        Index("ix_data_export_requests_download_token", "download_token"),
+    )
