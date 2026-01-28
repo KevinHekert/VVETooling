@@ -908,3 +908,59 @@ export interface PaginatedResponse<T> {
   page: number;
   size: number;
 }
+
+// STORY-073: Proxy (Volmacht) types
+export type ProxyScope = 'full' | 'specific';
+export type ProxyStatusType = 'pending' | 'confirmed' | 'revoked';
+
+export interface MeetingProxy {
+  id: string;
+  meeting_id: string;
+  grantor_id: string;
+  grantor_name?: string;
+  grantee_id: string;
+  grantee_name?: string;
+  scope: ProxyScope;
+  agenda_item_ids?: string[];
+  status: ProxyStatusType;
+  notes?: string;
+  confirmed_at?: string;
+  revoked_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProxyCreate {
+  grantee_id: string;
+  scope?: ProxyScope;
+  agenda_item_ids?: string[];
+  notes?: string;
+}
+
+export interface ProxyListItem {
+  id: string;
+  meeting_id: string;
+  grantor_id: string;
+  grantor_name?: string;
+  grantee_id: string;
+  grantee_name?: string;
+  scope: ProxyScope;
+  status: ProxyStatusType;
+  created_at: string;
+}
+
+export interface ProxySummary {
+  meeting_id: string;
+  total_proxies: number;
+  pending_count: number;
+  confirmed_count: number;
+  revoked_count: number;
+}
+
+export interface EligibleGrantee {
+  id: string;
+  first_name: string;
+  last_name: string;
+  full_name: string;
+  is_board_member: boolean;
+}

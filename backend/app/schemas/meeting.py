@@ -254,3 +254,103 @@ class RsvpSummary(BaseModel):
     with_proxy_count: int
     no_response_count: int
     response_rate: float
+
+
+# STORY-073: Proxy (Volmacht) schemas
+class ProxyScope(str, Enum):
+    """Scope of the proxy - full or specific agenda items (STORY-073)."""
+
+    FULL = "full"  # Volmacht voor alle agendapunten
+    SPECIFIC = "specific"  # Volmacht voor specifieke agendapunten
+
+
+class ProxyStatus(str, Enum):
+    """Status of a proxy/volmacht (STORY-073)."""
+
+    PENDING = "pending"  # Wachtend op bevestiging
+    CONFIRMED = "confirmed"  # Bevestigd door gevolmachtigde
+    REVOKED = "revoked"  # Ingetrokken door volmachtgever
+
+
+class ProxyCreate(BaseModel):
+    """Schema for creating a digital proxy/volmacht (STORY-073)."""
+
+    grantee_id: uuid.UUID = Field(..., description="ID of the person receiving the proxy")
+    scope: ProxyScope = Field(ProxyScope.FULL, description="Scope of the proxy")
+    agenda_item_ids: list[uuid.UUID] | None = Field(
+        None, description="Specific agenda item IDs (required if scope is SPECIFIC)"
+    )
+    notes: str | None = Field(None, max_length=500, description="Optional notes from grantor")
+
+    @field_validator('agenda_item_ids')
+    @classmethod
+    def validate_agenda_items_for_scope(cls, v: list[uuid.UUID] | None, info) -> list[uuid.UUID] | None:
+        """Validate that agenda_item_ids is provided when scope is SPECIFIC."""
+        scope = info.data.get('scope')
+        if scope == ProxyScope.SPECIFIC and (not v or len(v) == 0):
+            raise ValueError('Agendapunten zijn verplicht bij beperkte volmacht')
+        return v
+
+
+class ProxyUpdate(BaseModel):
+    """Schema for updating a proxy status (STORY-073)."""
+
+    status: ProxyStatus | None = None
+    notes: str | None = Field(None, max_length=500)
+
+
+class ProxyResponse(BaseModel):
+    """Response schema for a proxy/volmacht (STORY-073)."""
+
+    id: uuid.UUID
+    meeting_id: uuid.UUID
+    grantor_id: uuid.UUID
+    grantor_name: str | None = None
+    grantee_id: uuid.UUID
+    grantee_name: str | None = None
+    scope: ProxyScope
+    agenda_item_ids: list[uuid.UUID] | None = None
+    status: ProxyStatus
+    notes: str | None = None
+    confirmed_at: datetime | None = None
+    revoked_at: datetime | None = None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ProxyListResponse(BaseModel):
+    """List response schema for proxies (STORY-073)."""
+
+    id: uuid.UUID
+    meeting_id: uuid.UUID
+    grantor_id: uuid.UUID
+    grantor_name: str | None = None
+    grantee_id: uuid.UUID
+    grantee_name: str | None = None
+    scope: ProxyScope
+    status: ProxyStatus
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ProxySummary(BaseModel):
+    """Summary of proxies for a meeting (STORY-073)."""
+
+    meeting_id: uuid.UUID
+    total_proxies: int
+    pending_count: int
+    confirmed_count: int
+    revoked_count: int
+
+
+class EligibleGrantee(BaseModel):
+    """Response schema for eligible proxy recipients (STORY-073)."""
+
+    id: uuid.UUID
+    first_name: str
+    last_name: str
+    full_name: str
+    is_board_member: bool = False
