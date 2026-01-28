@@ -21,11 +21,15 @@ from app.db.models.models import (
     Document,
     Meeting,
     MeetingAgendaItem,
+    MeetingDecision,
+    MeetingMinutes,
     MeetingProxy,
     MeetingRsvp,
     MeetingRsvpStatus as DBMeetingRsvpStatus,
     MeetingStatus as DBMeetingStatus,
     MeetingType as DBMeetingType,
+    MinutesStatus as DBMinutesStatus,
+    DecisionType as DBDecisionType,
     ProxyScope as DBProxyScope,
     ProxyStatus as DBProxyStatus,
     Unit,
@@ -38,6 +42,10 @@ from app.schemas.meeting import (
     AgendaItemReorder,
     AgendaItemResponse,
     AgendaItemUpdate,
+    DecisionCreate,
+    DecisionResponse,
+    DecisionType,
+    DecisionUpdate,
     EligibleGrantee,
     MeetingCreate,
     MeetingInvitationCreate,
@@ -48,6 +56,11 @@ from app.schemas.meeting import (
     MeetingStatus,
     MeetingType,
     MeetingUpdate,
+    MinutesCreate,
+    MinutesResponse,
+    MinutesStatus,
+    MinutesTemplate,
+    MinutesUpdate,
     ProxyCreate,
     ProxyListResponse,
     ProxyResponse,
@@ -1741,4 +1754,534 @@ async def calculate_quorum(
         present_details=present_details,
         proxy_details=proxy_details,
         calculated_at=datetime.now(timezone.utc),
+    )
+
+
+# STORY-075: Meeting Minutes endpoints
+@router.get(
+    "/{meeting_id}/minutes/template",
+    response_model=MinutesTemplate,
+    summary="Notulen template ophalen",
+    description="Haal een vooraf ingevulde template op voor de notulen met datum, aanwezigen en agenda (STORY-075).",
+)
+async def get_minutes_template(
+    vve_id: uuid.UUID,
+    meeting_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: AsyncSession = Depends(get_db),
+) -> MinutesTemplate:
+    """Get a pre-populated template for meeting minutes (STORY-075)."""
+    # Get meeting
+    meeting_result = await db.execute(
+        select(Meeting).where(Meeting.id == meeting_id, Meeting.vve_id == vve_id)
+    )
+    meeting = meeting_result.scalar_one_or_none()
+    if not meeting:
+        raise HTTPException(status_code=404, detail="Vergadering niet gevonden")
+
+    # Get agenda items
+    agenda_result = await db.execute(
+        select(MeetingAgendaItem)
+        .where(MeetingAgendaItem.meeting_id == meeting_id)
+        .order_by(MeetingAgendaItem.order_index)
+    )
+    agenda_items = agenda_result.scalars().all()
+
+    # Get attendees (RSVPs with PRESENT status)
+    rsvps_result = await db.execute(
+        select(MeetingRsvp, User)
+        .join(User, MeetingRsvp.user_id == User.id)
+        .where(
+            MeetingRsvp.meeting_id == meeting_id,
+            MeetingRsvp.status == DBMeetingRsvpStatus.PRESENT,
+        )
+    )
+    attendees = [f"{user.first_name} {user.last_name}" for _, user in rsvps_result.all()]
+
+    # Build HTML template
+    date_str = meeting.meeting_date.strftime("%d %B %Y")
+    agenda_html = ""
+    for i, item in enumerate(agenda_items, 1):
+        agenda_html += f"""
+<h3>{i}. {item.title}</h3>
+<p><em>[Notities voor agendapunt {i}]</em></p>
+"""
+
+    html_template = f"""<h1>Notulen: {meeting.title}</h1>
+<p><strong>Datum:</strong> {date_str}</p>
+<p><strong>Locatie:</strong> {meeting.location_address or 'Online'}</p>
+
+<h2>Aanwezigen</h2>
+<p>{', '.join(attendees) if attendees else '<em>[Geen aanwezigen geregistreerd]</em>'}</p>
+
+<h2>Agenda en Bespreking</h2>
+{agenda_html if agenda_html else '<p><em>[Geen agendapunten]</em></p>'}
+
+<h2>Besluiten</h2>
+<p><em>[Voeg hier besluiten toe]</em></p>
+
+<h2>Actiepunten</h2>
+<p><em>[Voeg hier actiepunten toe]</em></p>
+
+<h2>Sluiting</h2>
+<p><em>[Afsluiting van de vergadering]</em></p>
+"""
+
+    return MinutesTemplate(
+        meeting_id=meeting_id,
+        meeting_title=meeting.title,
+        meeting_date=meeting.meeting_date,
+        attendees=attendees,
+        agenda_items=[item.title for item in agenda_items],
+        html_template=html_template,
+    )
+
+
+@router.post(
+    "/{meeting_id}/minutes",
+    response_model=MinutesResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Notulen aanmaken",
+    description="Maak notulen aan voor een vergadering (STORY-075).",
+)
+async def create_minutes(
+    vve_id: uuid.UUID,
+    meeting_id: uuid.UUID,
+    minutes_data: MinutesCreate,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: AsyncSession = Depends(get_db),
+) -> MinutesResponse:
+    """Create meeting minutes (STORY-075)."""
+    # Verify meeting exists
+    meeting_result = await db.execute(
+        select(Meeting).where(Meeting.id == meeting_id, Meeting.vve_id == vve_id)
+    )
+    if not meeting_result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Vergadering niet gevonden")
+
+    # Check if minutes already exist
+    existing_result = await db.execute(
+        select(MeetingMinutes).where(MeetingMinutes.meeting_id == meeting_id)
+    )
+    if existing_result.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="Notulen bestaan al voor deze vergadering")
+
+    # Create minutes
+    minutes = MeetingMinutes(
+        meeting_id=meeting_id,
+        content=minutes_data.content,
+        status=DBMinutesStatus.DRAFT,
+        created_by_id=current_user.id,
+        last_saved_at=datetime.now(timezone.utc),
+    )
+
+    db.add(minutes)
+    await db.commit()
+    await db.refresh(minutes)
+
+    # Get creator name
+    creator_result = await db.execute(select(User).where(User.id == current_user.id))
+    creator = creator_result.scalar_one()
+
+    return MinutesResponse(
+        id=minutes.id,
+        meeting_id=minutes.meeting_id,
+        content=minutes.content,
+        status=MinutesStatus(minutes.status.value),
+        created_by_id=minutes.created_by_id,
+        created_by_name=f"{creator.first_name} {creator.last_name}",
+        last_saved_at=minutes.last_saved_at,
+        created_at=minutes.created_at,
+        updated_at=minutes.updated_at,
+    )
+
+
+@router.get(
+    "/{meeting_id}/minutes",
+    response_model=MinutesResponse | None,
+    summary="Notulen ophalen",
+    description="Haal de notulen op voor een vergadering (STORY-075).",
+)
+async def get_minutes(
+    vve_id: uuid.UUID,
+    meeting_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_member)],
+    db: AsyncSession = Depends(get_db),
+) -> MinutesResponse | None:
+    """Get meeting minutes (STORY-075)."""
+    # Verify meeting exists
+    meeting_result = await db.execute(
+        select(Meeting).where(Meeting.id == meeting_id, Meeting.vve_id == vve_id)
+    )
+    if not meeting_result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Vergadering niet gevonden")
+
+    # Get minutes
+    minutes_result = await db.execute(
+        select(MeetingMinutes).where(MeetingMinutes.meeting_id == meeting_id)
+    )
+    minutes = minutes_result.scalar_one_or_none()
+
+    if not minutes:
+        return None
+
+    # Get user names
+    creator_name = None
+    if minutes.created_by_id:
+        creator_result = await db.execute(select(User).where(User.id == minutes.created_by_id))
+        creator = creator_result.scalar_one_or_none()
+        if creator:
+            creator_name = f"{creator.first_name} {creator.last_name}"
+
+    approved_by_name = None
+    if minutes.approved_by_id:
+        approver_result = await db.execute(select(User).where(User.id == minutes.approved_by_id))
+        approver = approver_result.scalar_one_or_none()
+        if approver:
+            approved_by_name = f"{approver.first_name} {approver.last_name}"
+
+    return MinutesResponse(
+        id=minutes.id,
+        meeting_id=minutes.meeting_id,
+        content=minutes.content,
+        status=MinutesStatus(minutes.status.value),
+        created_by_id=minutes.created_by_id,
+        created_by_name=creator_name,
+        published_at=minutes.published_at,
+        approved_at=minutes.approved_at,
+        approved_by_id=minutes.approved_by_id,
+        approved_by_name=approved_by_name,
+        last_saved_at=minutes.last_saved_at,
+        created_at=minutes.created_at,
+        updated_at=minutes.updated_at,
+    )
+
+
+@router.patch(
+    "/{meeting_id}/minutes",
+    response_model=MinutesResponse,
+    summary="Notulen bijwerken",
+    description="Werk de notulen bij voor een vergadering met auto-save (STORY-075).",
+)
+async def update_minutes(
+    vve_id: uuid.UUID,
+    meeting_id: uuid.UUID,
+    minutes_data: MinutesUpdate,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: AsyncSession = Depends(get_db),
+) -> MinutesResponse:
+    """Update meeting minutes with auto-save (STORY-075)."""
+    # Get minutes
+    minutes_result = await db.execute(
+        select(MeetingMinutes).where(MeetingMinutes.meeting_id == meeting_id)
+    )
+    minutes = minutes_result.scalar_one_or_none()
+
+    if not minutes:
+        raise HTTPException(status_code=404, detail="Notulen niet gevonden")
+
+    # Update fields
+    if minutes_data.content is not None:
+        minutes.content = minutes_data.content
+        minutes.last_saved_at = datetime.now(timezone.utc)
+
+    if minutes_data.status is not None:
+        minutes.status = DBMinutesStatus(minutes_data.status.value)
+        if minutes_data.status == MinutesStatus.PUBLISHED:
+            minutes.published_at = datetime.now(timezone.utc)
+        elif minutes_data.status == MinutesStatus.APPROVED:
+            minutes.approved_at = datetime.now(timezone.utc)
+            minutes.approved_by_id = current_user.id
+
+    await db.commit()
+    await db.refresh(minutes)
+
+    # Get user names
+    creator_name = None
+    if minutes.created_by_id:
+        creator_result = await db.execute(select(User).where(User.id == minutes.created_by_id))
+        creator = creator_result.scalar_one_or_none()
+        if creator:
+            creator_name = f"{creator.first_name} {creator.last_name}"
+
+    approved_by_name = None
+    if minutes.approved_by_id:
+        approver_result = await db.execute(select(User).where(User.id == minutes.approved_by_id))
+        approver = approver_result.scalar_one_or_none()
+        if approver:
+            approved_by_name = f"{approver.first_name} {approver.last_name}"
+
+    return MinutesResponse(
+        id=minutes.id,
+        meeting_id=minutes.meeting_id,
+        content=minutes.content,
+        status=MinutesStatus(minutes.status.value),
+        created_by_id=minutes.created_by_id,
+        created_by_name=creator_name,
+        published_at=minutes.published_at,
+        approved_at=minutes.approved_at,
+        approved_by_id=minutes.approved_by_id,
+        approved_by_name=approved_by_name,
+        last_saved_at=minutes.last_saved_at,
+        created_at=minutes.created_at,
+        updated_at=minutes.updated_at,
+    )
+
+
+# STORY-075: Decision endpoints
+@router.post(
+    "/{meeting_id}/decisions",
+    response_model=DecisionResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Besluit/actiepunt toevoegen",
+    description="Voeg een besluit of actiepunt toe aan de vergadering (STORY-075).",
+)
+async def create_decision(
+    vve_id: uuid.UUID,
+    meeting_id: uuid.UUID,
+    decision_data: DecisionCreate,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: AsyncSession = Depends(get_db),
+) -> DecisionResponse:
+    """Create a decision or action item (STORY-075)."""
+    # Verify meeting exists
+    meeting_result = await db.execute(
+        select(Meeting).where(Meeting.id == meeting_id, Meeting.vve_id == vve_id)
+    )
+    if not meeting_result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Vergadering niet gevonden")
+
+    # Get minutes if exists
+    minutes_result = await db.execute(
+        select(MeetingMinutes).where(MeetingMinutes.meeting_id == meeting_id)
+    )
+    minutes = minutes_result.scalar_one_or_none()
+
+    # Create decision
+    decision = MeetingDecision(
+        meeting_id=meeting_id,
+        minutes_id=minutes.id if minutes else None,
+        decision_type=DBDecisionType(decision_data.decision_type.value),
+        title=decision_data.title,
+        description=decision_data.description,
+        agenda_item_id=decision_data.agenda_item_id,
+        assignee_id=decision_data.assignee_id,
+        due_date=decision_data.due_date,
+        created_by_id=current_user.id,
+    )
+
+    db.add(decision)
+    await db.commit()
+    await db.refresh(decision)
+
+    # Get names
+    creator_name = None
+    creator_result = await db.execute(select(User).where(User.id == current_user.id))
+    creator = creator_result.scalar_one()
+    creator_name = f"{creator.first_name} {creator.last_name}"
+
+    assignee_name = None
+    if decision.assignee_id:
+        assignee_result = await db.execute(select(User).where(User.id == decision.assignee_id))
+        assignee = assignee_result.scalar_one_or_none()
+        if assignee:
+            assignee_name = f"{assignee.first_name} {assignee.last_name}"
+
+    agenda_item_title = None
+    if decision.agenda_item_id:
+        agenda_result = await db.execute(
+            select(MeetingAgendaItem).where(MeetingAgendaItem.id == decision.agenda_item_id)
+        )
+        agenda_item = agenda_result.scalar_one_or_none()
+        if agenda_item:
+            agenda_item_title = agenda_item.title
+
+    return DecisionResponse(
+        id=decision.id,
+        meeting_id=decision.meeting_id,
+        minutes_id=decision.minutes_id,
+        decision_type=DecisionType(decision.decision_type.value),
+        title=decision.title,
+        description=decision.description,
+        agenda_item_id=decision.agenda_item_id,
+        agenda_item_title=agenda_item_title,
+        assignee_id=decision.assignee_id,
+        assignee_name=assignee_name,
+        due_date=decision.due_date,
+        is_completed=decision.is_completed,
+        completed_at=decision.completed_at,
+        created_by_id=decision.created_by_id,
+        created_by_name=creator_name,
+        created_at=decision.created_at,
+        updated_at=decision.updated_at,
+    )
+
+
+@router.get(
+    "/{meeting_id}/decisions",
+    response_model=list[DecisionResponse],
+    summary="Besluiten/actiepunten ophalen",
+    description="Haal alle besluiten en actiepunten op voor een vergadering (STORY-075).",
+)
+async def list_decisions(
+    vve_id: uuid.UUID,
+    meeting_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_member)],
+    db: AsyncSession = Depends(get_db),
+    decision_type: DecisionType | None = Query(None, description="Filter op type"),
+) -> list[DecisionResponse]:
+    """List decisions and action items for a meeting (STORY-075)."""
+    # Verify meeting exists
+    meeting_result = await db.execute(
+        select(Meeting).where(Meeting.id == meeting_id, Meeting.vve_id == vve_id)
+    )
+    if not meeting_result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Vergadering niet gevonden")
+
+    # Build query
+    query = select(MeetingDecision).where(MeetingDecision.meeting_id == meeting_id)
+    if decision_type:
+        query = query.where(MeetingDecision.decision_type == DBDecisionType(decision_type.value))
+    query = query.order_by(MeetingDecision.created_at)
+
+    decisions_result = await db.execute(query)
+    decisions = decisions_result.scalars().all()
+
+    result = []
+    for decision in decisions:
+        # Get names
+        creator_name = None
+        if decision.created_by_id:
+            creator_result = await db.execute(select(User).where(User.id == decision.created_by_id))
+            creator = creator_result.scalar_one_or_none()
+            if creator:
+                creator_name = f"{creator.first_name} {creator.last_name}"
+
+        assignee_name = None
+        if decision.assignee_id:
+            assignee_result = await db.execute(select(User).where(User.id == decision.assignee_id))
+            assignee = assignee_result.scalar_one_or_none()
+            if assignee:
+                assignee_name = f"{assignee.first_name} {assignee.last_name}"
+
+        agenda_item_title = None
+        if decision.agenda_item_id:
+            agenda_result = await db.execute(
+                select(MeetingAgendaItem).where(MeetingAgendaItem.id == decision.agenda_item_id)
+            )
+            agenda_item = agenda_result.scalar_one_or_none()
+            if agenda_item:
+                agenda_item_title = agenda_item.title
+
+        result.append(DecisionResponse(
+            id=decision.id,
+            meeting_id=decision.meeting_id,
+            minutes_id=decision.minutes_id,
+            decision_type=DecisionType(decision.decision_type.value),
+            title=decision.title,
+            description=decision.description,
+            agenda_item_id=decision.agenda_item_id,
+            agenda_item_title=agenda_item_title,
+            assignee_id=decision.assignee_id,
+            assignee_name=assignee_name,
+            due_date=decision.due_date,
+            is_completed=decision.is_completed,
+            completed_at=decision.completed_at,
+            created_by_id=decision.created_by_id,
+            created_by_name=creator_name,
+            created_at=decision.created_at,
+            updated_at=decision.updated_at,
+        ))
+
+    return result
+
+
+@router.patch(
+    "/{meeting_id}/decisions/{decision_id}",
+    response_model=DecisionResponse,
+    summary="Besluit/actiepunt bijwerken",
+    description="Werk een besluit of actiepunt bij (STORY-075).",
+)
+async def update_decision(
+    vve_id: uuid.UUID,
+    meeting_id: uuid.UUID,
+    decision_id: uuid.UUID,
+    decision_data: DecisionUpdate,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: AsyncSession = Depends(get_db),
+) -> DecisionResponse:
+    """Update a decision or action item (STORY-075)."""
+    # Get decision
+    decision_result = await db.execute(
+        select(MeetingDecision).where(
+            MeetingDecision.id == decision_id,
+            MeetingDecision.meeting_id == meeting_id,
+        )
+    )
+    decision = decision_result.scalar_one_or_none()
+
+    if not decision:
+        raise HTTPException(status_code=404, detail="Besluit niet gevonden")
+
+    # Update fields
+    if decision_data.title is not None:
+        decision.title = decision_data.title
+    if decision_data.description is not None:
+        decision.description = decision_data.description
+    if decision_data.assignee_id is not None:
+        decision.assignee_id = decision_data.assignee_id
+    if decision_data.due_date is not None:
+        decision.due_date = decision_data.due_date
+    if decision_data.is_completed is not None:
+        decision.is_completed = decision_data.is_completed
+        if decision_data.is_completed:
+            decision.completed_at = datetime.now(timezone.utc)
+        else:
+            decision.completed_at = None
+
+    await db.commit()
+    await db.refresh(decision)
+
+    # Get names
+    creator_name = None
+    if decision.created_by_id:
+        creator_result = await db.execute(select(User).where(User.id == decision.created_by_id))
+        creator = creator_result.scalar_one_or_none()
+        if creator:
+            creator_name = f"{creator.first_name} {creator.last_name}"
+
+    assignee_name = None
+    if decision.assignee_id:
+        assignee_result = await db.execute(select(User).where(User.id == decision.assignee_id))
+        assignee = assignee_result.scalar_one_or_none()
+        if assignee:
+            assignee_name = f"{assignee.first_name} {assignee.last_name}"
+
+    agenda_item_title = None
+    if decision.agenda_item_id:
+        agenda_result = await db.execute(
+            select(MeetingAgendaItem).where(MeetingAgendaItem.id == decision.agenda_item_id)
+        )
+        agenda_item = agenda_result.scalar_one_or_none()
+        if agenda_item:
+            agenda_item_title = agenda_item.title
+
+    return DecisionResponse(
+        id=decision.id,
+        meeting_id=decision.meeting_id,
+        minutes_id=decision.minutes_id,
+        decision_type=DecisionType(decision.decision_type.value),
+        title=decision.title,
+        description=decision.description,
+        agenda_item_id=decision.agenda_item_id,
+        agenda_item_title=agenda_item_title,
+        assignee_id=decision.assignee_id,
+        assignee_name=assignee_name,
+        due_date=decision.due_date,
+        is_completed=decision.is_completed,
+        completed_at=decision.completed_at,
+        created_by_id=decision.created_by_id,
+        created_by_name=creator_name,
+        created_at=decision.created_at,
+        updated_at=decision.updated_at,
     )
