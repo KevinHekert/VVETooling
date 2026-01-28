@@ -1066,6 +1066,67 @@ class ApiClient {
       `/vves/${vveId}/meetings/${meetingId}/quorum?required_percentage=${requiredPercentage}`
     );
   }
+
+  // STORY-075: Meeting Minutes methods
+  async getMinutesTemplate(vveId: string, meetingId: string) {
+    return this.fetch<import('@/types').MinutesTemplate>(
+      `/vves/${vveId}/meetings/${meetingId}/minutes/template`
+    );
+  }
+
+  async createMinutes(vveId: string, meetingId: string, data: import('@/types').MinutesCreate) {
+    return this.fetch<import('@/types').MeetingMinutes>(
+      `/vves/${vveId}/meetings/${meetingId}/minutes`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async getMinutes(vveId: string, meetingId: string) {
+    return this.fetch<import('@/types').MeetingMinutes | null>(
+      `/vves/${vveId}/meetings/${meetingId}/minutes`
+    );
+  }
+
+  async updateMinutes(vveId: string, meetingId: string, data: import('@/types').MinutesUpdate) {
+    return this.fetch<import('@/types').MeetingMinutes>(
+      `/vves/${vveId}/meetings/${meetingId}/minutes`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  // STORY-075: Decision methods
+  async createDecision(vveId: string, meetingId: string, data: import('@/types').DecisionCreate) {
+    return this.fetch<import('@/types').MeetingDecision>(
+      `/vves/${vveId}/meetings/${meetingId}/decisions`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async listDecisions(vveId: string, meetingId: string, decisionType?: import('@/types').DecisionType) {
+    const params = decisionType ? `?decision_type=${decisionType}` : '';
+    return this.fetch<import('@/types').MeetingDecision[]>(
+      `/vves/${vveId}/meetings/${meetingId}/decisions${params}`
+    );
+  }
+
+  async updateDecision(vveId: string, meetingId: string, decisionId: string, data: import('@/types').DecisionUpdate) {
+    return this.fetch<import('@/types').MeetingDecision>(
+      `/vves/${vveId}/meetings/${meetingId}/decisions/${decisionId}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }
+    );
+  }
 }
 
 export const api = new ApiClient(API_BASE_URL);

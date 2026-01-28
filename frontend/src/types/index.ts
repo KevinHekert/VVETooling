@@ -996,3 +996,78 @@ export interface QuorumCalculation {
   proxy_details: QuorumMemberDetail[];
   calculated_at: string;
 }
+
+// STORY-075: Meeting Minutes types
+export type MinutesStatus = 'draft' | 'published' | 'approved';
+export type DecisionType = 'besluit' | 'actiepunt' | 'aandachtspunt';
+
+export interface MeetingMinutes {
+  id: string;
+  meeting_id: string;
+  content?: string;
+  status: MinutesStatus;
+  created_by_id?: string;
+  created_by_name?: string;
+  published_at?: string;
+  approved_at?: string;
+  approved_by_id?: string;
+  approved_by_name?: string;
+  last_saved_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MinutesCreate {
+  content?: string;
+}
+
+export interface MinutesUpdate {
+  content?: string;
+  status?: MinutesStatus;
+}
+
+export interface MinutesTemplate {
+  meeting_id: string;
+  meeting_title: string;
+  meeting_date: string;
+  attendees: string[];
+  agenda_items: string[];
+  html_template: string;
+}
+
+export interface MeetingDecision {
+  id: string;
+  meeting_id: string;
+  minutes_id?: string;
+  decision_type: DecisionType;
+  title: string;
+  description?: string;
+  agenda_item_id?: string;
+  agenda_item_title?: string;
+  assignee_id?: string;
+  assignee_name?: string;
+  due_date?: string;
+  is_completed: boolean;
+  completed_at?: string;
+  created_by_id?: string;
+  created_by_name?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DecisionCreate {
+  decision_type: DecisionType;
+  title: string;
+  description?: string;
+  agenda_item_id?: string;
+  assignee_id?: string;
+  due_date?: string;
+}
+
+export interface DecisionUpdate {
+  title?: string;
+  description?: string;
+  assignee_id?: string;
+  due_date?: string;
+  is_completed?: boolean;
+}
