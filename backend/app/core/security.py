@@ -16,7 +16,7 @@ from app.core.config import get_settings
 settings = get_settings()
 
 # Password hashing context
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 
 class UserRole(str, Enum):
@@ -41,7 +41,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 
 def get_password_hash(password: str) -> str:
-    """Hash a password using bcrypt."""
+    """Hash a password using pbkdf2_sha256."""
     return pwd_context.hash(password)
 
 

@@ -51,6 +51,7 @@ Meer screenshots en naming conventies vind je in [docs/screenshots/README.md](do
 cd backend
 cp .env.example .env
 python -m pip install -r requirements.txt
+python -m app.db.init_db
 uvicorn app.main:app --reload
 ```
 API docs: http://localhost:8000/docs
@@ -81,6 +82,11 @@ cp backend/.env.example backend/.env
 docker compose -f docker-compose.dev.yml up --build
 ```
 Frontend draait op http://localhost:81 en backend op http://localhost:7001/docs.
+
+Als de database nog geen tabellen heeft, maak ze handmatig aan in de backend container:
+```bash
+docker compose -f docker-compose.dev.yml exec backend python -m app.db.init_db
+```
 
 De dev-omgeving seed automatisch een beheerder:
 - **E-mail:** `admin@vvetooling.local`
