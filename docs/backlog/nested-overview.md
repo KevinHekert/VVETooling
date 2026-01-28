@@ -145,7 +145,7 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
       - 15.1.3 ✅ STORY-071 ALV uitnodiging versturen (Must)
     - 15.2 **FEAT-033 Presentie & Volmachten** ⚠️
       - 15.2.1 ✅ STORY-072 RSVP registreren voor ALV (Must)
-      - 15.2.2 ⬜ STORY-073 Volmacht digitaal afgeven (Must)
+      - 15.2.2 ✅ STORY-073 Volmacht digitaal afgeven (Must)
       - 15.2.3 ⬜ STORY-074 Quorum automatisch berekenen (Must)
     - 15.3 **FEAT-034 Notulen & Besluiten** ⬜
       - 15.3.1 ⬜ STORY-075 Notulen opstellen met template (Must)
@@ -266,7 +266,7 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
 |--------|--------|-----------|-----------|----------|
 | Epics | 27 | 13 | 14 | 48% |
 | Features | 69 | 27 | 42 | 39% |
-| Stories | 124 | 58 | 66 | 47% |
+| Stories | 124 | 59 | 65 | 48% |
 
 **Volledig afgeronde Epics (Horizon 1 - MVP):** EPIC-001, EPIC-002, EPIC-003, EPIC-004, EPIC-005, EPIC-006, EPIC-007, EPIC-008, EPIC-009, EPIC-010, EPIC-011, EPIC-012, EPIC-013
 
