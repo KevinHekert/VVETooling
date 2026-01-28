@@ -138,7 +138,7 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
       - 14.3.1 ✅ STORY-067 Onderhoudstaak aanmaken en toewijzen (Should)
       - 14.3.2 ✅ STORY-068 Onderhoudstaak status bijwerken (Should)
 
-15. **EPIC-015 ALV & Vergaderbeheer** ⚠️
+15. **EPIC-015 ALV & Vergaderbeheer** ✅
     - 15.1 **FEAT-032 ALV Planning & Uitnodigingen** ✅
       - 15.1.1 ✅ STORY-069 ALV plannen met datum en locatie (Must)
       - 15.1.2 ✅ STORY-070 ALV agenda opstellen (Must)
@@ -147,11 +147,11 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
       - 15.2.1 ✅ STORY-072 RSVP registreren voor ALV (Must)
       - 15.2.2 ✅ STORY-073 Volmacht digitaal afgeven (Must)
       - 15.2.3 ✅ STORY-074 Quorum automatisch berekenen (Must)
-    - 15.3 **FEAT-034 Notulen & Besluiten** ⚠️
+    - 15.3 **FEAT-034 Notulen & Besluiten** ✅
       - 15.3.1 ✅ STORY-075 Notulen opstellen met template (Must)
-      - 15.3.2 ⬜ STORY-076 Besluiten extraheren naar register (Should)
-      - 15.3.3 ⬜ STORY-077 Actiepunten toewijzen vanuit notulen (Should)
-      - 15.3.4 ⬜ STORY-120 Notulen delen met eigenaren (Must)
+      - 15.3.2 ✅ STORY-076 Besluiten extraheren naar register (Should)
+      - 15.3.3 ✅ STORY-077 Actiepunten toewijzen vanuit notulen (Should)
+      - 15.3.4 ✅ STORY-120 Notulen delen met eigenaren (Must)
 
 16. **EPIC-016 Juridisch & Compliance** ⬜
     - 16.1 **FEAT-035 Compliance Dashboard** ⬜
@@ -264,13 +264,13 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
 
 | Niveau | Totaal | ✅ Gereed | ⬜ Backlog | % Gereed |
 |--------|--------|-----------|-----------|----------|
-| Epics | 27 | 14 | 13 | 52% |
-| Features | 69 | 30 | 39 | 43% |
-| Stories | 124 | 68 | 56 | 55% |
+| Epics | 27 | 15 | 12 | 56% |
+| Features | 69 | 31 | 38 | 45% |
+| Stories | 124 | 71 | 53 | 57% |
 
-**Volledig afgeronde Epics (Horizon 1 - MVP):** EPIC-001, EPIC-002, EPIC-003, EPIC-004, EPIC-005, EPIC-006, EPIC-007, EPIC-008, EPIC-009, EPIC-010, EPIC-011, EPIC-012, EPIC-013, EPIC-014
+**Volledig afgeronde Epics (Horizon 1 - MVP):** EPIC-001, EPIC-002, EPIC-003, EPIC-004, EPIC-005, EPIC-006, EPIC-007, EPIC-008, EPIC-009, EPIC-010, EPIC-011, EPIC-012, EPIC-013, EPIC-014, EPIC-015
 
-**Nieuwe Epics (Horizon 2 - Uitbreiding):** EPIC-015, EPIC-016, EPIC-017, EPIC-018, EPIC-019, EPIC-020, EPIC-021, EPIC-022, EPIC-023, EPIC-024, EPIC-025, EPIC-026, EPIC-027
+**Nieuwe Epics (Horizon 2 - Uitbreiding):** EPIC-016, EPIC-017, EPIC-018, EPIC-019, EPIC-020, EPIC-021, EPIC-022, EPIC-023, EPIC-024, EPIC-025, EPIC-026, EPIC-027
 
 ---
 - Prioriteitlabels komen uit de individuele stories (Must/Should). Waar een story meerdere features raakt, is de primaire plaatsing hierboven opgenomen en gemarkeerd als *gedeeld* wanneer relevant.
