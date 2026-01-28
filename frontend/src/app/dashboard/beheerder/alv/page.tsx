@@ -120,7 +120,7 @@ export default function ALVPage() {
   const loadActionItems = async (meetingId: string) => {
     setIsLoadingActionItems(true);
     try {
-      const data = await api.listDecisions(vveId, meetingId, { type: 'actiepunt' });
+      const data = await api.listDecisions(vveId, meetingId, 'actiepunt');
       setActionItems(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Kon actiepunten niet ophalen');
