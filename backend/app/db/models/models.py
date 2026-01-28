@@ -2061,3 +2061,76 @@ class PollVote(Base):
         Index("ix_poll_votes_poll_id", "poll_id"),
         Index("ix_poll_votes_user_id", "user_id"),
     )
+
+
+# ============================================================================
+# Privacy Statement Models - STORY-080 AVG Module
+# ============================================================================
+
+
+class PrivacyStatementStatus(str, Enum):
+    """Status of a privacy statement (STORY-080)."""
+
+    DRAFT = "draft"
+    PUBLISHED = "published"
+    ARCHIVED = "archived"
+
+
+class PrivacyStatement(Base):
+    """Privacy statement for AVG compliance (STORY-080).
+
+    Implements FEAT-036: AVG Module.
+    Allows VVEs to generate and manage privacy statements.
+    """
+
+    __tablename__ = "privacy_statements"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    vve_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("vves.id", ondelete="CASCADE"), nullable=False
+    )
+    # Statement content
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    version: Mapped[str] = mapped_column(String(50), nullable=False)
+    # VVE Information (auto-filled or customized)
+    vve_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    vve_address: Mapped[str | None] = mapped_column(String(500))
+    contact_email: Mapped[str | None] = mapped_column(String(255))
+    contact_phone: Mapped[str | None] = mapped_column(String(50))
+    # Data protection officer info (optional)
+    dpo_name: Mapped[str | None] = mapped_column(String(255))
+    dpo_email: Mapped[str | None] = mapped_column(String(255))
+    # Privacy statement content sections (stored as JSON)
+    introduction: Mapped[str | None] = mapped_column(Text)  # Inleiding
+    data_collected: Mapped[str | None] = mapped_column(Text)  # Welke gegevens verzamelen we
+    data_purpose: Mapped[str | None] = mapped_column(Text)  # Doel van gegevensverwerking
+    legal_basis: Mapped[str | None] = mapped_column(Text)  # Rechtsgrond
+    data_sharing: Mapped[str | None] = mapped_column(Text)  # Met wie delen we gegevens
+    retention_period: Mapped[str | None] = mapped_column(Text)  # Bewaartermijnen
+    rights: Mapped[str | None] = mapped_column(Text)  # Rechten van betrokkenen
+    cookies: Mapped[str | None] = mapped_column(Text)  # Cookies en tracking
+    security: Mapped[str | None] = mapped_column(Text)  # Beveiliging
+    complaints: Mapped[str | None] = mapped_column(Text)  # Klachten
+    changes: Mapped[str | None] = mapped_column(Text)  # Wijzigingen
+    # Status
+    status: Mapped[PrivacyStatementStatus] = mapped_column(
+        SQLEnum(PrivacyStatementStatus), default=PrivacyStatementStatus.DRAFT
+    )
+    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Metadata
+    created_by_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    __table_args__ = (
+        Index("ix_privacy_statements_vve_id", "vve_id"),
+        Index("ix_privacy_statements_status", "status"),
+    )
