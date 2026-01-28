@@ -3,7 +3,7 @@
 ## Documentinformatie
 - **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: ⬜ Backlog
+- **Status**: ✅ Geïmplementeerd
 - **Versie**: 1.0
 - **Prioriteit**: Could (Horizon 2)
 - **Geneste nummering**: 14.2.2

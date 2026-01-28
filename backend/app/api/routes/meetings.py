@@ -10,7 +10,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies.auth import (
@@ -45,8 +45,12 @@ from app.schemas.meeting import (
     AgendaItemUpdate,
     DecisionCreate,
     DecisionResponse,
+    DecisionSearchRequest,
+    DecisionSearchResponse,
+    DecisionSearchResult,
     DecisionType,
     DecisionUpdate,
+    DecisionVoteResult,
     EligibleGrantee,
     MeetingCreate,
     MeetingInvitationCreate,
@@ -2677,3 +2681,250 @@ async def preview_share_minutes(
         "decisions_count": len(decisions),
         "can_share": minutes.status != DBMinutesStatus.DRAFT,
     }
+
+
+# ============================================================================
+# STORY-081: Besluit doorzoeken in register
+# ============================================================================
+
+
+@router.post(
+    "/decisions/search",
+    response_model=DecisionSearchResponse,
+    summary="Besluiten doorzoeken in register",
+    description="""
+    STORY-081: Als bestuurslid wil ik besluiten kunnen doorzoeken op onderwerp, 
+    datum en stemresultaat, zodat ik snel historische besluiten kan terugvinden.
+    
+    Features:
+    - Full-text zoeken in besluiten (titel en beschrijving)
+    - Filter op datumbereik
+    - Filter op stemresultaat (aangenomen/verworpen)
+    - Resultaten met relevante snippets en highlights
+    """,
+)
+async def search_decisions(
+    vve_id: uuid.UUID,
+    search_request: DecisionSearchRequest,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: AsyncSession = Depends(get_db),
+) -> DecisionSearchResponse:
+    """Search decisions in the register with full-text search and filters (STORY-081)."""
+    # Build the base query
+    query = (
+        select(MeetingDecision, Meeting)
+        .join(Meeting, Meeting.id == MeetingDecision.meeting_id)
+        .where(Meeting.vve_id == vve_id)
+    )
+    
+    # Apply filters
+    filters_applied: dict[str, str] = {}
+    
+    # Full-text search on title and description
+    # Escape SQL LIKE wildcards to prevent pattern injection
+    if search_request.query:
+        escaped_query = (
+            search_request.query
+            .replace("\\", "\\\\")
+            .replace("%", "\\%")
+            .replace("_", "\\_")
+        )
+        search_term = f"%{escaped_query.lower()}%"
+        query = query.where(
+            (MeetingDecision.title.ilike(search_term)) |
+            (MeetingDecision.description.ilike(search_term))
+        )
+        filters_applied["query"] = search_request.query
+    
+    # Date range filter
+    if search_request.date_from:
+        query = query.where(Meeting.meeting_date >= search_request.date_from)
+        filters_applied["date_from"] = search_request.date_from.isoformat()
+    
+    if search_request.date_to:
+        query = query.where(Meeting.meeting_date <= search_request.date_to)
+        filters_applied["date_to"] = search_request.date_to.isoformat()
+    
+    # Decision type filter
+    if search_request.decision_type:
+        query = query.where(
+            MeetingDecision.decision_type == DBDecisionType(search_request.decision_type.value)
+        )
+        filters_applied["decision_type"] = search_request.decision_type.value
+    
+    # Vote result filter - stored in description for now (could be separate field)
+    if search_request.vote_result:
+        # For MVP, we'll look for vote result keywords in description
+        if search_request.vote_result == DecisionVoteResult.AANGENOMEN:
+            query = query.where(
+                MeetingDecision.description.ilike("%aangenomen%") |
+                MeetingDecision.description.ilike("%goedgekeurd%") |
+                MeetingDecision.description.ilike("%akkoord%")
+            )
+        elif search_request.vote_result == DecisionVoteResult.VERWORPEN:
+            query = query.where(
+                MeetingDecision.description.ilike("%verworpen%") |
+                MeetingDecision.description.ilike("%afgewezen%")
+            )
+        filters_applied["vote_result"] = search_request.vote_result.value
+    
+    # Count total results (before pagination)
+    count_query = select(func.count()).select_from(query.subquery())
+    count_result = await db.execute(count_query)
+    total_count = count_result.scalar() or 0
+    
+    # Order by meeting date descending (most recent first)
+    query = query.order_by(Meeting.meeting_date.desc(), MeetingDecision.created_at.desc())
+    
+    # Apply pagination
+    query = query.offset(search_request.skip).limit(search_request.limit)
+    
+    # Execute query
+    result = await db.execute(query)
+    rows = result.all()
+    
+    # Build search results with snippets
+    results: list[DecisionSearchResult] = []
+    for decision, meeting in rows:
+        # Create relevance snippet with highlighted search terms
+        snippet = None
+        if search_request.query and decision.description:
+            # Find the position of the search term and create a snippet
+            desc_lower = decision.description.lower()
+            query_lower = search_request.query.lower()
+            pos = desc_lower.find(query_lower)
+            if pos >= 0:
+                start = max(0, pos - 50)
+                end = min(len(decision.description), pos + len(search_request.query) + 50)
+                snippet = decision.description[start:end]
+                if start > 0:
+                    snippet = "..." + snippet
+                if end < len(decision.description):
+                    snippet = snippet + "..."
+                # Highlight the search term with <mark> tags (case-insensitive)
+                import re
+                pattern = re.compile(re.escape(search_request.query), re.IGNORECASE)
+                snippet = pattern.sub(
+                    lambda m: f"<mark>{m.group()}</mark>",
+                    snippet
+                )
+        
+        # Parse vote result from description (simplified for MVP)
+        vote_result = None
+        if decision.description:
+            desc_lower = decision.description.lower()
+            if "aangenomen" in desc_lower or "goedgekeurd" in desc_lower:
+                vote_result = DecisionVoteResult.AANGENOMEN
+            elif "verworpen" in desc_lower or "afgewezen" in desc_lower:
+                vote_result = DecisionVoteResult.VERWORPEN
+            elif "aangehouden" in desc_lower:
+                vote_result = DecisionVoteResult.AANGEHOUDEN
+        
+        results.append(
+            DecisionSearchResult(
+                id=decision.id,
+                meeting_id=meeting.id,
+                meeting_title=meeting.title,
+                meeting_date=meeting.meeting_date,
+                decision_type=DecisionType(decision.decision_type.value),
+                title=decision.title,
+                description=decision.description,
+                vote_result=vote_result,
+                is_completed=decision.is_completed,
+                created_at=decision.created_at,
+                relevance_snippet=snippet,
+                match_score=1.0 if search_request.query else 0.5,
+            )
+        )
+    
+    return DecisionSearchResponse(
+        query=search_request.query,
+        total_count=total_count,
+        results=results,
+        has_more=(search_request.skip + len(results)) < total_count,
+        filters_applied=filters_applied,
+    )
+
+
+@router.get(
+    "/decisions/register",
+    response_model=DecisionSearchResponse,
+    summary="Besluitenregister overzicht",
+    description="Haal het volledige besluitenregister op (STORY-081).",
+)
+async def get_decision_register(
+    vve_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: AsyncSession = Depends(get_db),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=100),
+    decision_type: DecisionType | None = Query(None),
+) -> DecisionSearchResponse:
+    """Get the full decision register for the VVE (STORY-081)."""
+    # Build query
+    query = (
+        select(MeetingDecision, Meeting)
+        .join(Meeting, Meeting.id == MeetingDecision.meeting_id)
+        .where(Meeting.vve_id == vve_id)
+    )
+    
+    filters_applied: dict[str, str] = {}
+    
+    # Only show official decisions by default
+    if decision_type:
+        query = query.where(
+            MeetingDecision.decision_type == DBDecisionType(decision_type.value)
+        )
+        filters_applied["decision_type"] = decision_type.value
+    else:
+        query = query.where(
+            MeetingDecision.decision_type == DBDecisionType.BESLUIT
+        )
+        filters_applied["decision_type"] = "besluit"
+    
+    # Count total
+    count_query = select(func.count()).select_from(query.subquery())
+    count_result = await db.execute(count_query)
+    total_count = count_result.scalar() or 0
+    
+    # Order and paginate
+    query = query.order_by(Meeting.meeting_date.desc())
+    query = query.offset(skip).limit(limit)
+    
+    result = await db.execute(query)
+    rows = result.all()
+    
+    results: list[DecisionSearchResult] = []
+    for decision, meeting in rows:
+        # Parse vote result
+        vote_result = None
+        if decision.description:
+            desc_lower = decision.description.lower()
+            if "aangenomen" in desc_lower or "goedgekeurd" in desc_lower:
+                vote_result = DecisionVoteResult.AANGENOMEN
+            elif "verworpen" in desc_lower or "afgewezen" in desc_lower:
+                vote_result = DecisionVoteResult.VERWORPEN
+        
+        results.append(
+            DecisionSearchResult(
+                id=decision.id,
+                meeting_id=meeting.id,
+                meeting_title=meeting.title,
+                meeting_date=meeting.meeting_date,
+                decision_type=DecisionType(decision.decision_type.value),
+                title=decision.title,
+                description=decision.description,
+                vote_result=vote_result,
+                is_completed=decision.is_completed,
+                created_at=decision.created_at,
+                match_score=1.0,
+            )
+        )
+    
+    return DecisionSearchResponse(
+        query=None,
+        total_count=total_count,
+        results=results,
+        has_more=(skip + len(results)) < total_count,
+        filters_applied=filters_applied,
+    )
