@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
-import type { MeetingListItem, MeetingCreate, MeetingType, MeetingStatus, AgendaItem, AgendaItemCreate, MeetingInvitationPreview, MeetingRsvp, RsvpSummary, RsvpStatus, QuorumCalculation, ProxySummary } from '@/types';
+import type { MeetingListItem, MeetingCreate, MeetingType, MeetingStatus, AgendaItem, AgendaItemCreate, MeetingInvitationPreview, MeetingRsvp, RsvpSummary, RsvpStatus, QuorumCalculation, ProxySummary, MeetingDecision, DecisionCreate, DecisionType } from '@/types';
 
 /**
- * ALV (Algemene Ledenvergadering) Management - STORY-069, STORY-070, STORY-071, STORY-072, STORY-074
+ * ALV (Algemene Ledenvergadering) Management - STORY-069, STORY-070, STORY-071, STORY-072, STORY-074, STORY-077
  * 
  * Allows beheerder/secretaris to:
  * - Plan new ALV meetings with date, time, type and location
@@ -14,6 +14,7 @@ import type { MeetingListItem, MeetingCreate, MeetingType, MeetingStatus, Agenda
  * - STORY-070: Manage agenda with items, durations, and drag & drop
  * - STORY-071: Send invitations to all members
  * - STORY-074: View quorum calculation with real-time updates
+ * - STORY-077: Add action items with assignee and deadline
  */
 
 const MEETING_TYPE_LABELS: Record<MeetingType, { label: string; icon: string }> = {
@@ -28,6 +29,12 @@ const MEETING_STATUS_LABELS: Record<MeetingStatus, { label: string; color: strin
   actief: { label: 'Actief', color: 'bg-green-100 text-green-700' },
   afgesloten: { label: 'Afgesloten', color: 'bg-gray-100 text-gray-700' },
   geannuleerd: { label: 'Geannuleerd', color: 'bg-red-100 text-red-700' },
+};
+
+const DECISION_TYPE_LABELS: Record<DecisionType, { label: string; color: string }> = {
+  besluit: { label: 'Besluit', color: 'bg-blue-100 text-blue-700' },
+  actiepunt: { label: 'Actiepunt', color: 'bg-purple-100 text-purple-700' },
+  aandachtspunt: { label: 'Aandachtspunt', color: 'bg-orange-100 text-orange-700' },
 };
 
 export default function ALVPage() {
@@ -77,6 +84,18 @@ export default function ALVPage() {
   const [proxySummary, setProxySummary] = useState<ProxySummary | null>(null);
   const [isLoadingQuorum, setIsLoadingQuorum] = useState(false);
 
+  // STORY-077: Action items state
+  const [showActionItemModal, setShowActionItemModal] = useState(false);
+  const [actionItems, setActionItems] = useState<MeetingDecision[]>([]);
+  const [isLoadingActionItems, setIsLoadingActionItems] = useState(false);
+  const [newActionItem, setNewActionItem] = useState<DecisionCreate>({
+    decision_type: 'actiepunt',
+    title: '',
+    description: '',
+    due_date: '',
+  });
+  const [isSubmittingActionItem, setIsSubmittingActionItem] = useState(false);
+
   // TODO: Get VVE ID from context/session
   const vveId = 'demo-vve-id';
 
@@ -94,6 +113,43 @@ export default function ALVPage() {
       setError(err instanceof Error ? err.message : 'Kon vergaderingen niet ophalen');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // STORY-077: Load action items for selected meeting
+  const loadActionItems = async (meetingId: string) => {
+    setIsLoadingActionItems(true);
+    try {
+      const data = await api.listDecisions(vveId, meetingId, 'actiepunt');
+      setActionItems(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Kon actiepunten niet ophalen');
+    } finally {
+      setIsLoadingActionItems(false);
+    }
+  };
+
+  // STORY-077: Create action item
+  const handleCreateActionItem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedMeeting) return;
+    
+    setIsSubmittingActionItem(true);
+    try {
+      await api.createDecision(vveId, selectedMeeting.id, newActionItem);
+      setSuccessMessage('Actiepunt toegevoegd');
+      setNewActionItem({
+        decision_type: 'actiepunt',
+        title: '',
+        description: '',
+        due_date: '',
+      });
+      loadActionItems(selectedMeeting.id);
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Kon actiepunt niet toevoegen');
+    } finally {
+      setIsSubmittingActionItem(false);
     }
   };
 
@@ -332,6 +388,24 @@ export default function ALVPage() {
     } finally {
       setIsLoadingQuorum(false);
     }
+  };
+
+  // STORY-077: Action items modal functions
+  const openActionItemModal = async (meeting: MeetingListItem) => {
+    setSelectedMeeting(meeting);
+    setShowActionItemModal(true);
+    loadActionItems(meeting.id);
+  };
+
+  const closeActionItemModal = () => {
+    setShowActionItemModal(false);
+    setActionItems([]);
+    setNewActionItem({
+      decision_type: 'actiepunt',
+      title: '',
+      description: '',
+      due_date: '',
+    });
   };
 
   const RSVP_STATUS_LABELS: Record<RsvpStatus, { label: string; icon: string; color: string }> = {
@@ -641,6 +715,13 @@ export default function ALVPage() {
                       >
                         ⚖️ Quorum
                       </button>
+                      {/* STORY-077: Action items button */}
+                      <button
+                        onClick={() => openActionItemModal(meeting)}
+                        className="text-sm text-orange-600 hover:text-orange-800"
+                      >
+                        ✅ Actiepunten
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -651,7 +732,7 @@ export default function ALVPage() {
       )}
 
       {/* STORY-070: Agenda Modal */}
-      {selectedMeeting && !showRsvpModal && !showInvitationModal && !showQuorumModal && (
+      {selectedMeeting && !showRsvpModal && !showInvitationModal && !showQuorumModal && !showActionItemModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
@@ -1222,6 +1303,149 @@ export default function ALVPage() {
                   Geen quorum gegevens beschikbaar.
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* STORY-077: Action Items Modal */}
+      {showActionItemModal && selectedMeeting && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              {/* Modal Header */}
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">
+                    ✅ Actiepunten - {selectedMeeting.title}
+                  </h2>
+                  <p className="text-sm text-gray-600">
+                    Beheer actiepunten voor deze vergadering
+                  </p>
+                </div>
+                <button
+                  onClick={closeActionItemModal}
+                  className="text-gray-400 hover:text-gray-600 text-xl"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Add Action Item Form */}
+              <form onSubmit={handleCreateActionItem} className="mb-6 bg-gray-50 p-4 rounded-lg">
+                <h3 className="font-semibold text-gray-900 mb-3">Nieuw actiepunt toevoegen</h3>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Titel *
+                    </label>
+                    <input
+                      type="text"
+                      value={newActionItem.title}
+                      onChange={(e) => setNewActionItem({ ...newActionItem, title: e.target.value })}
+                      placeholder="Wat moet er gebeuren?"
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Beschrijving
+                    </label>
+                    <textarea
+                      value={newActionItem.description || ''}
+                      onChange={(e) => setNewActionItem({ ...newActionItem, description: e.target.value })}
+                      placeholder="Aanvullende details..."
+                      rows={2}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Deadline
+                    </label>
+                    <input
+                      type="date"
+                      value={newActionItem.due_date || ''}
+                      onChange={(e) => setNewActionItem({ ...newActionItem, due_date: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={isSubmittingActionItem || !newActionItem.title}
+                    className="w-full px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                  >
+                    {isSubmittingActionItem ? 'Bezig...' : 'Actiepunt toevoegen'}
+                  </button>
+                </div>
+              </form>
+
+              {/* Action Items List */}
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-3">
+                  Bestaande actiepunten ({actionItems.length})
+                </h3>
+                {isLoadingActionItems ? (
+                  <div className="flex justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
+                  </div>
+                ) : actionItems.length === 0 ? (
+                  <p className="text-gray-500 text-center py-8">
+                    Nog geen actiepunten voor deze vergadering
+                  </p>
+                ) : (
+                  <ul className="space-y-3">
+                    {actionItems.map((item) => (
+                      <li
+                        key={item.id}
+                        className={`p-3 border rounded-lg ${
+                          item.is_completed ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${
+                                DECISION_TYPE_LABELS[item.decision_type as DecisionType]?.color || 'bg-gray-100 text-gray-700'
+                              }`}>
+                                {DECISION_TYPE_LABELS[item.decision_type as DecisionType]?.label || item.decision_type}
+                              </span>
+                              {item.is_completed && (
+                                <span className="text-green-600 text-sm">✓ Afgerond</span>
+                              )}
+                            </div>
+                            <h4 className={`font-medium mt-1 ${item.is_completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
+                              {item.title}
+                            </h4>
+                            {item.description && (
+                              <p className="text-sm text-gray-600 mt-1">{item.description}</p>
+                            )}
+                            <div className="flex gap-4 mt-2 text-sm text-gray-500">
+                              {item.due_date && (
+                                <span>📅 Deadline: {new Date(item.due_date).toLocaleDateString('nl-NL')}</span>
+                              )}
+                              {item.assignee_name && (
+                                <span>👤 {item.assignee_name}</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              {/* Close button */}
+              <div className="mt-6 text-right">
+                <button
+                  onClick={closeActionItemModal}
+                  className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Sluiten
+                </button>
+              </div>
             </div>
           </div>
         </div>

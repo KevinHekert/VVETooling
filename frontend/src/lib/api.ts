@@ -1128,6 +1128,83 @@ class ApiClient {
     );
   }
 
+  // STORY-076: Extract decisions to register
+  async extractDecisions(vveId: string, meetingId: string, decisionIds?: string[]) {
+    return this.fetch<import('@/types').DecisionExtractResponse>(
+      `/vves/${vveId}/meetings/${meetingId}/decisions/extract`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ decision_ids: decisionIds || null }),
+      }
+    );
+  }
+
+  // ============================================================================
+  // Digital Voting Methods (STORY-113, STORY-114, STORY-115)
+  // ============================================================================
+
+  // STORY-113: Create voting
+  async createVoting(vveId: string, data: import('@/types').VotingCreate) {
+    return this.fetch<import('@/types').Voting>(
+      `/vves/${vveId}/voting`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async listVotings(vveId: string, params?: { status?: string }) {
+    const query = params?.status ? `?status=${params.status}` : '';
+    return this.fetch<import('@/types').VotingListItem[]>(
+      `/vves/${vveId}/voting${query}`
+    );
+  }
+
+  async getVoting(vveId: string, votingId: string) {
+    return this.fetch<import('@/types').Voting>(
+      `/vves/${vveId}/voting/${votingId}`
+    );
+  }
+
+  async openVoting(vveId: string, votingId: string) {
+    return this.fetch<import('@/types').Voting>(
+      `/vves/${vveId}/voting/${votingId}/open`,
+      { method: 'POST' }
+    );
+  }
+
+  async closeVoting(vveId: string, votingId: string) {
+    return this.fetch<import('@/types').Voting>(
+      `/vves/${vveId}/voting/${votingId}/close`,
+      { method: 'POST' }
+    );
+  }
+
+  // STORY-114: Cast vote
+  async castVote(vveId: string, votingId: string, choice: import('@/types').VoteChoice) {
+    return this.fetch<import('@/types').Vote>(
+      `/vves/${vveId}/voting/${votingId}/vote`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ choice }),
+      }
+    );
+  }
+
+  async getMyVote(vveId: string, votingId: string) {
+    return this.fetch<import('@/types').Vote | null>(
+      `/vves/${vveId}/voting/${votingId}/vote/me`
+    );
+  }
+
+  // STORY-115: Get voting results
+  async getVotingResults(vveId: string, votingId: string) {
+    return this.fetch<import('@/types').VotingResults>(
+      `/vves/${vveId}/voting/${votingId}/results`
+    );
+  }
+
   // ============================================================================
   // Voting Proxy Methods (STORY-117)
   // ============================================================================

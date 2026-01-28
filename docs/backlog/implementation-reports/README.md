@@ -12,63 +12,146 @@ Deze directory bevat implementatierapporten voor elke voltooide user story. Elk 
 
 | Categorie | Aantal | Percentage |
 |-----------|--------|------------|
-| ✅ Geïmplementeerd | 22 | 50% |
-| ⬜ Backlog | 22 | 50% |
-| **Totaal** | 44 | 100% |
+| ✅ Geïmplementeerd | 76 | 61% |
+| ⬜ Backlog | 48 | 39% |
+| **Totaal** | 124 | 100% |
 
 ## Geïmplementeerde Stories
 
-| Genest # | Story | Titel | Status | Rapport |
-|----------|-------|-------|--------|---------|
-| 1.1.1 | STORY-001 | Transactie toevoegen | ✅ Geïmplementeerd | [STORY-001-implementatie.md](STORY-001-implementatie.md) |
-| 2.1.1 | STORY-002 | Splitsingssleutel valideren | ✅ Geïmplementeerd | [STORY-002-implementatie.md](STORY-002-implementatie.md) |
-| 2.2.1 | STORY-003 | Bewoner ziet eigen status | ✅ Geïmplementeerd | [STORY-003-implementatie.md](STORY-003-implementatie.md) |
-| 6.1.1 | STORY-004 | Bestuur uploadt document | ✅ Geïmplementeerd | [STORY-004-implementatie.md](STORY-004-implementatie.md) |
-| 5.1.1 | STORY-005 | Rol-gebaseerd inloggen | ✅ Geïmplementeerd | [STORY-005-implementatie.md](STORY-005-implementatie.md) |
-| 3.2.1 | STORY-006 | Begroting opstellen en exporteren | ✅ Geïmplementeerd | [STORY-006-implementatie.md](STORY-006-implementatie.md) |
-| 4.1.1 | STORY-007 | Onboarding wizard voor meerdere rollen | ✅ Geïmplementeerd | [STORY-007-implementatie.md](STORY-007-implementatie.md) |
-| 6.2.1 | STORY-008 | Documenten delen en downloaden | ✅ Geïmplementeerd | [STORY-008-implementatie.md](STORY-008-implementatie.md) |
-| 9.1.1 | STORY-009 | Rol-specifiek dashboard raamwerk | ✅ Geïmplementeerd | [STORY-009-implementatie.md](STORY-009-implementatie.md) |
-| 5.2.1 | STORY-010 | Audit logging zichtbaar in UI | ✅ Geïmplementeerd | [STORY-010-implementatie.md](STORY-010-implementatie.md) |
-| 1.1.2 | STORY-011 | Transacties importeren en valideren | ✅ Geïmplementeerd | [STORY-011-implementatie.md](STORY-011-implementatie.md) |
-| 1.1.3 | STORY-012 | Transactie-overzicht met filters en widgets | ✅ Geïmplementeerd | [STORY-012-implementatie.md](STORY-012-implementatie.md) |
-| 1.2.1 | STORY-013 | Reserves overzicht en allocatie | ✅ Geïmplementeerd | [STORY-013-implementatie.md](STORY-013-implementatie.md) |
-| 2.2.2 | STORY-014 | Contributie berekenen en status delen | ✅ Geïmplementeerd | [STORY-014-implementatie.md](STORY-014-implementatie.md) |
-| 3.1.1 | STORY-015 | Jaarrekening genereren en delen | ✅ Geïmplementeerd | [STORY-015-implementatie.md](STORY-015-implementatie.md) |
-| 2.1.2 | STORY-016 | Splitsingssleutel configureren met UI-wizard | ✅ Geïmplementeerd | [STORY-016-implementatie.md](STORY-016-implementatie.md) |
-| 4.1.2 | STORY-017 | Onboarding uitnodigingen en herinneringen | ✅ Geïmplementeerd | [STORY-017-implementatie.md](STORY-017-implementatie.md) |
-| 6.1.2 | STORY-018 | Document versiebeheer en rol-specifiek delen | ✅ Geïmplementeerd | [STORY-018-implementatie.md](STORY-018-implementatie.md) |
-| 5.1.2 | STORY-021 | Auth & RBAC UI beheer | ✅ Geïmplementeerd | [STORY-021-implementatie.md](STORY-021-implementatie.md) |
-| 9.1.3 | STORY-024 | Multi-tenant toegang en context switcher | ✅ Geïmplementeerd | [STORY-024-implementatie.md](STORY-024-implementatie.md) |
-| 9.1.4 | STORY-025 | Notificaties en toasts consistent raamwerk | ✅ Geïmplementeerd | [STORY-025-implementatie.md](STORY-025-implementatie.md) |
-| 1.2.4 | STORY-028 | Mobile-first reserves dashboard | ✅ Geïmplementeerd | [STORY-028-implementatie.md](STORY-028-implementatie.md) |
+### EPIC-001: Financieel overzicht beheren
+| Story | Titel | Rapport |
+|-------|-------|---------|
+| STORY-001 | Transactie toevoegen | [Rapport](STORY-001-implementatie.md) |
+| STORY-011 | Transacties importeren en valideren | [Rapport](STORY-011-implementatie.md) |
+| STORY-012 | Transactie-overzicht met filters en widgets | [Rapport](STORY-012-implementatie.md) |
+| STORY-013 | Reserves overzicht en allocatie | [Rapport](STORY-013-implementatie.md) |
+| STORY-026 | Reserves scenario-planning en prognose | [Rapport](STORY-026-implementatie.md) |
+| STORY-027 | Reserves herclassificatie en audit trail | [Rapport](STORY-027-implementatie.md) |
+| STORY-028 | Mobile-first reserves dashboard | [Rapport](STORY-028-implementatie.md) |
+| STORY-033 | Reservefonds prognose dashboard | [Rapport](STORY-033-implementatie.md) |
+| STORY-039 | Reservefonds prognose export en scenario | [Rapport](STORY-039-implementatie.md) |
+| STORY-040 | Reservefonds prognose waarschuwingen | [Rapport](STORY-040-implementatie.md) |
 
-## Backlog Stories (nog te implementeren)
+### EPIC-002: Splitsingen beheren
+| Story | Titel | Rapport |
+|-------|-------|---------|
+| STORY-002 | Splitsingssleutel valideren | [Rapport](STORY-002-implementatie.md) |
+| STORY-016 | Splitsingssleutel configureren met UI-wizard | [Rapport](STORY-016-implementatie.md) |
+| STORY-003 | Bewoner ziet eigen status | [Rapport](STORY-003-implementatie.md) |
+| STORY-014 | Contributie berekenen en status delen | [Rapport](STORY-014-implementatie.md) |
 
-| Genest # | Story | Titel | Prioriteit |
-|----------|-------|-------|------------|
-| 6.2.2 | STORY-019 | Document download-links en notificaties | Should |
-| 8.1.1 | STORY-020 | Pricing- en abonnementenbeheer UI | Should |
-| 7.1.1 | STORY-022 | Export en back-up UI | Should |
-| 5.2.2 | STORY-023 | Audit logging filters en export | Should |
-| 1.2.2 | STORY-026 | Reserves scenario-planning en prognose | Should |
-| 1.2.3 | STORY-027 | Reserves herclassificatie en audit trail | Should |
-| 10.1.1 | STORY-029 | Bewoner ticket wizard en tijdlijn | Must |
-| 10.1.2 | STORY-030 | Ticket bewijsstukken (bonnen en facturen) | Must |
-| 10.1.3 | STORY-031 | Bestuur ticket inzicht en behandeling | Must |
-| 6.3.1 | STORY-032 | Splitsingsakte versie en aanvullingen | Should |
-| 1.3.1 | STORY-033 | Reservefonds prognose dashboard | Should |
-| 10.2.1 | STORY-034 | Leveranciers koppelen aan tickets | Should |
-| 10.2.2 | STORY-035 | Leveranciersprofiel beheren | Should |
-| 10.2.3 | STORY-036 | Leveranciers opvolgacties loggen | Should |
-| 10.1.4 | STORY-037 | Ticket communicatie en notities | Must |
-| 10.1.5 | STORY-038 | Ticket prioriteit en SLA | Should |
-| 1.3.2 | STORY-039 | Reservefonds prognose export en scenario | Should |
-| 1.3.3 | STORY-040 | Reservefonds prognose waarschuwingen | Should |
-| 6.3.2 | STORY-041 | Splitsingsakte versies overzicht | Must |
-| 6.3.3 | STORY-042 | Splitsingsakte aanvullingen log | Should |
-| 6.3.4 | STORY-043 | Splitsingsakte publicatie en toegang | Should |
-| 10.2.4 | STORY-044 | Ticket supplier collaboration status | Must |
+### EPIC-003: Jaarrekening & begroting
+| Story | Titel | Rapport |
+|-------|-------|---------|
+| STORY-015 | Jaarrekening genereren en delen | [Rapport](STORY-015-implementatie.md) |
+| STORY-006 | Begroting opstellen en exporteren | [Rapport](STORY-006-implementatie.md) |
+
+### EPIC-004: Onboarding alle rollen
+| Story | Titel | Rapport |
+|-------|-------|---------|
+| STORY-007 | Onboarding wizard voor meerdere rollen | [Rapport](STORY-007-implementatie.md) |
+| STORY-017 | Onboarding uitnodigingen en herinneringen | [Rapport](STORY-017-implementatie.md) |
+
+### EPIC-005: Veiligheid & compliance
+| Story | Titel | Rapport |
+|-------|-------|---------|
+| STORY-005 | Rol-gebaseerd inloggen | [Rapport](STORY-005-implementatie.md) |
+| STORY-021 | Auth & RBAC UI beheer | [Rapport](STORY-021-implementatie.md) |
+| STORY-010 | Audit logging zichtbaar in UI | [Rapport](STORY-010-implementatie.md) |
+| STORY-023 | Audit logging filters en export | [Rapport](STORY-023-implementatie.md) |
+
+### EPIC-006: Documenten delen
+| Story | Titel | Rapport |
+|-------|-------|---------|
+| STORY-004 | Bestuur uploadt document | [Rapport](STORY-004-implementatie.md) |
+| STORY-018 | Document versiebeheer en rol-specifiek delen | [Rapport](STORY-018-implementatie.md) |
+| STORY-008 | Documenten delen en downloaden | [Rapport](STORY-008-implementatie.md) |
+| STORY-019 | Document download-links en notificaties | [Rapport](STORY-019-implementatie.md) |
+| STORY-032 | Splitsingsakte versie en aanvullingen | [Rapport](STORY-032-implementatie.md) |
+| STORY-041 | Splitsingsakte versies overzicht | [Rapport](STORY-041-implementatie.md) |
+| STORY-042 | Splitsingsakte aanvullingen log | [Rapport](STORY-042-implementatie.md) |
+| STORY-043 | Splitsingsakte publicatie en toegang | [Rapport](STORY-043-implementatie.md) |
+
+### EPIC-007: Data export & backup
+| Story | Titel | Rapport |
+|-------|-------|---------|
+| STORY-022 | Export en back-up UI | [Rapport](STORY-022-implementatie.md) |
+
+### EPIC-008: Betaling & abonnement
+| Story | Titel | Rapport |
+|-------|-------|---------|
+| STORY-020 | Pricing- en abonnementenbeheer UI | [Rapport](STORY-020-implementatie.md) |
+
+### EPIC-009: Multi-user toegang & dashboards
+| Story | Titel | Rapport |
+|-------|-------|---------|
+| STORY-009 | Rol-specifiek dashboard raamwerk | [Rapport](STORY-009-implementatie.md) |
+| STORY-024 | Multi-tenant toegang en context switcher | [Rapport](STORY-024-implementatie.md) |
+| STORY-025 | Notificaties en toasts consistent raamwerk | [Rapport](STORY-025-implementatie.md) |
+
+### EPIC-010: Serviceverzoeken & leveranciers
+| Story | Titel | Rapport |
+|-------|-------|---------|
+| STORY-029 | Bewoner ticket wizard en tijdlijn | [Rapport](STORY-029-implementatie.md) |
+| STORY-030 | Ticket bewijsstukken (bonnen en facturen) | [Rapport](STORY-030-implementatie.md) |
+| STORY-031 | Bestuur ticket inzicht en behandeling | [Rapport](STORY-031-implementatie.md) |
+| STORY-037 | Ticket communicatie en notities | [Rapport](STORY-037-implementatie.md) |
+| STORY-038 | Ticket prioriteit en SLA | [Rapport](STORY-038-implementatie.md) |
+| STORY-034 | Leveranciers koppelen aan tickets | [Rapport](STORY-034-implementatie.md) |
+| STORY-035 | Leveranciersprofiel beheren | [Rapport](STORY-035-implementatie.md) |
+| STORY-036 | Leveranciers opvolgacties loggen | [Rapport](STORY-036-implementatie.md) |
+| STORY-044 | Ticket supplier collaboration status | [Rapport](STORY-044-implementatie.md) |
+
+### EPIC-011: Correspondentie & sjablonen
+| Story | Titel | Rapport |
+|-------|-------|---------|
+| STORY-045 | Sjablonenbeheer pagina | [Rapport](STORY-045-implementatie.md) |
+| STORY-046 | Brieven genereren wizard | [Rapport](STORY-046-implementatie.md) |
+| STORY-047 | Multi-channel verzending | [Rapport](STORY-047-implementatie.md) |
+
+### EPIC-012: E-mail Integraties
+| Story | Titel | Rapport |
+|-------|-------|---------|
+| STORY-048 | E-mail provider configureren via Settings | [Rapport](STORY-048-implementatie.md) |
+| STORY-049 | Mailchimp integratie implementeren | [Rapport](STORY-049-implementatie.md) |
+| STORY-050 | Amazon SES integratie implementeren | [Rapport](STORY-050-implementatie.md) |
+| STORY-051 | SendGrid integratie implementeren | [Rapport](STORY-051-implementatie.md) |
+| STORY-052 | E-mail provider abstractie laag | [Rapport](STORY-052-implementatie.md) |
+| STORY-053 | E-mail verzenden via geconfigureerde provider | [Rapport](STORY-053-implementatie.md) |
+| STORY-054 | E-mail verzending monitoring en logging | [Rapport](STORY-054-implementatie.md) |
+
+### EPIC-013: Contractbeheer
+| Story | Titel | Rapport |
+|-------|-------|---------|
+| STORY-055 | Contract registreren met metadata | [Rapport](STORY-055-implementatie.md) |
+| STORY-056 | Contract document uploaden | [Rapport](STORY-056-implementatie.md) |
+| STORY-057 | Contracten doorzoeken en filteren | [Rapport](STORY-057-implementatie.md) |
+| STORY-058 | Opzegtermijn alert configureren | [Rapport](STORY-058-implementatie.md) |
+| STORY-059 | Dashboard widget aflopen contracten | [Rapport](STORY-059-implementatie.md) |
+| STORY-060 | Leverancier registreren | [Rapport](STORY-060-implementatie.md) |
+
+### EPIC-015: ALV & Vergaderbeheer (deels)
+| Story | Titel | Rapport |
+|-------|-------|---------|
+| STORY-069 | ALV plannen met datum en locatie | [Rapport](STORY-069-implementatie.md) |
+| STORY-070 | ALV agenda opstellen | [Rapport](STORY-070-implementatie.md) |
+| STORY-071 | ALV uitnodiging versturen | [Rapport](STORY-071-implementatie.md) |
+| STORY-072 | RSVP registreren voor ALV | [Rapport](STORY-072-implementatie.md) |
+| STORY-073 | Volmacht digitaal afgeven | [Rapport](STORY-073-implementatie.md) |
+| STORY-074 | Quorum automatisch berekenen | [Rapport](STORY-074-implementatie.md) |
+| STORY-075 | Notulen opstellen met template | [Rapport](STORY-075-implementatie.md) |
+
+### EPIC-016: Juridisch & Compliance (deels)
+| Story | Titel | Rapport |
+|-------|-------|---------|
+| STORY-080 | Privacy statement genereren | [Rapport](STORY-080-implementatie.md) |
+| STORY-122 | Eigenaar data-export aanvragen | [Rapport](STORY-122-implementatie.md) |
+
+### EPIC-027: Digitaal Stemmen & Polls (deels)
+| Story | Titel | Rapport |
+|-------|-------|---------|
+| STORY-116 | Poll aanmaken voor draagvlakmeting | [Rapport](STORY-116-implementatie.md) |
+| STORY-117 | Digitale volmacht registreren | [Rapport](STORY-117-implementatie.md) |
 
 ## Template
 Gebruik de [template](TEMPLATE-implementatierapport.md) voor nieuwe rapporten.

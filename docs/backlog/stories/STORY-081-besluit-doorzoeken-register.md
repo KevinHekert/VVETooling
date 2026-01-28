@@ -3,7 +3,7 @@
 ## Documentinformatie
 - **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: ✅ Geïmplementeerd
+- **Status**: ⬜ Backlog
 - **Versie**: 1.0
 - **Prioriteit**: Should (Horizon 2)
 - **Geneste nummering**: 16.3.1

@@ -2,12 +2,17 @@
 
 import { useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/Toast';
+import { api } from '@/lib/api';
+import type { MeetingListItem } from '@/types';
 
 /**
- * Besluitenregister Search Page - STORY-081
+ * Besluitenregister Search Page - STORY-081, STORY-076
  * 
  * Als bestuurslid wil ik besluiten kunnen doorzoeken op onderwerp, 
  * datum en stemresultaat, zodat ik snel historische besluiten kan terugvinden.
+ * 
+ * STORY-076: Als secretaris wil ik gemarkeerde besluiten kunnen extraheren
+ * naar het besluitenregister, zodat alle besluiten centraal en doorzoekbaar zijn.
  * 
  * Features:
  * - Full-text zoeken in besluiten
@@ -15,6 +20,7 @@ import { useToast } from '@/components/ui/Toast';
  * - Filter op stemresultaat (aangenomen/verworpen)
  * - Resultaten met relevante snippets
  * - Highlight van zoekterm in resultaten
+ * - STORY-076: Extract decisions from meetings
  */
 
 type DecisionType = 'besluit' | 'actiepunt' | 'aandachtspunt';
@@ -173,6 +179,16 @@ export default function BesluitenRegisterPage() {
   const [totalCount, setTotalCount] = useState(0);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   
+  // STORY-076: Extraction modal state
+  const [showExtractModal, setShowExtractModal] = useState(false);
+  const [meetings, setMeetings] = useState<MeetingListItem[]>([]);
+  const [isLoadingMeetings, setIsLoadingMeetings] = useState(false);
+  const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(null);
+  const [isExtracting, setIsExtracting] = useState(false);
+  
+  // TODO: Get VVE ID from context/session
+  const vveId = 'demo-vve-id';
+  
   // Search filters
   const [filters, setFilters] = useState<SearchFilters>({
     query: '',
@@ -181,6 +197,41 @@ export default function BesluitenRegisterPage() {
     voteResult: null,
     decisionType: 'besluit',
   });
+
+  // STORY-076: Load meetings for extraction modal
+  const loadMeetings = async () => {
+    setIsLoadingMeetings(true);
+    try {
+      const data = await api.getMeetings(vveId);
+      setMeetings(data);
+    } catch (err) {
+      addToast('Kon vergaderingen niet ophalen', 'error');
+    } finally {
+      setIsLoadingMeetings(false);
+    }
+  };
+
+  // STORY-076: Handle extract decisions from meeting
+  const handleExtractDecisions = async () => {
+    if (!selectedMeetingId) {
+      addToast('Selecteer eerst een vergadering', 'error');
+      return;
+    }
+    
+    setIsExtracting(true);
+    try {
+      const result = await api.extractDecisions(vveId, selectedMeetingId);
+      addToast(`${result.extracted_count} besluit(en) geëxtraheerd naar het register`, 'success');
+      setShowExtractModal(false);
+      setSelectedMeetingId(null);
+      // Reload decisions to show newly extracted ones
+      // In production, this would fetch from the API
+    } catch (err) {
+      addToast(err instanceof Error ? err.message : 'Kon besluiten niet extraheren', 'error');
+    } finally {
+      setIsExtracting(false);
+    }
+  };
 
   // Load initial data
   useEffect(() => {
@@ -339,13 +390,97 @@ export default function BesluitenRegisterPage() {
             Doorzoek historische besluiten van de VVE
           </p>
         </div>
-        <button
-          onClick={handleExport}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-        >
-          📥 Exporteren
-        </button>
+        <div className="flex gap-2">
+          {/* STORY-076: Extract from meeting button */}
+          <button
+            onClick={() => {
+              setShowExtractModal(true);
+              loadMeetings();
+            }}
+            className="inline-flex items-center gap-2 px-4 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50"
+          >
+            📋 Extraheren uit vergadering
+          </button>
+          <button
+            onClick={handleExport}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            📥 Exporteren
+          </button>
+        </div>
       </div>
+
+      {/* STORY-076: Extract Modal */}
+      {showExtractModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold">📋 Besluiten extraheren</h2>
+                <button
+                  onClick={() => {
+                    setShowExtractModal(false);
+                    setSelectedMeetingId(null);
+                  }}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  ✕
+                </button>
+              </div>
+              
+              <p className="text-gray-600 mb-4">
+                Selecteer een vergadering waaruit de gemarkeerde besluiten moeten worden geëxtraheerd naar het besluitenregister.
+              </p>
+              
+              {isLoadingMeetings ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+              ) : meetings.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">Geen vergaderingen gevonden</p>
+              ) : (
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {meetings.map((meeting) => (
+                    <button
+                      key={meeting.id}
+                      onClick={() => setSelectedMeetingId(meeting.id)}
+                      className={`w-full text-left p-3 rounded-lg border transition-colors ${
+                        selectedMeetingId === meeting.id
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="font-medium">{meeting.title}</div>
+                      <div className="text-sm text-gray-500">
+                        {new Date(meeting.meeting_date).toLocaleDateString('nl-NL')}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+              
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => {
+                    setShowExtractModal(false);
+                    setSelectedMeetingId(null);
+                  }}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                >
+                  Annuleren
+                </button>
+                <button
+                  onClick={handleExtractDecisions}
+                  disabled={!selectedMeetingId || isExtracting}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isExtracting ? 'Bezig met extraheren...' : 'Extraheren'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Search & Filters */}
       <div className="bg-white rounded-lg shadow p-6">

@@ -6,11 +6,11 @@ Deze backlog is de single source of truth voor uitvoering van VVE Tooling MVP. A
 ## Voortgang Overzicht
 📊 **[Geneste Backlog Overzicht](nested-overview.md)** - Volledige hiërarchie met implementatiestatus
 
-| Niveau | Totaal | ✅ Gereed | ⬜ Backlog | % Gereed |
-|--------|--------|-----------|-----------|----------|
-| Epics | 27 | 12 | 15 | 44% |
-| Features | 69 | 25 | 44 | 36% |
-| Stories | 124 | 54 | 70 | 44% |
+| Niveau | Totaal | ✅ Gereed | ⚠️ Deels | ⬜ Backlog | % Gereed |
+|--------|--------|-----------|----------|-----------|----------|
+| Epics | 27 | 13 | 3 | 11 | 48% |
+| Features | 69 | 35 | 1 | 33 | 51% |
+| Stories | 124 | 76 | - | 48 | 61% |
 
 ## Navigatie
 - **Ways of working**
