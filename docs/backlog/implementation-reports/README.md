@@ -12,8 +12,8 @@ Deze directory bevat implementatierapporten voor elke voltooide user story. Elk 
 
 | Categorie | Aantal | Percentage |
 |-----------|--------|------------|
-| ✅ Geïmplementeerd | 72 | 58% |
-| ⬜ Backlog | 52 | 42% |
+| ✅ Geïmplementeerd | 73 | 59% |
+| ⬜ Backlog | 51 | 41% |
 | **Totaal** | 124 | 100% |
 
 ## Geïmplementeerde Stories

@@ -150,7 +150,7 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
     - 15.3 **FEAT-034 Notulen & Besluiten** ⚠️
       - 15.3.1 ✅ STORY-075 Notulen opstellen met template (Must)
       - 15.3.2 ✅ STORY-076 Besluiten extraheren naar register (Should)
-      - 15.3.3 ⬜ STORY-077 Actiepunten toewijzen vanuit notulen (Should)
+      - 15.3.3 ✅ STORY-077 Actiepunten toewijzen vanuit notulen (Should)
       - 15.3.4 ⬜ STORY-120 Notulen delen met eigenaren (Must)
 
 16. **EPIC-016 Juridisch & Compliance** ⚠️
@@ -266,7 +266,7 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
 |--------|--------|-----------|----------|-----------|----------|
 | Epics | 27 | 13 | 3 | 11 | 48% |
 | Features | 69 | 34 | 1 | 34 | 49% |
-| Stories | 124 | 72 | - | 52 | 58% |
+| Stories | 124 | 73 | - | 51 | 59% |
 
 **Volledig afgeronde Epics (Horizon 1 - MVP):** EPIC-001, EPIC-002, EPIC-003, EPIC-004, EPIC-005, EPIC-006, EPIC-007, EPIC-008, EPIC-009, EPIC-010, EPIC-011, EPIC-012, EPIC-013
 
