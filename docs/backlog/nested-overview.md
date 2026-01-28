@@ -153,13 +153,13 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
       - 15.3.3 ✅ STORY-077 Actiepunten toewijzen vanuit notulen (Should)
       - 15.3.4 ✅ STORY-120 Notulen delen met eigenaren (Must)
 
-16. **EPIC-016 Juridisch & Compliance** ✅
+16. **EPIC-016 Juridisch & Compliance** ⚠️
     - 16.1 **FEAT-035 Compliance Dashboard** ✅
       - 16.1.1 ✅ STORY-078 Compliance status per categorie (Should)
       - 16.1.2 ✅ STORY-079 Compliance checklist afvinken (Should)
       - 16.1.3 ✅ STORY-121 Compliance deadline alert ontvangen (Should)
-    - 16.2 **FEAT-036 AVG Module** ⬜
-      - 16.2.1 ⬜ STORY-080 Privacy statement genereren (Should)
+    - 16.2 **FEAT-036 AVG Module** ⚠️
+      - 16.2.1 ✅ STORY-080 Privacy statement genereren (Should)
       - 16.2.2 ⬜ STORY-122 Eigenaar data-export aanvragen (Should)
     - 16.3 **FEAT-037 Besluiten Register** ⬜
       - 16.3.1 ⬜ STORY-081 Besluit doorzoeken in register (Should)
@@ -266,11 +266,11 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
 |--------|--------|-----------|-----------|----------|
 | Epics | 27 | 17 | 10 | 63% |
 | Features | 69 | 36 | 33 | 52% |
-| Stories | 124 | 79 | 45 | 64% |
+| Stories | 124 | 80 | 44 | 65% |
 
 **Volledig afgeronde Epics (Horizon 1 - MVP):** EPIC-001, EPIC-002, EPIC-003, EPIC-004, EPIC-005, EPIC-006, EPIC-007, EPIC-008, EPIC-009, EPIC-010, EPIC-011, EPIC-012, EPIC-013, EPIC-014, EPIC-015, EPIC-027
 
-**Deels afgeronde Epics:** EPIC-016 (FEAT-035 Compliance Dashboard)
+**Deels afgeronde Epics:** EPIC-016 (FEAT-035 Compliance Dashboard, STORY-080 AVG Module)
 
 **Nieuwe Epics (Horizon 2 - Uitbreiding):** EPIC-017, EPIC-018, EPIC-019, EPIC-020, EPIC-021, EPIC-022, EPIC-023, EPIC-024, EPIC-025, EPIC-026
 
