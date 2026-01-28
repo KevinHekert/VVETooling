@@ -1,7 +1,7 @@
 """Tests for Privacy Statement schemas - STORY-080 validation logic."""
 
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 import pytest
 
@@ -261,3 +261,152 @@ class TestPrivacyStatementStatus:
         assert PrivacyStatementStatus.DRAFT == "draft"
         assert PrivacyStatementStatus.PUBLISHED == "published"
         assert PrivacyStatementStatus.ARCHIVED == "archived"
+
+
+# ============================================================================
+# Data Export Tests (STORY-122)
+# ============================================================================
+
+
+class TestDataExportRequestCreate:
+    """Tests for DataExportRequestCreate schema."""
+
+    def test_data_export_request_minimal(self):
+        """Test minimal data export request."""
+        from app.schemas.privacy import DataExportRequestCreate, DataExportFormat
+        
+        request = DataExportRequestCreate()
+        
+        assert request.vve_id is None
+        assert request.export_format == DataExportFormat.JSON
+
+    def test_data_export_request_with_vve(self):
+        """Test data export request for specific VVE."""
+        from app.schemas.privacy import DataExportRequestCreate, DataExportFormat
+        
+        vve_id = uuid.uuid4()
+        request = DataExportRequestCreate(
+            vve_id=vve_id,
+            export_format=DataExportFormat.CSV,
+        )
+        
+        assert request.vve_id == vve_id
+        assert request.export_format == DataExportFormat.CSV
+
+
+class TestDataExportRequestResponse:
+    """Tests for DataExportRequestResponse schema."""
+
+    def test_data_export_response_pending(self):
+        """Test data export response in pending status."""
+        from app.schemas.privacy import (
+            DataExportRequestResponse,
+            DataExportStatus,
+            DataExportFormat,
+        )
+        
+        request_id = uuid.uuid4()
+        user_id = uuid.uuid4()
+        now = datetime.now(timezone.utc)
+        
+        response = DataExportRequestResponse(
+            id=request_id,
+            user_id=user_id,
+            vve_id=None,
+            status=DataExportStatus.PENDING,
+            export_format=DataExportFormat.JSON,
+            file_size_bytes=None,
+            download_count=0,
+            expires_at=now,
+            processing_started_at=None,
+            processing_completed_at=None,
+            error_message=None,
+            created_at=now,
+            updated_at=now,
+            is_ready=False,
+            is_expired=False,
+        )
+        
+        assert response.id == request_id
+        assert response.status == DataExportStatus.PENDING
+        assert response.is_ready is False
+
+    def test_data_export_response_completed(self):
+        """Test data export response in completed status."""
+        from app.schemas.privacy import (
+            DataExportRequestResponse,
+            DataExportStatus,
+            DataExportFormat,
+        )
+        
+        now = datetime.now(timezone.utc)
+        
+        response = DataExportRequestResponse(
+            id=uuid.uuid4(),
+            user_id=uuid.uuid4(),
+            vve_id=uuid.uuid4(),
+            status=DataExportStatus.COMPLETED,
+            export_format=DataExportFormat.JSON,
+            file_size_bytes=1024000,
+            download_count=2,
+            expires_at=now + timedelta(days=7),
+            processing_started_at=now - timedelta(hours=1),
+            processing_completed_at=now,
+            error_message=None,
+            created_at=now - timedelta(hours=2),
+            updated_at=now,
+            is_ready=True,
+            is_expired=False,
+            download_url="/download/test",
+        )
+        
+        assert response.status == DataExportStatus.COMPLETED
+        assert response.is_ready is True
+        assert response.file_size_bytes == 1024000
+        assert response.download_url == "/download/test"
+
+
+class TestDataExportConfirmation:
+    """Tests for DataExportConfirmation schema."""
+
+    def test_data_export_confirmation(self):
+        """Test data export confirmation response."""
+        from app.schemas.privacy import DataExportConfirmation, DataExportStatus
+        
+        request_id = uuid.uuid4()
+        
+        confirmation = DataExportConfirmation(
+            request_id=request_id,
+            status=DataExportStatus.PENDING,
+            message="Uw aanvraag is ontvangen",
+            estimated_completion_minutes=30,
+        )
+        
+        assert confirmation.request_id == request_id
+        assert confirmation.status == DataExportStatus.PENDING
+        assert confirmation.estimated_completion_minutes == 30
+
+
+class TestDataExportStatus:
+    """Tests for DataExportStatus enum."""
+
+    def test_all_statuses_defined(self):
+        """Test that all required statuses are defined."""
+        from app.schemas.privacy import DataExportStatus
+        
+        assert DataExportStatus.PENDING == "pending"
+        assert DataExportStatus.PROCESSING == "processing"
+        assert DataExportStatus.COMPLETED == "completed"
+        assert DataExportStatus.EXPIRED == "expired"
+        assert DataExportStatus.FAILED == "failed"
+
+
+class TestDataExportFormat:
+    """Tests for DataExportFormat enum."""
+
+    def test_all_formats_defined(self):
+        """Test that all required formats are defined."""
+        from app.schemas.privacy import DataExportFormat
+        
+        assert DataExportFormat.JSON == "json"
+        assert DataExportFormat.CSV == "csv"
