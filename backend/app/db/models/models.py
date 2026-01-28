@@ -1927,3 +1927,137 @@ class VotingProxy(Base):
             name="uq_voting_proxy_unit_voting"
         ),
     )
+
+
+# ============================================================================
+# Poll Models - STORY-116 Polls & Peilingen
+# ============================================================================
+
+
+class PollStatus(str, Enum):
+    """Status of a poll (STORY-116)."""
+
+    DRAFT = "draft"
+    OPEN = "open"
+    CLOSED = "closed"
+
+
+class PollResultsVisibility(str, Enum):
+    """Who can see poll results (STORY-116)."""
+
+    ALL = "all"  # Iedereen kan resultaten zien
+    BOARD_ONLY = "board_only"  # Alleen bestuur kan resultaten zien
+    AFTER_VOTE = "after_vote"  # Resultaten na eigen stem
+
+
+class Poll(Base):
+    """Informal poll for gauging support (STORY-116).
+
+    Implements FEAT-068: Polls & Peilingen.
+    Non-binding polls to measure support before formal voting.
+    """
+
+    __tablename__ = "polls"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    vve_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("vves.id", ondelete="CASCADE"), nullable=False
+    )
+    # Poll details
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text)
+    status: Mapped[PollStatus] = mapped_column(
+        SQLEnum(PollStatus), default=PollStatus.DRAFT
+    )
+    # Timing
+    end_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    # Settings
+    allow_multiple: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_anonymous: Mapped[bool] = mapped_column(Boolean, default=False)
+    results_visibility: Mapped[PollResultsVisibility] = mapped_column(
+        SQLEnum(PollResultsVisibility), default=PollResultsVisibility.ALL
+    )
+    # Statistics
+    total_votes: Mapped[int] = mapped_column(Integer, default=0)
+    total_participants: Mapped[int] = mapped_column(Integer, default=0)
+    # Metadata
+    created_by_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    # Relationships
+    options: Mapped[list["PollOption"]] = relationship(
+        "PollOption", back_populates="poll", cascade="all, delete-orphan"
+    )
+    votes: Mapped[list["PollVote"]] = relationship(
+        "PollVote", back_populates="poll", cascade="all, delete-orphan"
+    )
+
+    __table_args__ = (
+        Index("ix_polls_vve_id", "vve_id"),
+        Index("ix_polls_status", "status"),
+        Index("ix_polls_end_date", "end_date"),
+    )
+
+
+class PollOption(Base):
+    """Option in a poll (STORY-116)."""
+
+    __tablename__ = "poll_options"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    poll_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("polls.id", ondelete="CASCADE"), nullable=False
+    )
+    text: Mapped[str] = mapped_column(String(255), nullable=False)
+    vote_count: Mapped[int] = mapped_column(Integer, default=0)
+    display_order: Mapped[int] = mapped_column(Integer, default=0)
+
+    # Relationships
+    poll: Mapped["Poll"] = relationship("Poll", back_populates="options")
+
+    __table_args__ = (
+        Index("ix_poll_options_poll_id", "poll_id"),
+    )
+
+
+class PollVote(Base):
+    """Individual vote on a poll option (STORY-116)."""
+
+    __tablename__ = "poll_votes"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    poll_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("polls.id", ondelete="CASCADE"), nullable=False
+    )
+    option_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("poll_options.id", ondelete="CASCADE"), nullable=False
+    )
+    # User ID is nullable for anonymous polls
+    user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    # Timestamp
+    voted_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+    # Relationships
+    poll: Mapped["Poll"] = relationship("Poll", back_populates="votes")
+
+    __table_args__ = (
+        Index("ix_poll_votes_poll_id", "poll_id"),
+        Index("ix_poll_votes_user_id", "user_id"),
+    )

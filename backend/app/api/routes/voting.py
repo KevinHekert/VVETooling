@@ -27,6 +27,11 @@ from app.db.models.models import (
     VotingStatus as DBVotingStatus,
     VotingProxy,
     VotingProxyStatus as DBVotingProxyStatus,
+    Poll,
+    PollOption as DBPollOption,
+    PollVote,
+    PollStatus as DBPollStatus,
+    PollResultsVisibility as DBPollResultsVisibility,
     Unit,
     User,
     VVE,
@@ -50,6 +55,15 @@ from app.schemas.voting import (
     VotingProxyListResponse,
     VotingProxyConfirmation,
     VotingProxyStatus,
+    PollCreate,
+    PollUpdate,
+    PollResponse,
+    PollListResponse,
+    PollOptionResponse,
+    PollVoteCreate,
+    PollVoteResponse,
+    PollStatus,
+    PollResultsVisibility,
 )
 
 router = APIRouter(prefix="/vves/{vve_id}/voting", tags=["voting"])
@@ -1124,3 +1138,449 @@ async def get_my_received_proxies(
         )
 
     return response
+
+
+
+# ============================================================================
+# Polls (STORY-116)
+# ============================================================================
+
+
+def is_poll_active(poll: Poll) -> bool:
+    """Check if poll is currently active."""
+    now = datetime.now(timezone.utc)
+    return poll.status == DBPollStatus.OPEN and poll.end_date > now
+
+
+@router.post(
+    "/polls",
+    response_model=PollResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Poll aanmaken",
+    description="""
+    STORY-116: Als bestuurslid wil ik een informele poll kunnen aanmaken.
+    
+    - Poll met vraag en multiple choice opties
+    - Geen juridische binding (informeel)
+    - Optie voor anonieme deelname
+    - Resultaten zichtbaar voor iedereen of alleen bestuur
+    """,
+)
+async def create_poll(
+    vve_id: uuid.UUID,
+    poll_data: PollCreate,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> PollResponse:
+    """Create a new poll (STORY-116)."""
+    # Verify VVE exists
+    vve_result = await db.execute(select(VVE).where(VVE.id == vve_id))
+    if vve_result.scalar_one_or_none() is None:
+        raise HTTPException(status_code=404, detail="VVE niet gevonden")
+
+    # Create poll
+    poll = Poll(
+        vve_id=vve_id,
+        title=poll_data.title,
+        description=poll_data.description,
+        end_date=poll_data.end_date,
+        allow_multiple=poll_data.allow_multiple,
+        is_anonymous=poll_data.is_anonymous,
+        results_visibility=DBPollResultsVisibility(poll_data.results_visibility.value),
+        created_by_id=current_user.id,
+    )
+    db.add(poll)
+    await db.flush()  # Get poll ID
+
+    # Create options
+    for idx, option_text in enumerate(poll_data.options):
+        option = DBPollOption(
+            poll_id=poll.id,
+            text=option_text,
+            display_order=idx,
+        )
+        db.add(option)
+
+    await db.commit()
+    await db.refresh(poll)
+
+    # Get options for response
+    options_result = await db.execute(
+        select(DBPollOption).where(DBPollOption.poll_id == poll.id).order_by(DBPollOption.display_order)
+    )
+    options = options_result.scalars().all()
+
+    return PollResponse(
+        id=poll.id,
+        vve_id=poll.vve_id,
+        title=poll.title,
+        description=poll.description,
+        options=[
+            PollOptionResponse(
+                id=opt.id,
+                text=opt.text,
+                vote_count=opt.vote_count,
+                percentage=Decimal("0.0"),
+                display_order=opt.display_order,
+            )
+            for opt in options
+        ],
+        end_date=poll.end_date,
+        allow_multiple=poll.allow_multiple,
+        is_anonymous=poll.is_anonymous,
+        results_visibility=PollResultsVisibility(poll.results_visibility.value),
+        total_votes=poll.total_votes,
+        total_participants=poll.total_participants,
+        status=PollStatus(poll.status.value),
+        created_by_id=poll.created_by_id,
+        created_by_name=f"{current_user.first_name} {current_user.last_name}",
+        created_at=poll.created_at,
+        updated_at=poll.updated_at,
+        is_active=is_poll_active(poll),
+        days_remaining=calculate_days_remaining(poll.end_date),
+    )
+
+
+@router.get(
+    "/polls",
+    response_model=list[PollListResponse],
+    summary="Lijst van polls",
+)
+async def list_polls(
+    vve_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_member)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+    status_filter: PollStatus | None = Query(None, alias="status"),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=100),
+) -> list[PollListResponse]:
+    """Get list of polls."""
+    query = select(Poll).where(Poll.vve_id == vve_id)
+
+    if status_filter:
+        query = query.where(Poll.status == DBPollStatus(status_filter.value))
+
+    query = query.order_by(Poll.end_date.desc())
+    query = query.offset(skip).limit(limit)
+
+    result = await db.execute(query)
+    polls = result.scalars().all()
+
+    return [
+        PollListResponse(
+            id=p.id,
+            vve_id=p.vve_id,
+            title=p.title,
+            status=PollStatus(p.status.value),
+            end_date=p.end_date,
+            total_participants=p.total_participants,
+            is_anonymous=p.is_anonymous,
+            is_active=is_poll_active(p),
+            days_remaining=calculate_days_remaining(p.end_date),
+        )
+        for p in polls
+    ]
+
+
+@router.get(
+    "/polls/{poll_id}",
+    response_model=PollResponse,
+    summary="Poll details",
+)
+async def get_poll(
+    vve_id: uuid.UUID,
+    poll_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_member)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> PollResponse:
+    """Get poll details."""
+    result = await db.execute(
+        select(Poll).where(Poll.id == poll_id, Poll.vve_id == vve_id)
+    )
+    poll = result.scalar_one_or_none()
+
+    if poll is None:
+        raise HTTPException(status_code=404, detail="Poll niet gevonden")
+
+    # Get options
+    options_result = await db.execute(
+        select(DBPollOption).where(DBPollOption.poll_id == poll.id).order_by(DBPollOption.display_order)
+    )
+    options = options_result.scalars().all()
+
+    # Calculate percentages
+    total_votes = poll.total_votes
+    option_responses = []
+    for opt in options:
+        percentage = (Decimal(opt.vote_count) / Decimal(total_votes) * 100) if total_votes > 0 else Decimal("0.0")
+        option_responses.append(
+            PollOptionResponse(
+                id=opt.id,
+                text=opt.text,
+                vote_count=opt.vote_count,
+                percentage=round(percentage, 1),
+                display_order=opt.display_order,
+            )
+        )
+
+    # Get creator name
+    created_by_name = None
+    if poll.created_by_id:
+        user_result = await db.execute(select(User).where(User.id == poll.created_by_id))
+        user = user_result.scalar_one_or_none()
+        if user:
+            created_by_name = f"{user.first_name} {user.last_name}"
+
+    # Check if user has voted
+    has_voted = None
+    if not poll.is_anonymous:
+        vote_result = await db.execute(
+            select(PollVote).where(PollVote.poll_id == poll.id, PollVote.user_id == current_user.id)
+        )
+        has_voted = vote_result.scalar_one_or_none() is not None
+
+    return PollResponse(
+        id=poll.id,
+        vve_id=poll.vve_id,
+        title=poll.title,
+        description=poll.description,
+        options=option_responses,
+        end_date=poll.end_date,
+        allow_multiple=poll.allow_multiple,
+        is_anonymous=poll.is_anonymous,
+        results_visibility=PollResultsVisibility(poll.results_visibility.value),
+        total_votes=poll.total_votes,
+        total_participants=poll.total_participants,
+        status=PollStatus(poll.status.value),
+        created_by_id=poll.created_by_id,
+        created_by_name=created_by_name,
+        created_at=poll.created_at,
+        updated_at=poll.updated_at,
+        is_active=is_poll_active(poll),
+        days_remaining=calculate_days_remaining(poll.end_date),
+        has_voted=has_voted,
+    )
+
+
+@router.put(
+    "/polls/{poll_id}",
+    response_model=PollResponse,
+    summary="Poll wijzigen",
+)
+async def update_poll(
+    vve_id: uuid.UUID,
+    poll_id: uuid.UUID,
+    update_data: PollUpdate,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> PollResponse:
+    """Update a poll (only allowed when in draft status)."""
+    result = await db.execute(
+        select(Poll).where(Poll.id == poll_id, Poll.vve_id == vve_id)
+    )
+    poll = result.scalar_one_or_none()
+
+    if poll is None:
+        raise HTTPException(status_code=404, detail="Poll niet gevonden")
+
+    # Can only edit draft polls (unless just changing status)
+    if poll.status != DBPollStatus.DRAFT and update_data.status is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Alleen concept-polls kunnen worden gewijzigd"
+        )
+
+    update_dict = update_data.model_dump(exclude_unset=True)
+    for field, value in update_dict.items():
+        if field == "status" and value is not None:
+            setattr(poll, field, DBPollStatus(value.value))
+        elif field == "results_visibility" and value is not None:
+            setattr(poll, field, DBPollResultsVisibility(value.value))
+        else:
+            setattr(poll, field, value)
+
+    await db.commit()
+    await db.refresh(poll)
+
+    # Return full poll response
+    return await get_poll(vve_id, poll_id, current_user, db)
+
+
+@router.post(
+    "/polls/{poll_id}/open",
+    response_model=PollResponse,
+    summary="Poll openen",
+)
+async def open_poll(
+    vve_id: uuid.UUID,
+    poll_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> PollResponse:
+    """Open a poll for votes."""
+    result = await db.execute(
+        select(Poll).where(Poll.id == poll_id, Poll.vve_id == vve_id)
+    )
+    poll = result.scalar_one_or_none()
+
+    if poll is None:
+        raise HTTPException(status_code=404, detail="Poll niet gevonden")
+
+    if poll.status != DBPollStatus.DRAFT:
+        raise HTTPException(status_code=400, detail="Alleen concept-polls kunnen worden geopend")
+
+    poll.status = DBPollStatus.OPEN
+    await db.commit()
+
+    return await get_poll(vve_id, poll_id, current_user, db)
+
+
+@router.post(
+    "/polls/{poll_id}/close",
+    response_model=PollResponse,
+    summary="Poll sluiten",
+)
+async def close_poll(
+    vve_id: uuid.UUID,
+    poll_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> PollResponse:
+    """Close a poll."""
+    result = await db.execute(
+        select(Poll).where(Poll.id == poll_id, Poll.vve_id == vve_id)
+    )
+    poll = result.scalar_one_or_none()
+
+    if poll is None:
+        raise HTTPException(status_code=404, detail="Poll niet gevonden")
+
+    if poll.status == DBPollStatus.CLOSED:
+        raise HTTPException(status_code=400, detail="Poll is al gesloten")
+
+    if poll.status == DBPollStatus.DRAFT:
+        raise HTTPException(status_code=400, detail="Concept-poll kan niet worden gesloten")
+
+    poll.status = DBPollStatus.CLOSED
+    await db.commit()
+
+    return await get_poll(vve_id, poll_id, current_user, db)
+
+
+@router.delete(
+    "/polls/{poll_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Poll verwijderen",
+)
+async def delete_poll(
+    vve_id: uuid.UUID,
+    poll_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> None:
+    """Delete a poll (only allowed when in draft status)."""
+    result = await db.execute(
+        select(Poll).where(Poll.id == poll_id, Poll.vve_id == vve_id)
+    )
+    poll = result.scalar_one_or_none()
+
+    if poll is None:
+        raise HTTPException(status_code=404, detail="Poll niet gevonden")
+
+    if poll.status != DBPollStatus.DRAFT:
+        raise HTTPException(
+            status_code=400,
+            detail="Alleen concept-polls kunnen worden verwijderd"
+        )
+
+    await db.delete(poll)
+    await db.commit()
+
+
+@router.post(
+    "/polls/{poll_id}/vote",
+    response_model=PollVoteResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Op poll stemmen",
+    description="Stem op een of meerdere opties in de poll.",
+)
+async def vote_on_poll(
+    vve_id: uuid.UUID,
+    poll_id: uuid.UUID,
+    vote_data: PollVoteCreate,
+    current_user: Annotated[CurrentUser, Depends(require_member)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> PollVoteResponse:
+    """Vote on a poll (STORY-116)."""
+    # Get poll
+    poll_result = await db.execute(
+        select(Poll).where(Poll.id == poll_id, Poll.vve_id == vve_id)
+    )
+    poll = poll_result.scalar_one_or_none()
+
+    if poll is None:
+        raise HTTPException(status_code=404, detail="Poll niet gevonden")
+
+    # Check if poll is active
+    if not is_poll_active(poll):
+        raise HTTPException(status_code=400, detail="Poll is niet actief")
+
+    # Check if already voted (for non-anonymous polls)
+    if not poll.is_anonymous:
+        existing_vote = await db.execute(
+            select(PollVote).where(
+                PollVote.poll_id == poll_id,
+                PollVote.user_id == current_user.id,
+            )
+        )
+        if existing_vote.scalar_one_or_none() is not None:
+            raise HTTPException(status_code=400, detail="U heeft al gestemd op deze poll")
+
+    # Validate options
+    if not poll.allow_multiple and len(vote_data.option_ids) > 1:
+        raise HTTPException(
+            status_code=400,
+            detail="Deze poll staat slechts één keuze toe"
+        )
+
+    # Verify all option IDs belong to this poll
+    options_result = await db.execute(
+        select(DBPollOption).where(
+            DBPollOption.poll_id == poll_id,
+            DBPollOption.id.in_(vote_data.option_ids),
+        )
+    )
+    valid_options = options_result.scalars().all()
+
+    if len(valid_options) != len(vote_data.option_ids):
+        raise HTTPException(status_code=400, detail="Ongeldige optie geselecteerd")
+
+    # Create votes
+    now = datetime.now(timezone.utc)
+    selected_texts = []
+    for option in valid_options:
+        vote = PollVote(
+            poll_id=poll_id,
+            option_id=option.id,
+            user_id=None if poll.is_anonymous else current_user.id,
+            voted_at=now,
+        )
+        db.add(vote)
+
+        # Update option vote count
+        option.vote_count += 1
+        selected_texts.append(option.text)
+
+    # Update poll statistics
+    poll.total_votes += len(valid_options)
+    poll.total_participants += 1
+
+    await db.commit()
+
+    return PollVoteResponse(
+        poll_id=poll_id,
+        poll_title=poll.title,
+        selected_options=selected_texts,
+        voted_at=now,
+        message="Uw stem is succesvol geregistreerd",
+    )
