@@ -1283,38 +1283,39 @@ async def list_proxies(
     if not meeting_result.scalar_one_or_none():
         raise HTTPException(status_code=404, detail="Vergadering niet gevonden")
 
-    # Get all proxies with user info
-    proxies_result = await db.execute(
-        select(MeetingProxy, User, User)
-        .join(User, MeetingProxy.grantor_id == User.id)
-        .join(User, MeetingProxy.grantee_id == User.id, isouter=True)
-        .where(MeetingProxy.meeting_id == meeting_id)
-        .order_by(MeetingProxy.created_at.desc())
-    )
-
-    # Use separate queries for grantor and grantee
+    # Get all proxies
     proxies_result = await db.execute(
         select(MeetingProxy).where(MeetingProxy.meeting_id == meeting_id)
         .order_by(MeetingProxy.created_at.desc())
     )
     proxies = proxies_result.scalars().all()
 
+    if not proxies:
+        return []
+
+    # Batch fetch all users to avoid N+1 queries
+    user_ids = set()
+    for proxy in proxies:
+        user_ids.add(proxy.grantor_id)
+        user_ids.add(proxy.grantee_id)
+
+    users_result = await db.execute(
+        select(User).where(User.id.in_(user_ids))
+    )
+    users_by_id = {user.id: user for user in users_result.scalars().all()}
+
     result = []
     for proxy in proxies:
-        # Get grantor name
-        grantor_result = await db.execute(select(User).where(User.id == proxy.grantor_id))
-        grantor = grantor_result.scalar_one()
-        # Get grantee name
-        grantee_result = await db.execute(select(User).where(User.id == proxy.grantee_id))
-        grantee = grantee_result.scalar_one()
+        grantor = users_by_id.get(proxy.grantor_id)
+        grantee = users_by_id.get(proxy.grantee_id)
 
         result.append(ProxyListResponse(
             id=proxy.id,
             meeting_id=proxy.meeting_id,
             grantor_id=proxy.grantor_id,
-            grantor_name=f"{grantor.first_name} {grantor.last_name}",
+            grantor_name=f"{grantor.first_name} {grantor.last_name}" if grantor else None,
             grantee_id=proxy.grantee_id,
-            grantee_name=f"{grantee.first_name} {grantee.last_name}",
+            grantee_name=f"{grantee.first_name} {grantee.last_name}" if grantee else None,
             scope=ProxyScope(proxy.scope.value),
             status=ProxyStatus(proxy.status.value),
             created_at=proxy.created_at,
@@ -1415,22 +1416,32 @@ async def list_received_proxies(
     )
     proxies = proxies_result.scalars().all()
 
+    if not proxies:
+        return []
+
+    # Batch fetch all users to avoid N+1 queries
+    user_ids = set()
+    for proxy in proxies:
+        user_ids.add(proxy.grantor_id)
+        user_ids.add(proxy.grantee_id)
+
+    users_result = await db.execute(
+        select(User).where(User.id.in_(user_ids))
+    )
+    users_by_id = {user.id: user for user in users_result.scalars().all()}
+
     result = []
     for proxy in proxies:
-        # Get grantor name
-        grantor_result = await db.execute(select(User).where(User.id == proxy.grantor_id))
-        grantor = grantor_result.scalar_one()
-        # Get grantee name
-        grantee_result = await db.execute(select(User).where(User.id == proxy.grantee_id))
-        grantee = grantee_result.scalar_one()
+        grantor = users_by_id.get(proxy.grantor_id)
+        grantee = users_by_id.get(proxy.grantee_id)
 
         result.append(ProxyListResponse(
             id=proxy.id,
             meeting_id=proxy.meeting_id,
             grantor_id=proxy.grantor_id,
-            grantor_name=f"{grantor.first_name} {grantor.last_name}",
+            grantor_name=f"{grantor.first_name} {grantor.last_name}" if grantor else None,
             grantee_id=proxy.grantee_id,
-            grantee_name=f"{grantee.first_name} {grantee.last_name}",
+            grantee_name=f"{grantee.first_name} {grantee.last_name}" if grantee else None,
             scope=ProxyScope(proxy.scope.value),
             status=ProxyStatus(proxy.status.value),
             created_at=proxy.created_at,
@@ -2147,31 +2158,37 @@ async def list_decisions(
     decisions_result = await db.execute(query)
     decisions = decisions_result.scalars().all()
 
+    if not decisions:
+        return []
+
+    # Batch fetch all users and agenda items to avoid N+1 queries
+    user_ids = set()
+    agenda_item_ids = set()
+    for decision in decisions:
+        if decision.created_by_id:
+            user_ids.add(decision.created_by_id)
+        if decision.assignee_id:
+            user_ids.add(decision.assignee_id)
+        if decision.agenda_item_id:
+            agenda_item_ids.add(decision.agenda_item_id)
+
+    users_by_id = {}
+    if user_ids:
+        users_result = await db.execute(select(User).where(User.id.in_(user_ids)))
+        users_by_id = {user.id: user for user in users_result.scalars().all()}
+
+    agenda_items_by_id = {}
+    if agenda_item_ids:
+        agenda_result = await db.execute(
+            select(MeetingAgendaItem).where(MeetingAgendaItem.id.in_(agenda_item_ids))
+        )
+        agenda_items_by_id = {item.id: item for item in agenda_result.scalars().all()}
+
     result = []
     for decision in decisions:
-        # Get names
-        creator_name = None
-        if decision.created_by_id:
-            creator_result = await db.execute(select(User).where(User.id == decision.created_by_id))
-            creator = creator_result.scalar_one_or_none()
-            if creator:
-                creator_name = f"{creator.first_name} {creator.last_name}"
-
-        assignee_name = None
-        if decision.assignee_id:
-            assignee_result = await db.execute(select(User).where(User.id == decision.assignee_id))
-            assignee = assignee_result.scalar_one_or_none()
-            if assignee:
-                assignee_name = f"{assignee.first_name} {assignee.last_name}"
-
-        agenda_item_title = None
-        if decision.agenda_item_id:
-            agenda_result = await db.execute(
-                select(MeetingAgendaItem).where(MeetingAgendaItem.id == decision.agenda_item_id)
-            )
-            agenda_item = agenda_result.scalar_one_or_none()
-            if agenda_item:
-                agenda_item_title = agenda_item.title
+        creator = users_by_id.get(decision.created_by_id) if decision.created_by_id else None
+        assignee = users_by_id.get(decision.assignee_id) if decision.assignee_id else None
+        agenda_item = agenda_items_by_id.get(decision.agenda_item_id) if decision.agenda_item_id else None
 
         result.append(DecisionResponse(
             id=decision.id,
@@ -2181,14 +2198,14 @@ async def list_decisions(
             title=decision.title,
             description=decision.description,
             agenda_item_id=decision.agenda_item_id,
-            agenda_item_title=agenda_item_title,
+            agenda_item_title=agenda_item.title if agenda_item else None,
             assignee_id=decision.assignee_id,
-            assignee_name=assignee_name,
+            assignee_name=f"{assignee.first_name} {assignee.last_name}" if assignee else None,
             due_date=decision.due_date,
             is_completed=decision.is_completed,
             completed_at=decision.completed_at,
             created_by_id=decision.created_by_id,
-            created_by_name=creator_name,
+            created_by_name=f"{creator.first_name} {creator.last_name}" if creator else None,
             created_at=decision.created_at,
             updated_at=decision.updated_at,
         ))
