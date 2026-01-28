@@ -1736,3 +1736,122 @@ class ComplianceHistory(Base):
     __table_args__ = (
         Index("ix_compliance_history_item_id", "compliance_item_id"),
     )
+
+
+# ============================================================================
+# Digital Voting Models - EPIC-027 Digitaal Stemmen & Polls
+# ============================================================================
+
+
+class VotingStatus(str, Enum):
+    """Status of a voting/poll (FEAT-067 Digitale Stemming)."""
+
+    DRAFT = "draft"
+    OPEN = "open"
+    CLOSED = "closed"
+    CANCELLED = "cancelled"
+
+
+class VoteChoice(str, Enum):
+    """Vote choices (STORY-114)."""
+
+    VOOR = "voor"  # For
+    TEGEN = "tegen"  # Against
+    BLANCO = "blanco"  # Abstain
+
+
+class Voting(Base):
+    """Digital voting/proposal for VVE decisions (STORY-113).
+
+    Implements FEAT-067: Digitale Stemming.
+    """
+
+    __tablename__ = "votings"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    vve_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("vves.id", ondelete="CASCADE"), nullable=False
+    )
+    # Voting details
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text)
+    status: Mapped[VotingStatus] = mapped_column(
+        SQLEnum(VotingStatus), default=VotingStatus.DRAFT
+    )
+    # Timing
+    start_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    end_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    # Connection to meeting (optional)
+    meeting_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("meetings.id", ondelete="SET NULL")
+    )
+    # Quorum requirement
+    quorum_percentage: Mapped[int] = mapped_column(Integer, default=50)  # % of shares needed
+    # Results (populated after closing)
+    total_votes: Mapped[int] = mapped_column(Integer, default=0)
+    votes_for: Mapped[int] = mapped_column(Integer, default=0)
+    votes_against: Mapped[int] = mapped_column(Integer, default=0)
+    votes_abstain: Mapped[int] = mapped_column(Integer, default=0)
+    quorum_reached: Mapped[bool | None] = mapped_column(Boolean)
+    result_percentage_for: Mapped[Decimal | None] = mapped_column(Numeric(5, 2))
+    # Metadata
+    created_by_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    # Relationships
+    votes: Mapped[list["Vote"]] = relationship(
+        "Vote", back_populates="voting", cascade="all, delete-orphan"
+    )
+
+    __table_args__ = (
+        Index("ix_votings_vve_id", "vve_id"),
+        Index("ix_votings_status", "status"),
+        Index("ix_votings_end_date", "end_date"),
+    )
+
+
+class Vote(Base):
+    """Individual vote cast by an owner (STORY-114).
+
+    One vote per unit/ownership right.
+    """
+
+    __tablename__ = "votes"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    voting_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("votings.id", ondelete="CASCADE"), nullable=False
+    )
+    unit_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("units.id", ondelete="CASCADE"), nullable=False
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    # Vote choice
+    choice: Mapped[VoteChoice] = mapped_column(SQLEnum(VoteChoice), nullable=False)
+    # Share weight (from unit at time of voting)
+    share_percentage: Mapped[Decimal] = mapped_column(Numeric(10, 5), nullable=False)
+    # Metadata
+    voted_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+    # Relationships
+    voting: Mapped["Voting"] = relationship("Voting", back_populates="votes")
+
+    __table_args__ = (
+        Index("ix_votes_voting_id", "voting_id"),
+        UniqueConstraint("voting_id", "unit_id", name="uq_votes_voting_unit"),
+    )
