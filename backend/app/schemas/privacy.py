@@ -219,3 +219,94 @@ Deze privacyverklaring kan worden aangepast. De meest recente versie is altijd
 beschikbaar via onze digitale kanalen. Bij belangrijke wijzigingen zullen wij u 
 actief informeren.
 """.strip()
+
+
+# ============================================================================
+# Data Export Schemas (STORY-122)
+# ============================================================================
+
+
+class DataExportStatus(str, Enum):
+    """Status of a data export request."""
+
+    PENDING = "pending"
+    PROCESSING = "processing"
+    COMPLETED = "completed"
+    EXPIRED = "expired"
+    FAILED = "failed"
+
+
+class DataExportFormat(str, Enum):
+    """Format of the exported data."""
+
+    JSON = "json"
+    CSV = "csv"
+
+
+class DataExportRequestCreate(BaseModel):
+    """Schema for creating a data export request (STORY-122)."""
+
+    vve_id: uuid.UUID | None = None  # If None, export all VVEs
+    export_format: DataExportFormat = DataExportFormat.JSON
+
+
+class DataExportRequestResponse(BaseModel):
+    """Response schema for data export request."""
+
+    id: uuid.UUID
+    user_id: uuid.UUID
+    vve_id: uuid.UUID | None
+    status: DataExportStatus
+    export_format: DataExportFormat
+    file_size_bytes: int | None
+    download_count: int
+    expires_at: datetime | None
+    processing_started_at: datetime | None
+    processing_completed_at: datetime | None
+    error_message: str | None
+    created_at: datetime
+    updated_at: datetime
+    # Calculated fields
+    is_ready: bool = False
+    is_expired: bool = False
+    download_url: str | None = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DataExportRequestListResponse(BaseModel):
+    """List response for data export requests."""
+
+    id: uuid.UUID
+    vve_id: uuid.UUID | None
+    vve_name: str | None
+    status: DataExportStatus
+    export_format: DataExportFormat
+    file_size_bytes: int | None
+    expires_at: datetime | None
+    created_at: datetime
+    is_ready: bool
+    is_expired: bool
+
+
+class DataExportConfirmation(BaseModel):
+    """Confirmation response after creating export request."""
+
+    request_id: uuid.UUID
+    status: DataExportStatus
+    message: str
+    estimated_completion_minutes: int = 60
+
+
+class DataExportData(BaseModel):
+    """Container for exported personal data."""
+
+    export_date: datetime
+    user_info: dict
+    vve_memberships: list[dict]
+    units_owned: list[dict]
+    transactions: list[dict]
+    documents_accessed: list[dict]
+    votes_cast: list[dict]
+    tickets_created: list[dict]
+    audit_trail: list[dict]

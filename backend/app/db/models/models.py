@@ -2134,3 +2134,79 @@ class PrivacyStatement(Base):
         Index("ix_privacy_statements_vve_id", "vve_id"),
         Index("ix_privacy_statements_status", "status"),
     )
+
+
+# ============================================================================
+# Data Export Models - STORY-122 AVG Data Export
+# ============================================================================
+
+
+class DataExportStatus(str, Enum):
+    """Status of a data export request (STORY-122)."""
+
+    PENDING = "pending"  # Aanvraag ontvangen
+    PROCESSING = "processing"  # Export wordt gegenereerd
+    COMPLETED = "completed"  # Export beschikbaar
+    EXPIRED = "expired"  # Download link verlopen
+    FAILED = "failed"  # Export mislukt
+
+
+class DataExportFormat(str, Enum):
+    """Format of the exported data."""
+
+    JSON = "json"
+    CSV = "csv"
+
+
+class DataExportRequest(Base):
+    """AVG data export request from an owner (STORY-122).
+
+    Implements FEAT-036: AVG Module - Right of access.
+    Allows owners to request an export of all their personal data.
+    """
+
+    __tablename__ = "data_export_requests"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    # The user requesting the export
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    # VVE context (optional - if None, export all VVEs)
+    vve_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("vves.id", ondelete="SET NULL")
+    )
+    # Request details
+    status: Mapped[DataExportStatus] = mapped_column(
+        SQLEnum(DataExportStatus), default=DataExportStatus.PENDING
+    )
+    export_format: Mapped[DataExportFormat] = mapped_column(
+        SQLEnum(DataExportFormat), default=DataExportFormat.JSON
+    )
+    # File storage
+    file_path: Mapped[str | None] = mapped_column(String(500))  # S3 path or local path
+    file_size_bytes: Mapped[int | None] = mapped_column(Integer)
+    # Download tracking
+    download_token: Mapped[str | None] = mapped_column(String(255), unique=True)
+    download_count: Mapped[int] = mapped_column(Integer, default=0)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Processing timestamps
+    processing_started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    processing_completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Error tracking
+    error_message: Mapped[str | None] = mapped_column(Text)
+    # Timestamps
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    __table_args__ = (
+        Index("ix_data_export_requests_user_id", "user_id"),
+        Index("ix_data_export_requests_status", "status"),
+        Index("ix_data_export_requests_download_token", "download_token"),
+    )
