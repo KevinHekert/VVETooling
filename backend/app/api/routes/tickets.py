@@ -24,7 +24,9 @@ from app.api.dependencies.auth import (
 )
 from app.core.security import UserRole
 from app.db.models.models import (
+    Contract,
     Supplier,
+    SupplierEvaluation,
     SupplierFollowUp,
     SupplierFollowUpChannel as DBSupplierFollowUpChannel,
     SupplierStatus as DBSupplierStatus,
@@ -44,12 +46,16 @@ from app.db.models.models import (
 from app.db.session import get_db
 from app.schemas.ticket import (
     SupplierCreate,
+    SupplierEvaluationCreate,
+    SupplierEvaluationResponse,
+    SupplierEvaluationUpdate,
     SupplierFollowUpChannel,
     SupplierFollowUpCreate,
     SupplierFollowUpResponse,
     SupplierResponse,
     SupplierStatus,
     SupplierUpdate,
+    SupplierWithEvaluationSummary,
     TicketAttachmentResponse,
     TicketAttachmentStatus,
     TicketAttachmentUpdate,
@@ -1483,3 +1489,247 @@ async def create_follow_up(
     response.created_by_name = f"{current_user.first_name} {current_user.last_name}"
 
     return response
+
+
+# ============================================================================
+# STORY-061: Supplier Evaluation Endpoints
+# ============================================================================
+
+
+@supplier_router.get(
+    "/{supplier_id}/evaluations",
+    response_model=list[SupplierEvaluationResponse],
+    summary="Leverancier evaluaties ophalen",
+    description="STORY-061: Haal alle evaluaties op voor een specifieke leverancier.",
+)
+async def list_supplier_evaluations(
+    vve_id: uuid.UUID,
+    supplier_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> list[SupplierEvaluationResponse]:
+    """Get all evaluations for a supplier."""
+    # Verify supplier exists and belongs to VVE
+    supplier_result = await db.execute(
+        select(Supplier).where(Supplier.id == supplier_id, Supplier.vve_id == vve_id)
+    )
+    supplier = supplier_result.scalar_one_or_none()
+    if not supplier:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Leverancier niet gevonden",
+        )
+
+    result = await db.execute(
+        select(SupplierEvaluation)
+        .where(SupplierEvaluation.supplier_id == supplier_id)
+        .order_by(SupplierEvaluation.created_at.desc())
+    )
+    evaluations = result.scalars().all()
+
+    responses = []
+    for evaluation in evaluations:
+        # Get creator name (if not anonymous)
+        creator_name = None
+        if not evaluation.is_anonymous:
+            creator_result = await db.execute(
+                select(User).where(User.id == evaluation.created_by_id)
+            )
+            creator = creator_result.scalar_one_or_none()
+            if creator:
+                creator_name = f"{creator.first_name} {creator.last_name}"
+
+        # Get contract description if linked
+        contract_description = None
+        if evaluation.contract_id:
+            contract_result = await db.execute(
+                select(Contract).where(Contract.id == evaluation.contract_id)
+            )
+            contract = contract_result.scalar_one_or_none()
+            if contract:
+                contract_description = contract.description or contract.supplier_name
+
+        response = SupplierEvaluationResponse(
+            id=evaluation.id,
+            vve_id=evaluation.vve_id,
+            supplier_id=evaluation.supplier_id,
+            supplier_name=supplier.name,
+            contract_id=evaluation.contract_id,
+            contract_description=contract_description,
+            rating=evaluation.rating,
+            feedback=evaluation.feedback,
+            is_anonymous=evaluation.is_anonymous,
+            created_by_id=evaluation.created_by_id,
+            created_by_name=creator_name,
+            created_at=evaluation.created_at,
+        )
+        responses.append(response)
+
+    return responses
+
+
+@supplier_router.post(
+    "/{supplier_id}/evaluations",
+    response_model=SupplierEvaluationResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Leverancier evaluatie toevoegen",
+    description="STORY-061: Voeg een evaluatie toe aan een leverancier. Evaluatie met sterren (1-5) en vrije tekst.",
+)
+async def create_supplier_evaluation(
+    vve_id: uuid.UUID,
+    supplier_id: uuid.UUID,
+    evaluation_data: SupplierEvaluationCreate,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> SupplierEvaluationResponse:
+    """Create a new evaluation for a supplier (STORY-061)."""
+    # Verify supplier exists and belongs to VVE
+    supplier_result = await db.execute(
+        select(Supplier).where(Supplier.id == supplier_id, Supplier.vve_id == vve_id)
+    )
+    supplier = supplier_result.scalar_one_or_none()
+    if not supplier:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Leverancier niet gevonden",
+        )
+
+    # Validate supplier_id in path matches body
+    if evaluation_data.supplier_id != supplier_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Supplier ID in path does not match body",
+        )
+
+    # If contract_id is provided, validate it exists and belongs to VVE
+    contract_description = None
+    if evaluation_data.contract_id:
+        contract_result = await db.execute(
+            select(Contract).where(
+                Contract.id == evaluation_data.contract_id,
+                Contract.vve_id == vve_id,
+            )
+        )
+        contract = contract_result.scalar_one_or_none()
+        if not contract:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Contract niet gevonden",
+            )
+        contract_description = contract.description or contract.supplier_name
+
+    evaluation = SupplierEvaluation(
+        vve_id=vve_id,
+        supplier_id=supplier_id,
+        contract_id=evaluation_data.contract_id,
+        rating=evaluation_data.rating,
+        feedback=evaluation_data.feedback,
+        is_anonymous=evaluation_data.is_anonymous,
+        created_by_id=current_user.id,
+    )
+    db.add(evaluation)
+    await db.commit()
+    await db.refresh(evaluation)
+
+    # Get creator name
+    creator_name = None
+    if not evaluation.is_anonymous:
+        creator_name = f"{current_user.first_name} {current_user.last_name}"
+
+    return SupplierEvaluationResponse(
+        id=evaluation.id,
+        vve_id=evaluation.vve_id,
+        supplier_id=evaluation.supplier_id,
+        supplier_name=supplier.name,
+        contract_id=evaluation.contract_id,
+        contract_description=contract_description,
+        rating=evaluation.rating,
+        feedback=evaluation.feedback,
+        is_anonymous=evaluation.is_anonymous,
+        created_by_id=evaluation.created_by_id,
+        created_by_name=creator_name,
+        created_at=evaluation.created_at,
+    )
+
+
+@supplier_router.get(
+    "/{supplier_id}/evaluation-summary",
+    response_model=dict,
+    summary="Leverancier evaluatie samenvatting",
+    description="STORY-061: Haal de gemiddelde score en aantal evaluaties op voor een leverancier.",
+)
+async def get_supplier_evaluation_summary(
+    vve_id: uuid.UUID,
+    supplier_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> dict:
+    """Get evaluation summary (average rating and count) for a supplier."""
+    # Verify supplier exists
+    supplier_result = await db.execute(
+        select(Supplier).where(Supplier.id == supplier_id, Supplier.vve_id == vve_id)
+    )
+    supplier = supplier_result.scalar_one_or_none()
+    if not supplier:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Leverancier niet gevonden",
+        )
+
+    # Calculate average and count
+    result = await db.execute(
+        select(
+            func.avg(SupplierEvaluation.rating).label("average_rating"),
+            func.count(SupplierEvaluation.id).label("evaluation_count"),
+        ).where(SupplierEvaluation.supplier_id == supplier_id)
+    )
+    summary = result.one()
+
+    avg_rating = float(summary.average_rating) if summary.average_rating else None
+
+    return {
+        "supplier_id": str(supplier_id),
+        "supplier_name": supplier.name,
+        "average_rating": round(avg_rating, 2) if avg_rating else None,
+        "evaluation_count": summary.evaluation_count or 0,
+    }
+
+
+@supplier_router.delete(
+    "/{supplier_id}/evaluations/{evaluation_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Leverancier evaluatie verwijderen",
+    description="STORY-061: Verwijder een eigen evaluatie. Alleen de maker kan verwijderen.",
+)
+async def delete_supplier_evaluation(
+    vve_id: uuid.UUID,
+    supplier_id: uuid.UUID,
+    evaluation_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> None:
+    """Delete a supplier evaluation. Only the creator can delete."""
+    result = await db.execute(
+        select(SupplierEvaluation).where(
+            SupplierEvaluation.id == evaluation_id,
+            SupplierEvaluation.supplier_id == supplier_id,
+            SupplierEvaluation.vve_id == vve_id,
+        )
+    )
+    evaluation = result.scalar_one_or_none()
+
+    if not evaluation:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Evaluatie niet gevonden",
+        )
+
+    # Only creator or beheerder can delete
+    if evaluation.created_by_id != current_user.id and current_user.role != UserRole.BEHEERDER:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Alleen de maker van de evaluatie kan deze verwijderen",
+        )
+
+    await db.delete(evaluation)
+    await db.commit()

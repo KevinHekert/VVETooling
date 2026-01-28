@@ -14,10 +14,12 @@ from enum import Enum
 
 from sqlalchemy import (
     Boolean,
+    CheckConstraint,
     DateTime,
     Enum as SQLEnum,
     ForeignKey,
     Index,
+    Integer,
     Numeric,
     String,
     Text,
@@ -643,6 +645,50 @@ class SupplierFollowUp(Base):
     )
 
 
+class SupplierEvaluation(Base):
+    """Supplier evaluation/review after project completion (STORY-061).
+
+    Implements STORY-061: Leverancier evaluatie toevoegen.
+    Allows board members to rate suppliers with stars (1-5) and feedback.
+    """
+
+    __tablename__ = "supplier_evaluations"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    vve_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("vves.id", ondelete="CASCADE"), nullable=False
+    )
+    supplier_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("suppliers.id", ondelete="CASCADE"), nullable=False
+    )
+    # Optional link to specific contract/project
+    contract_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("contracts.id", ondelete="SET NULL")
+    )
+    # Rating (1-5 stars)
+    rating: Mapped[int] = mapped_column(Integer, nullable=False)
+    # Free text feedback
+    feedback: Mapped[str | None] = mapped_column(Text)
+    # Optional: anonymous evaluation
+    is_anonymous: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Audit fields
+    created_by_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+    __table_args__ = (
+        Index("ix_supplier_evaluations_vve_id", "vve_id"),
+        Index("ix_supplier_evaluations_supplier_id", "supplier_id"),
+        Index("ix_supplier_evaluations_contract_id", "contract_id"),
+        CheckConstraint("rating >= 1 AND rating <= 5", name="check_rating_range"),
+    )
+
+
 class Ticket(Base):
     """Ticket for resident complaints and service requests (FEAT-016).
 
@@ -1062,8 +1108,110 @@ class Meeting(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
+    # Relationship to agenda items (STORY-070)
+    agenda_items: Mapped[list["MeetingAgendaItem"]] = relationship(
+        "MeetingAgendaItem", back_populates="meeting", cascade="all, delete-orphan"
+    )
+
     __table_args__ = (
         Index("ix_meetings_vve_id", "vve_id"),
         Index("ix_meetings_meeting_date", "meeting_date"),
         Index("ix_meetings_status", "status"),
+    )
+
+
+class MeetingAgendaItem(Base):
+    """Agenda item for an ALV meeting (STORY-070).
+
+    Implements STORY-070: ALV agenda opstellen.
+    Allows secretaris to create agenda with items, durations, and linked documents.
+    """
+
+    __tablename__ = "meeting_agenda_items"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    meeting_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("meetings.id", ondelete="CASCADE"), nullable=False
+    )
+    # Agenda item details
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text)
+    # Duration in minutes
+    duration_minutes: Mapped[int | None] = mapped_column(Integer)
+    # Order in agenda (for drag & drop sorting)
+    order_index: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    # Optional link to document
+    document_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("documents.id", ondelete="SET NULL")
+    )
+    # Is this a standard/template item
+    is_standard: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Audit fields
+    created_by_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    # Relationships
+    meeting: Mapped["Meeting"] = relationship("Meeting", back_populates="agenda_items")
+
+    __table_args__ = (
+        Index("ix_meeting_agenda_items_meeting_id", "meeting_id"),
+        Index("ix_meeting_agenda_items_order", "meeting_id", "order_index"),
+    )
+
+
+class MeetingRsvpStatus(str, Enum):
+    """RSVP status for ALV meetings (STORY-072)."""
+
+    PRESENT = "present"  # Aanwezig
+    ABSENT = "absent"  # Afwezig
+    WITH_PROXY = "with_proxy"  # Met volmacht
+
+
+class MeetingRsvp(Base):
+    """RSVP response for an ALV meeting (STORY-072).
+
+    Implements STORY-072: RSVP registreren voor ALV.
+    Allows owners to confirm attendance for meetings.
+    """
+
+    __tablename__ = "meeting_rsvps"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    meeting_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("meetings.id", ondelete="CASCADE"), nullable=False
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    # RSVP status
+    status: Mapped[MeetingRsvpStatus] = mapped_column(
+        SQLEnum(MeetingRsvpStatus), nullable=False
+    )
+    # Optional proxy holder (if status is WITH_PROXY)
+    proxy_holder_name: Mapped[str | None] = mapped_column(String(255))
+    # Notes from respondent
+    notes: Mapped[str | None] = mapped_column(Text)
+    # Timestamps
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    __table_args__ = (
+        Index("ix_meeting_rsvps_meeting_id", "meeting_id"),
+        Index("ix_meeting_rsvps_user_id", "user_id"),
+        UniqueConstraint("meeting_id", "user_id", name="uq_meeting_rsvp_user"),
     )

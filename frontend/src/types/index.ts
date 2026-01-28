@@ -539,6 +539,37 @@ export interface SupplierFollowUpCreate {
   contact_date: string;
 }
 
+// STORY-061: Supplier Evaluation types
+export interface SupplierEvaluation {
+  id: string;
+  vve_id: string;
+  supplier_id: string;
+  supplier_name?: string;
+  contract_id?: string;
+  contract_description?: string;
+  rating: number;
+  feedback?: string;
+  is_anonymous: boolean;
+  created_by_id: string;
+  created_by_name?: string;
+  created_at: string;
+}
+
+export interface SupplierEvaluationCreate {
+  supplier_id: string;
+  contract_id?: string;
+  rating: number;
+  feedback?: string;
+  is_anonymous?: boolean;
+}
+
+export interface SupplierEvaluationSummary {
+  supplier_id: string;
+  supplier_name: string;
+  average_rating: number | null;
+  evaluation_count: number;
+}
+
 // STORY-041: Splitsingsakte version types
 export type SplitsingsakteVersionStatus = 'draft' | 'active' | 'archived';
 
@@ -770,6 +801,100 @@ export interface MeetingListItem {
   status: MeetingStatus;
   days_until?: number;
   is_upcoming: boolean;
+}
+
+// STORY-070: Agenda Item types
+export interface AgendaItem {
+  id: string;
+  meeting_id: string;
+  title: string;
+  description?: string;
+  duration_minutes?: number;
+  order_index: number;
+  document_id?: string;
+  document_name?: string;
+  is_standard: boolean;
+  created_by_id: string;
+  created_by_name?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AgendaItemCreate {
+  title: string;
+  description?: string;
+  duration_minutes?: number;
+  order_index?: number;
+  document_id?: string;
+  is_standard?: boolean;
+}
+
+export interface AgendaItemUpdate {
+  title?: string;
+  description?: string;
+  duration_minutes?: number;
+  order_index?: number;
+  document_id?: string;
+}
+
+export interface AgendaItemReorder {
+  item_ids: string[];
+}
+
+// STORY-071: ALV Invitation types
+export interface MeetingInvitationCreate {
+  include_agenda?: boolean;
+  include_documents?: boolean;
+  custom_message?: string;
+}
+
+export interface MeetingInvitationResponse {
+  meeting_id: string;
+  invitations_sent: number;
+  status: string;
+  sent_at: string;
+  recipients: string[];
+}
+
+export interface MeetingInvitationPreview {
+  subject: string;
+  body_preview: string;
+  recipient_count: number;
+  meeting_date: string;
+  agenda_summary?: string;
+  document_count: number;
+}
+
+// STORY-072: RSVP types
+export type RsvpStatus = 'present' | 'absent' | 'with_proxy';
+
+export interface MeetingRsvp {
+  id: string;
+  meeting_id: string;
+  user_id: string;
+  user_name?: string;
+  status: RsvpStatus;
+  proxy_holder_name?: string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RsvpCreate {
+  status: RsvpStatus;
+  proxy_holder_name?: string;
+  notes?: string;
+}
+
+export interface RsvpSummary {
+  meeting_id: string;
+  total_invited: number;
+  total_responded: number;
+  present_count: number;
+  absent_count: number;
+  with_proxy_count: number;
+  no_response_count: number;
+  response_rate: number;
 }
 
 // API Response types

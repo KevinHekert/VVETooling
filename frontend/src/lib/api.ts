@@ -590,6 +590,42 @@ class ApiClient {
     );
   }
 
+  // STORY-061: Supplier Evaluations
+  async getSupplierEvaluations(vveId: string, supplierId: string) {
+    return this.fetch<import('@/types').SupplierEvaluation[]>(
+      `/vves/${vveId}/suppliers/${supplierId}/evaluations`
+    );
+  }
+
+  async createSupplierEvaluation(
+    vveId: string,
+    supplierId: string,
+    data: import('@/types').SupplierEvaluationCreate
+  ) {
+    return this.fetch<import('@/types').SupplierEvaluation>(
+      `/vves/${vveId}/suppliers/${supplierId}/evaluations`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async getSupplierEvaluationSummary(vveId: string, supplierId: string) {
+    return this.fetch<import('@/types').SupplierEvaluationSummary>(
+      `/vves/${vveId}/suppliers/${supplierId}/evaluation-summary`
+    );
+  }
+
+  async deleteSupplierEvaluation(vveId: string, supplierId: string, evaluationId: string) {
+    return this.fetch<void>(
+      `/vves/${vveId}/suppliers/${supplierId}/evaluations/${evaluationId}`,
+      {
+        method: 'DELETE',
+      }
+    );
+  }
+
   // STORY-041: Splitsingsakte Versions
   async getSplitsingsakteVersions(vveId: string, includeArchived = false) {
     const query = includeArchived ? '?include_archived=true' : '';
@@ -859,6 +895,110 @@ class ApiClient {
     return this.fetch(`/vves/${vveId}/meetings/${meetingId}`, {
       method: 'DELETE',
     });
+  }
+
+  // STORY-070: Agenda Items
+  async getAgendaItems(vveId: string, meetingId: string) {
+    return this.fetch<import('@/types').AgendaItem[]>(
+      `/vves/${vveId}/meetings/${meetingId}/agenda`
+    );
+  }
+
+  async createAgendaItem(vveId: string, meetingId: string, data: import('@/types').AgendaItemCreate) {
+    return this.fetch<import('@/types').AgendaItem>(
+      `/vves/${vveId}/meetings/${meetingId}/agenda`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async createStandardAgenda(vveId: string, meetingId: string) {
+    return this.fetch<import('@/types').AgendaItem[]>(
+      `/vves/${vveId}/meetings/${meetingId}/agenda/template`,
+      {
+        method: 'POST',
+      }
+    );
+  }
+
+  async updateAgendaItem(vveId: string, meetingId: string, itemId: string, data: import('@/types').AgendaItemUpdate) {
+    return this.fetch<import('@/types').AgendaItem>(
+      `/vves/${vveId}/meetings/${meetingId}/agenda/${itemId}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async reorderAgendaItems(vveId: string, meetingId: string, data: import('@/types').AgendaItemReorder) {
+    return this.fetch<import('@/types').AgendaItem[]>(
+      `/vves/${vveId}/meetings/${meetingId}/agenda/reorder`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async deleteAgendaItem(vveId: string, meetingId: string, itemId: string) {
+    return this.fetch(`/vves/${vveId}/meetings/${meetingId}/agenda/${itemId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async deleteAllAgendaItems(vveId: string, meetingId: string) {
+    return this.fetch(`/vves/${vveId}/meetings/${meetingId}/agenda`, {
+      method: 'DELETE',
+    });
+  }
+
+  // STORY-071: ALV Invitations
+  async previewInvitation(vveId: string, meetingId: string) {
+    return this.fetch<import('@/types').MeetingInvitationPreview>(
+      `/vves/${vveId}/meetings/${meetingId}/invitation/preview`
+    );
+  }
+
+  async sendInvitation(vveId: string, meetingId: string, data: import('@/types').MeetingInvitationCreate) {
+    return this.fetch<import('@/types').MeetingInvitationResponse>(
+      `/vves/${vveId}/meetings/${meetingId}/invitation/send`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  // STORY-072: RSVP
+  async createOrUpdateRsvp(vveId: string, meetingId: string, data: import('@/types').RsvpCreate) {
+    return this.fetch<import('@/types').MeetingRsvp>(
+      `/vves/${vveId}/meetings/${meetingId}/rsvp`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async getMyRsvp(vveId: string, meetingId: string) {
+    return this.fetch<import('@/types').MeetingRsvp | null>(
+      `/vves/${vveId}/meetings/${meetingId}/rsvp`
+    );
+  }
+
+  async listRsvps(vveId: string, meetingId: string) {
+    return this.fetch<import('@/types').MeetingRsvp[]>(
+      `/vves/${vveId}/meetings/${meetingId}/rsvps`
+    );
+  }
+
+  async getRsvpSummary(vveId: string, meetingId: string) {
+    return this.fetch<import('@/types').RsvpSummary>(
+      `/vves/${vveId}/meetings/${meetingId}/rsvps/summary`
+    );
   }
 }
 
