@@ -543,7 +543,7 @@ async def get_voting_results(
 
     # Calculate total eligible shares
     units_result = await db.execute(
-        select(func.sum(Unit.share_percentage)).where(Unit.vve_id == vve_id, Unit.is_active == True)
+        select(func.sum(Unit.share_percentage)).where(Unit.vve_id == vve_id, Unit.is_active.is_(True))
     )
     total_eligible_shares = Decimal(units_result.scalar() or 0)
 

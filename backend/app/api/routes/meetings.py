@@ -1130,7 +1130,7 @@ async def list_eligible_grantees(
         .join(User, VVEMember.user_id == User.id)
         .where(
             VVEMember.vve_id == vve_id,
-            VVEMember.is_active == True,
+            VVEMember.is_active.is_(True),
             VVEMember.user_id != current_user.id,
         )
     )
@@ -1182,7 +1182,7 @@ async def create_proxy(
         .where(
             VVEMember.vve_id == vve_id,
             VVEMember.user_id == proxy_data.grantee_id,
-            VVEMember.is_active == True,
+            VVEMember.is_active.is_(True),
         )
     )
     grantee_data = grantee_result.first()
@@ -1659,7 +1659,7 @@ async def calculate_quorum(
 
     # Get all units with their share percentages for this VVE
     units_result = await db.execute(
-        select(Unit).where(Unit.vve_id == vve_id, Unit.is_active == True)
+        select(Unit).where(Unit.vve_id == vve_id, Unit.is_active.is_(True))
     )
     units = {unit.id: unit for unit in units_result.scalars().all()}
     total_shares = float(sum(unit.share_percentage for unit in units.values()))
@@ -1668,7 +1668,7 @@ async def calculate_quorum(
     members_result = await db.execute(
         select(VVEMember, User)
         .join(User, VVEMember.user_id == User.id)
-        .where(VVEMember.vve_id == vve_id, VVEMember.is_active == True)
+        .where(VVEMember.vve_id == vve_id, VVEMember.is_active.is_(True))
     )
     members = members_result.all()
     member_by_user_id = {user.id: (member, user) for member, user in members}
@@ -2589,7 +2589,7 @@ async def share_minutes(
     members_result = await db.execute(
         select(VVEMember).where(
             VVEMember.vve_id == vve_id,
-            VVEMember.is_active == True,
+            VVEMember.is_active.is_(True),
         )
     )
     members = members_result.scalars().all()
@@ -2656,7 +2656,7 @@ async def preview_share_minutes(
     members_result = await db.execute(
         select(VVEMember).where(
             VVEMember.vve_id == vve_id,
-            VVEMember.is_active == True,
+            VVEMember.is_active.is_(True),
         )
     )
     members = members_result.scalars().all()

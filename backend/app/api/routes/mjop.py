@@ -8,6 +8,7 @@ Implements EPIC-014 (MJOP & Onderhoudsplanning):
 
 import json
 import uuid
+from datetime import datetime
 from decimal import Decimal
 from io import BytesIO
 from typing import Annotated, Any
@@ -919,7 +920,7 @@ async def calculate_reserves(
             detail="VVE niet gevonden",
         )
 
-    current_year = 2026  # Could be dynamic
+    current_year = datetime.now().year
     end_year = current_year + request.years_ahead
 
     # Get elements with maintenance in range

@@ -8,6 +8,7 @@ import uuid
 from datetime import datetime, timezone, timedelta
 from typing import Annotated
 
+from dateutil.relativedelta import relativedelta
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -554,7 +555,6 @@ async def complete_compliance_item(
 
     # If recurring, create next deadline
     if item.is_recurring and item.recurrence_months and item.deadline:
-        from dateutil.relativedelta import relativedelta
         item.deadline = item.deadline + relativedelta(months=item.recurrence_months)
         item.is_completed = False
         item.completed_at = None
