@@ -18,7 +18,10 @@ class Settings(BaseSettings):
 
     # API Configuration
     api_prefix: str = "/api/v1"
-    allowed_origins: list[str] = ["http://localhost:3000"]
+    allowed_origins: list[str] = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
 
     # Database (PostgreSQL - ADR-003)
     database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/vvetooling"
