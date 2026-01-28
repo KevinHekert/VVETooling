@@ -27,5 +27,8 @@ pytest==8.3.5
 pytest-asyncio==0.25.3
 httpx==0.28.1
 
+# Excel processing (STORY-062: MJOP import)
+openpyxl==3.1.5
+
 # Development
 python-dotenv==1.0.1
