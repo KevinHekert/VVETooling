@@ -1855,3 +1855,75 @@ class Vote(Base):
         Index("ix_votes_voting_id", "voting_id"),
         UniqueConstraint("voting_id", "unit_id", name="uq_votes_voting_unit"),
     )
+
+
+class VotingProxyStatus(str, Enum):
+    """Status of a voting proxy (STORY-117)."""
+
+    PENDING = "pending"  # Wachtend op bevestiging
+    CONFIRMED = "confirmed"  # Bevestigd door gevolmachtigde
+    REVOKED = "revoked"  # Ingetrokken door volmachtgever
+    USED = "used"  # Volmacht is gebruikt
+
+
+class VotingProxy(Base):
+    """Digital proxy (volmacht) for voting (STORY-117).
+
+    Implements FEAT-069: Volmacht Beheer.
+    Allows owners to grant proxy voting rights to another owner for digital votings.
+    """
+
+    __tablename__ = "voting_proxies"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    # The owner granting the proxy (volmachtgever)
+    grantor_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    # The unit for which the proxy is granted
+    unit_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("units.id", ondelete="CASCADE"), nullable=False
+    )
+    # The person receiving the proxy (gevolmachtigde)
+    grantee_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    # Specific voting (optional - if None, applies to all votings for this VVE)
+    voting_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("votings.id", ondelete="CASCADE")
+    )
+    # VVE reference for general proxies
+    vve_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("vves.id", ondelete="CASCADE"), nullable=False
+    )
+    # Status of the proxy
+    status: Mapped[VotingProxyStatus] = mapped_column(
+        SQLEnum(VotingProxyStatus), nullable=False, default=VotingProxyStatus.PENDING
+    )
+    # Notes from the grantor
+    notes: Mapped[str | None] = mapped_column(Text)
+    # Confirmation timestamp
+    confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Revocation timestamp
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Timestamps
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    __table_args__ = (
+        Index("ix_voting_proxies_grantor_id", "grantor_id"),
+        Index("ix_voting_proxies_grantee_id", "grantee_id"),
+        Index("ix_voting_proxies_voting_id", "voting_id"),
+        Index("ix_voting_proxies_vve_id", "vve_id"),
+        # Ensure one active proxy per unit per voting
+        UniqueConstraint(
+            "unit_id", "voting_id",
+            name="uq_voting_proxy_unit_voting"
+        ),
+    )

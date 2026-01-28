@@ -238,23 +238,73 @@ class PollVoteCreate(BaseModel):
 # ============================================================================
 
 
-class DigitalProxyCreate(BaseModel):
-    """Schema for registering a digital proxy (STORY-117)."""
+class VotingProxyStatus(str, Enum):
+    """Status of a voting proxy."""
+
+    PENDING = "pending"
+    CONFIRMED = "confirmed"
+    REVOKED = "revoked"
+    USED = "used"
+
+
+class VotingProxyCreate(BaseModel):
+    """Schema for registering a digital voting proxy (STORY-117)."""
 
     grantee_id: uuid.UUID
-    voting_id: uuid.UUID | None = None  # Specific voting or all
+    unit_id: uuid.UUID
+    voting_id: uuid.UUID | None = None  # Specific voting or all votings
     notes: str | None = Field(None, max_length=1000)
 
 
-class DigitalProxyResponse(BaseModel):
-    """Response schema for digital proxy."""
+class VotingProxyUpdate(BaseModel):
+    """Schema for updating a voting proxy."""
+
+    notes: str | None = Field(None, max_length=1000)
+
+
+class VotingProxyResponse(BaseModel):
+    """Response schema for voting proxy."""
 
     id: uuid.UUID
     grantor_id: uuid.UUID
     grantor_name: str
     grantee_id: uuid.UUID
     grantee_name: str
+    unit_id: uuid.UUID
+    unit_number: str
     voting_id: uuid.UUID | None
     voting_title: str | None
-    is_active: bool
+    vve_id: uuid.UUID
+    status: VotingProxyStatus
+    notes: str | None
+    confirmed_at: datetime | None
+    revoked_at: datetime | None
     created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class VotingProxyListResponse(BaseModel):
+    """List response for voting proxies."""
+
+    id: uuid.UUID
+    grantor_name: str
+    grantee_name: str
+    unit_number: str
+    voting_title: str | None
+    status: VotingProxyStatus
+    created_at: datetime
+
+
+class VotingProxyConfirmation(BaseModel):
+    """Confirmation response for proxy operations."""
+
+    proxy_id: uuid.UUID
+    message: str
+    status: VotingProxyStatus
+
+
+# Legacy aliases for backwards compatibility
+DigitalProxyCreate = VotingProxyCreate
+DigitalProxyResponse = VotingProxyResponse

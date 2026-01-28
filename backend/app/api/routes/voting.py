@@ -25,6 +25,8 @@ from app.db.models.models import (
     VoteChoice as DBVoteChoice,
     Voting,
     VotingStatus as DBVotingStatus,
+    VotingProxy,
+    VotingProxyStatus as DBVotingProxyStatus,
     Unit,
     User,
     VVE,
@@ -43,6 +45,11 @@ from app.schemas.voting import (
     VotingResultsSummary,
     VotingStatus,
     VotingUpdate,
+    VotingProxyCreate,
+    VotingProxyResponse,
+    VotingProxyListResponse,
+    VotingProxyConfirmation,
+    VotingProxyStatus,
 )
 
 router = APIRouter(prefix="/vves/{vve_id}/voting", tags=["voting"])
@@ -643,3 +650,477 @@ async def close_voting(
 
     # Return results
     return await get_voting_results(vve_id, voting_id, current_user, db)
+
+
+# ============================================================================
+# Voting Proxy (STORY-117)
+# ============================================================================
+
+
+@router.post(
+    "/proxies",
+    response_model=VotingProxyResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Volmacht registreren",
+    description="""
+    STORY-117: Als eigenaar wil ik digitaal een volmacht kunnen geven.
+    
+    - Selectie van gevolmachtigde uit eigenaren-lijst
+    - Koppeling aan specifieke stemming of alle stemmingen
+    - Bevestiging naar beide partijen
+    """,
+)
+async def create_voting_proxy(
+    vve_id: uuid.UUID,
+    proxy_data: VotingProxyCreate,
+    current_user: Annotated[CurrentUser, Depends(require_member)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> VotingProxyResponse:
+    """Create a new voting proxy (STORY-117)."""
+    # Verify VVE exists
+    vve_result = await db.execute(select(VVE).where(VVE.id == vve_id))
+    if vve_result.scalar_one_or_none() is None:
+        raise HTTPException(status_code=404, detail="VVE niet gevonden")
+
+    # Verify unit belongs to VVE
+    unit_result = await db.execute(
+        select(Unit).where(Unit.id == proxy_data.unit_id, Unit.vve_id == vve_id)
+    )
+    unit = unit_result.scalar_one_or_none()
+    if unit is None:
+        raise HTTPException(status_code=404, detail="Eenheid niet gevonden")
+
+    # Verify grantee exists and is member of VVE
+    grantee_result = await db.execute(select(User).where(User.id == proxy_data.grantee_id))
+    grantee = grantee_result.scalar_one_or_none()
+    if grantee is None:
+        raise HTTPException(status_code=404, detail="Gevolmachtigde niet gevonden")
+
+    grantee_member_result = await db.execute(
+        select(VVEMember).where(
+            VVEMember.user_id == proxy_data.grantee_id,
+            VVEMember.vve_id == vve_id,
+            VVEMember.is_active.is_(True),
+        )
+    )
+    if grantee_member_result.scalar_one_or_none() is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Gevolmachtigde is geen actief lid van deze VVE"
+        )
+
+    # Can't grant proxy to yourself
+    if proxy_data.grantee_id == current_user.id:
+        raise HTTPException(
+            status_code=400,
+            detail="U kunt geen volmacht aan uzelf geven"
+        )
+
+    # Check if voting exists (if specified)
+    voting_title = None
+    if proxy_data.voting_id:
+        voting_result = await db.execute(
+            select(Voting).where(
+                Voting.id == proxy_data.voting_id,
+                Voting.vve_id == vve_id,
+            )
+        )
+        voting = voting_result.scalar_one_or_none()
+        if voting is None:
+            raise HTTPException(status_code=404, detail="Stemming niet gevonden")
+        voting_title = voting.title
+
+    # Check for existing active proxy for this unit/voting combination
+    existing_query = select(VotingProxy).where(
+        VotingProxy.unit_id == proxy_data.unit_id,
+        VotingProxy.status.in_([DBVotingProxyStatus.PENDING, DBVotingProxyStatus.CONFIRMED]),
+    )
+    if proxy_data.voting_id:
+        existing_query = existing_query.where(VotingProxy.voting_id == proxy_data.voting_id)
+    else:
+        existing_query = existing_query.where(VotingProxy.voting_id.is_(None))
+
+    existing_result = await db.execute(existing_query)
+    if existing_result.scalar_one_or_none() is not None:
+        raise HTTPException(
+            status_code=400,
+            detail="Er bestaat al een actieve volmacht voor deze eenheid"
+        )
+
+    # Create proxy
+    proxy = VotingProxy(
+        grantor_id=current_user.id,
+        grantee_id=proxy_data.grantee_id,
+        unit_id=proxy_data.unit_id,
+        voting_id=proxy_data.voting_id,
+        vve_id=vve_id,
+        notes=proxy_data.notes,
+    )
+    db.add(proxy)
+    await db.commit()
+    await db.refresh(proxy)
+
+    # Get names for response
+    grantor_name = f"{current_user.first_name} {current_user.last_name}"
+    grantee_name = f"{grantee.first_name} {grantee.last_name}"
+
+    return VotingProxyResponse(
+        id=proxy.id,
+        grantor_id=proxy.grantor_id,
+        grantor_name=grantor_name,
+        grantee_id=proxy.grantee_id,
+        grantee_name=grantee_name,
+        unit_id=proxy.unit_id,
+        unit_number=unit.unit_number,
+        voting_id=proxy.voting_id,
+        voting_title=voting_title,
+        vve_id=proxy.vve_id,
+        status=VotingProxyStatus(proxy.status.value),
+        notes=proxy.notes,
+        confirmed_at=proxy.confirmed_at,
+        revoked_at=proxy.revoked_at,
+        created_at=proxy.created_at,
+        updated_at=proxy.updated_at,
+    )
+
+
+@router.get(
+    "/proxies",
+    response_model=list[VotingProxyListResponse],
+    summary="Lijst van volmachten",
+)
+async def list_voting_proxies(
+    vve_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_member)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+    status_filter: VotingProxyStatus | None = Query(None, alias="status"),
+    voting_id: uuid.UUID | None = None,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=100),
+) -> list[VotingProxyListResponse]:
+    """Get list of voting proxies for the VVE."""
+    query = select(VotingProxy).where(VotingProxy.vve_id == vve_id)
+
+    if status_filter:
+        query = query.where(VotingProxy.status == DBVotingProxyStatus(status_filter.value))
+
+    if voting_id:
+        query = query.where(VotingProxy.voting_id == voting_id)
+
+    query = query.order_by(VotingProxy.created_at.desc())
+    query = query.offset(skip).limit(limit)
+
+    result = await db.execute(query)
+    proxies = result.scalars().all()
+
+    response = []
+    for proxy in proxies:
+        # Get names
+        grantor_result = await db.execute(select(User).where(User.id == proxy.grantor_id))
+        grantor = grantor_result.scalar_one_or_none()
+        grantee_result = await db.execute(select(User).where(User.id == proxy.grantee_id))
+        grantee = grantee_result.scalar_one_or_none()
+        unit_result = await db.execute(select(Unit).where(Unit.id == proxy.unit_id))
+        unit = unit_result.scalar_one_or_none()
+
+        voting_title = None
+        if proxy.voting_id:
+            voting_result = await db.execute(select(Voting).where(Voting.id == proxy.voting_id))
+            voting = voting_result.scalar_one_or_none()
+            if voting:
+                voting_title = voting.title
+
+        response.append(
+            VotingProxyListResponse(
+                id=proxy.id,
+                grantor_name=f"{grantor.first_name} {grantor.last_name}" if grantor else "Onbekend",
+                grantee_name=f"{grantee.first_name} {grantee.last_name}" if grantee else "Onbekend",
+                unit_number=unit.unit_number if unit else "Onbekend",
+                voting_title=voting_title,
+                status=VotingProxyStatus(proxy.status.value),
+                created_at=proxy.created_at,
+            )
+        )
+
+    return response
+
+
+@router.get(
+    "/proxies/{proxy_id}",
+    response_model=VotingProxyResponse,
+    summary="Volmacht details",
+)
+async def get_voting_proxy(
+    vve_id: uuid.UUID,
+    proxy_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_member)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> VotingProxyResponse:
+    """Get voting proxy details."""
+    result = await db.execute(
+        select(VotingProxy).where(VotingProxy.id == proxy_id, VotingProxy.vve_id == vve_id)
+    )
+    proxy = result.scalar_one_or_none()
+
+    if proxy is None:
+        raise HTTPException(status_code=404, detail="Volmacht niet gevonden")
+
+    # Get related data
+    grantor_result = await db.execute(select(User).where(User.id == proxy.grantor_id))
+    grantor = grantor_result.scalar_one_or_none()
+    grantee_result = await db.execute(select(User).where(User.id == proxy.grantee_id))
+    grantee = grantee_result.scalar_one_or_none()
+    unit_result = await db.execute(select(Unit).where(Unit.id == proxy.unit_id))
+    unit = unit_result.scalar_one_or_none()
+
+    voting_title = None
+    if proxy.voting_id:
+        voting_result = await db.execute(select(Voting).where(Voting.id == proxy.voting_id))
+        voting = voting_result.scalar_one_or_none()
+        if voting:
+            voting_title = voting.title
+
+    return VotingProxyResponse(
+        id=proxy.id,
+        grantor_id=proxy.grantor_id,
+        grantor_name=f"{grantor.first_name} {grantor.last_name}" if grantor else "Onbekend",
+        grantee_id=proxy.grantee_id,
+        grantee_name=f"{grantee.first_name} {grantee.last_name}" if grantee else "Onbekend",
+        unit_id=proxy.unit_id,
+        unit_number=unit.unit_number if unit else "Onbekend",
+        voting_id=proxy.voting_id,
+        voting_title=voting_title,
+        vve_id=proxy.vve_id,
+        status=VotingProxyStatus(proxy.status.value),
+        notes=proxy.notes,
+        confirmed_at=proxy.confirmed_at,
+        revoked_at=proxy.revoked_at,
+        created_at=proxy.created_at,
+        updated_at=proxy.updated_at,
+    )
+
+
+@router.post(
+    "/proxies/{proxy_id}/confirm",
+    response_model=VotingProxyConfirmation,
+    summary="Volmacht bevestigen",
+    description="Gevolmachtigde bevestigt de ontvangen volmacht.",
+)
+async def confirm_voting_proxy(
+    vve_id: uuid.UUID,
+    proxy_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_member)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> VotingProxyConfirmation:
+    """Confirm a voting proxy (by grantee)."""
+    result = await db.execute(
+        select(VotingProxy).where(VotingProxy.id == proxy_id, VotingProxy.vve_id == vve_id)
+    )
+    proxy = result.scalar_one_or_none()
+
+    if proxy is None:
+        raise HTTPException(status_code=404, detail="Volmacht niet gevonden")
+
+    # Only grantee can confirm
+    if proxy.grantee_id != current_user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="Alleen de gevolmachtigde kan de volmacht bevestigen"
+        )
+
+    if proxy.status != DBVotingProxyStatus.PENDING:
+        raise HTTPException(
+            status_code=400,
+            detail="Volmacht kan alleen worden bevestigd als deze nog wacht op bevestiging"
+        )
+
+    proxy.status = DBVotingProxyStatus.CONFIRMED
+    proxy.confirmed_at = datetime.now(timezone.utc)
+    await db.commit()
+
+    return VotingProxyConfirmation(
+        proxy_id=proxy.id,
+        message="Volmacht succesvol bevestigd",
+        status=VotingProxyStatus(proxy.status.value),
+    )
+
+
+@router.post(
+    "/proxies/{proxy_id}/revoke",
+    response_model=VotingProxyConfirmation,
+    summary="Volmacht intrekken",
+    description="Volmachtgever trekt de volmacht in.",
+)
+async def revoke_voting_proxy(
+    vve_id: uuid.UUID,
+    proxy_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_member)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> VotingProxyConfirmation:
+    """Revoke a voting proxy (by grantor)."""
+    result = await db.execute(
+        select(VotingProxy).where(VotingProxy.id == proxy_id, VotingProxy.vve_id == vve_id)
+    )
+    proxy = result.scalar_one_or_none()
+
+    if proxy is None:
+        raise HTTPException(status_code=404, detail="Volmacht niet gevonden")
+
+    # Only grantor can revoke
+    if proxy.grantor_id != current_user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="Alleen de volmachtgever kan de volmacht intrekken"
+        )
+
+    if proxy.status == DBVotingProxyStatus.REVOKED:
+        raise HTTPException(status_code=400, detail="Volmacht is al ingetrokken")
+
+    if proxy.status == DBVotingProxyStatus.USED:
+        raise HTTPException(
+            status_code=400,
+            detail="Volmacht is al gebruikt en kan niet meer worden ingetrokken"
+        )
+
+    proxy.status = DBVotingProxyStatus.REVOKED
+    proxy.revoked_at = datetime.now(timezone.utc)
+    await db.commit()
+
+    return VotingProxyConfirmation(
+        proxy_id=proxy.id,
+        message="Volmacht succesvol ingetrokken",
+        status=VotingProxyStatus(proxy.status.value),
+    )
+
+
+@router.delete(
+    "/proxies/{proxy_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Volmacht verwijderen",
+)
+async def delete_voting_proxy(
+    vve_id: uuid.UUID,
+    proxy_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_member)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> None:
+    """Delete a voting proxy (only allowed when pending)."""
+    result = await db.execute(
+        select(VotingProxy).where(VotingProxy.id == proxy_id, VotingProxy.vve_id == vve_id)
+    )
+    proxy = result.scalar_one_or_none()
+
+    if proxy is None:
+        raise HTTPException(status_code=404, detail="Volmacht niet gevonden")
+
+    # Only grantor can delete
+    if proxy.grantor_id != current_user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="Alleen de volmachtgever kan de volmacht verwijderen"
+        )
+
+    if proxy.status != DBVotingProxyStatus.PENDING:
+        raise HTTPException(
+            status_code=400,
+            detail="Alleen volmachten met status 'wachtend' kunnen worden verwijderd"
+        )
+
+    await db.delete(proxy)
+    await db.commit()
+
+
+@router.get(
+    "/proxies/my-proxies/granted",
+    response_model=list[VotingProxyListResponse],
+    summary="Mijn afgegeven volmachten",
+)
+async def get_my_granted_proxies(
+    vve_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_member)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> list[VotingProxyListResponse]:
+    """Get proxies granted by the current user."""
+    result = await db.execute(
+        select(VotingProxy).where(
+            VotingProxy.vve_id == vve_id,
+            VotingProxy.grantor_id == current_user.id,
+        ).order_by(VotingProxy.created_at.desc())
+    )
+    proxies = result.scalars().all()
+
+    response = []
+    for proxy in proxies:
+        grantee_result = await db.execute(select(User).where(User.id == proxy.grantee_id))
+        grantee = grantee_result.scalar_one_or_none()
+        unit_result = await db.execute(select(Unit).where(Unit.id == proxy.unit_id))
+        unit = unit_result.scalar_one_or_none()
+
+        voting_title = None
+        if proxy.voting_id:
+            voting_result = await db.execute(select(Voting).where(Voting.id == proxy.voting_id))
+            voting = voting_result.scalar_one_or_none()
+            if voting:
+                voting_title = voting.title
+
+        response.append(
+            VotingProxyListResponse(
+                id=proxy.id,
+                grantor_name=f"{current_user.first_name} {current_user.last_name}",
+                grantee_name=f"{grantee.first_name} {grantee.last_name}" if grantee else "Onbekend",
+                unit_number=unit.unit_number if unit else "Onbekend",
+                voting_title=voting_title,
+                status=VotingProxyStatus(proxy.status.value),
+                created_at=proxy.created_at,
+            )
+        )
+
+    return response
+
+
+@router.get(
+    "/proxies/my-proxies/received",
+    response_model=list[VotingProxyListResponse],
+    summary="Mijn ontvangen volmachten",
+)
+async def get_my_received_proxies(
+    vve_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_member)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> list[VotingProxyListResponse]:
+    """Get proxies received by the current user."""
+    result = await db.execute(
+        select(VotingProxy).where(
+            VotingProxy.vve_id == vve_id,
+            VotingProxy.grantee_id == current_user.id,
+        ).order_by(VotingProxy.created_at.desc())
+    )
+    proxies = result.scalars().all()
+
+    response = []
+    for proxy in proxies:
+        grantor_result = await db.execute(select(User).where(User.id == proxy.grantor_id))
+        grantor = grantor_result.scalar_one_or_none()
+        unit_result = await db.execute(select(Unit).where(Unit.id == proxy.unit_id))
+        unit = unit_result.scalar_one_or_none()
+
+        voting_title = None
+        if proxy.voting_id:
+            voting_result = await db.execute(select(Voting).where(Voting.id == proxy.voting_id))
+            voting = voting_result.scalar_one_or_none()
+            if voting:
+                voting_title = voting.title
+
+        response.append(
+            VotingProxyListResponse(
+                id=proxy.id,
+                grantor_name=f"{grantor.first_name} {grantor.last_name}" if grantor else "Onbekend",
+                grantee_name=f"{current_user.first_name} {current_user.last_name}",
+                unit_number=unit.unit_number if unit else "Onbekend",
+                voting_title=voting_title,
+                status=VotingProxyStatus(proxy.status.value),
+                created_at=proxy.created_at,
+            )
+        )
+
+    return response
