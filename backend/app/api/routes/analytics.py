@@ -104,8 +104,8 @@ async def get_benchmark(
     db: AsyncSession = Depends(get_db),
     size_min: int | None = Query(None, ge=1),
     size_max: int | None = Query(None, ge=1),
-    building_year_from: int | None = Query(None, ge=1900),
-    building_year_to: int | None = Query(None, ge=2100),
+    building_year_from: int | None = Query(None, ge=1900, le=2100),
+    building_year_to: int | None = Query(None, ge=1900, le=2100),
 ) -> BenchmarkResponse:
     """Get benchmark comparison for the VVE (STORY-093)."""
     # Verify VVE exists

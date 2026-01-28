@@ -2721,8 +2721,15 @@ async def search_decisions(
     filters_applied: dict[str, str] = {}
     
     # Full-text search on title and description
+    # Escape SQL LIKE wildcards to prevent pattern injection
     if search_request.query:
-        search_term = f"%{search_request.query.lower()}%"
+        escaped_query = (
+            search_request.query
+            .replace("\\", "\\\\")
+            .replace("%", "\\%")
+            .replace("_", "\\_")
+        )
+        search_term = f"%{escaped_query.lower()}%"
         query = query.where(
             (MeetingDecision.title.ilike(search_term)) |
             (MeetingDecision.description.ilike(search_term))
@@ -2794,10 +2801,12 @@ async def search_decisions(
                     snippet = "..." + snippet
                 if end < len(decision.description):
                     snippet = snippet + "..."
-                # Highlight the search term with <mark> tags
-                snippet = snippet.replace(
-                    search_request.query, 
-                    f"<mark>{search_request.query}</mark>"
+                # Highlight the search term with <mark> tags (case-insensitive)
+                import re
+                pattern = re.compile(re.escape(search_request.query), re.IGNORECASE)
+                snippet = pattern.sub(
+                    lambda m: f"<mark>{m.group()}</mark>",
+                    snippet
                 )
         
         # Parse vote result from description (simplified for MVP)

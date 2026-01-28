@@ -226,8 +226,15 @@ export default function BesluitenRegisterPage() {
           let snippet = d.description.substring(start, end);
           if (start > 0) snippet = '...' + snippet;
           if (end < d.description.length) snippet = snippet + '...';
-          // Highlight the search term
-          const regex = new RegExp(`(${filters.query})`, 'gi');
+          // Escape HTML entities first to prevent XSS
+          snippet = snippet
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+          // Highlight the search term (escape regex special chars)
+          const escapedQuery = filters.query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const regex = new RegExp(`(${escapedQuery})`, 'gi');
           snippet = snippet.replace(regex, '<mark>$1</mark>');
           return { ...d, relevance_snippet: snippet };
         }
