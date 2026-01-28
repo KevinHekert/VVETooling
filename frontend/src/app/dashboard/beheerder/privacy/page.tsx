@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
-import type { PrivacyStatementListItem, PrivacyStatement, PrivacyStatementCreate, PrivacyStatementStatus, PrivacyStatementTemplate } from '@/types';
+import type { PrivacyStatementListItem, PrivacyStatement, PrivacyStatementCreate, PrivacyStatementStatus } from '@/types';
 
 /**
  * Privacy Statement Management Page - STORY-080
@@ -38,7 +38,6 @@ const SECTION_LABELS: Record<string, string> = {
 export default function PrivacyPage() {
   const [statements, setStatements] = useState<PrivacyStatementListItem[]>([]);
   const [selectedStatement, setSelectedStatement] = useState<PrivacyStatement | null>(null);
-  const [template, setTemplate] = useState<PrivacyStatementTemplate | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -58,12 +57,8 @@ export default function PrivacyPage() {
   const fetchStatements = async () => {
     setIsLoading(true);
     try {
-      const [data, templateData] = await Promise.all([
-        api.listPrivacyStatements(vveId),
-        api.getPrivacyStatementTemplate(vveId),
-      ]);
+      const data = await api.listPrivacyStatements(vveId);
       setStatements(data);
-      setTemplate(templateData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Kon privacy statements niet ophalen');
     } finally {
@@ -362,14 +357,14 @@ export default function PrivacyPage() {
                     <h3 className="font-medium text-gray-900 mb-2">{label}</h3>
                     {isEditing ? (
                       <textarea
-                        value={(selectedStatement as any)[key] || ''}
+                        value={selectedStatement[key as keyof PrivacyStatement] as string || ''}
                         onChange={(e) => handleSectionChange(key, e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 min-h-[120px]"
                         rows={5}
                       />
                     ) : (
                       <div className="text-gray-600 whitespace-pre-wrap bg-gray-50 p-3 rounded-lg">
-                        {(selectedStatement as any)[key] || <em className="text-gray-400">Niet ingevuld</em>}
+                        {selectedStatement[key as keyof PrivacyStatement] as string || <em className="text-gray-400">Niet ingevuld</em>}
                       </div>
                     )}
                   </div>

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
-import type { PollListItem, PollCreate, Poll, PollStatus, PollResultsVisibility, PollVoteCreate } from '@/types';
+import type { PollListItem, PollCreate, Poll, PollStatus, PollResultsVisibility } from '@/types';
 
 /**
  * Polls Management Page - STORY-116
