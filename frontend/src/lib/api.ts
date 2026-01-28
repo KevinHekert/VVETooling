@@ -1000,6 +1000,133 @@ class ApiClient {
       `/vves/${vveId}/meetings/${meetingId}/rsvps/summary`
     );
   }
+
+  // STORY-073: Proxy (Volmacht) methods
+  async getEligibleGrantees(vveId: string, meetingId: string) {
+    return this.fetch<import('@/types').EligibleGrantee[]>(
+      `/vves/${vveId}/meetings/${meetingId}/proxies/eligible-grantees`
+    );
+  }
+
+  async createProxy(vveId: string, meetingId: string, data: import('@/types').ProxyCreate) {
+    return this.fetch<import('@/types').MeetingProxy>(
+      `/vves/${vveId}/meetings/${meetingId}/proxies`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async getMyProxy(vveId: string, meetingId: string) {
+    return this.fetch<import('@/types').MeetingProxy | null>(
+      `/vves/${vveId}/meetings/${meetingId}/proxies/my`
+    );
+  }
+
+  async getReceivedProxies(vveId: string, meetingId: string) {
+    return this.fetch<import('@/types').ProxyListItem[]>(
+      `/vves/${vveId}/meetings/${meetingId}/proxies/received`
+    );
+  }
+
+  async listProxies(vveId: string, meetingId: string) {
+    return this.fetch<import('@/types').ProxyListItem[]>(
+      `/vves/${vveId}/meetings/${meetingId}/proxies`
+    );
+  }
+
+  async confirmProxy(vveId: string, meetingId: string, proxyId: string) {
+    return this.fetch<import('@/types').MeetingProxy>(
+      `/vves/${vveId}/meetings/${meetingId}/proxies/${proxyId}/confirm`,
+      {
+        method: 'PATCH',
+      }
+    );
+  }
+
+  async revokeProxy(vveId: string, meetingId: string, proxyId: string) {
+    return this.fetch<import('@/types').MeetingProxy>(
+      `/vves/${vveId}/meetings/${meetingId}/proxies/${proxyId}/revoke`,
+      {
+        method: 'PATCH',
+      }
+    );
+  }
+
+  async getProxySummary(vveId: string, meetingId: string) {
+    return this.fetch<import('@/types').ProxySummary>(
+      `/vves/${vveId}/meetings/${meetingId}/proxies/summary`
+    );
+  }
+
+  // STORY-074: Quorum Calculation methods
+  async getQuorum(vveId: string, meetingId: string, requiredPercentage: number = 50.0) {
+    return this.fetch<import('@/types').QuorumCalculation>(
+      `/vves/${vveId}/meetings/${meetingId}/quorum?required_percentage=${requiredPercentage}`
+    );
+  }
+
+  // STORY-075: Meeting Minutes methods
+  async getMinutesTemplate(vveId: string, meetingId: string) {
+    return this.fetch<import('@/types').MinutesTemplate>(
+      `/vves/${vveId}/meetings/${meetingId}/minutes/template`
+    );
+  }
+
+  async createMinutes(vveId: string, meetingId: string, data: import('@/types').MinutesCreate) {
+    return this.fetch<import('@/types').MeetingMinutes>(
+      `/vves/${vveId}/meetings/${meetingId}/minutes`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async getMinutes(vveId: string, meetingId: string) {
+    return this.fetch<import('@/types').MeetingMinutes | null>(
+      `/vves/${vveId}/meetings/${meetingId}/minutes`
+    );
+  }
+
+  async updateMinutes(vveId: string, meetingId: string, data: import('@/types').MinutesUpdate) {
+    return this.fetch<import('@/types').MeetingMinutes>(
+      `/vves/${vveId}/meetings/${meetingId}/minutes`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  // STORY-075: Decision methods
+  async createDecision(vveId: string, meetingId: string, data: import('@/types').DecisionCreate) {
+    return this.fetch<import('@/types').MeetingDecision>(
+      `/vves/${vveId}/meetings/${meetingId}/decisions`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async listDecisions(vveId: string, meetingId: string, decisionType?: import('@/types').DecisionType) {
+    const params = decisionType ? `?decision_type=${decisionType}` : '';
+    return this.fetch<import('@/types').MeetingDecision[]>(
+      `/vves/${vveId}/meetings/${meetingId}/decisions${params}`
+    );
+  }
+
+  async updateDecision(vveId: string, meetingId: string, decisionId: string, data: import('@/types').DecisionUpdate) {
+    return this.fetch<import('@/types').MeetingDecision>(
+      `/vves/${vveId}/meetings/${meetingId}/decisions/${decisionId}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }
+    );
+  }
 }
 
 export const api = new ApiClient(API_BASE_URL);

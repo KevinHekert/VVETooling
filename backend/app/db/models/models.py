@@ -1215,3 +1215,191 @@ class MeetingRsvp(Base):
         Index("ix_meeting_rsvps_user_id", "user_id"),
         UniqueConstraint("meeting_id", "user_id", name="uq_meeting_rsvp_user"),
     )
+
+
+class ProxyScope(str, Enum):
+    """Scope of the proxy - full or specific agenda items (STORY-073)."""
+
+    FULL = "full"  # Volmacht voor alle agendapunten
+    SPECIFIC = "specific"  # Volmacht voor specifieke agendapunten
+
+
+class ProxyStatus(str, Enum):
+    """Status of a proxy/volmacht (STORY-073)."""
+
+    PENDING = "pending"  # Wachtend op bevestiging
+    CONFIRMED = "confirmed"  # Bevestigd door gevolmachtigde
+    REVOKED = "revoked"  # Ingetrokken door volmachtgever
+
+
+class MeetingProxy(Base):
+    """Digital proxy (volmacht) for an ALV meeting (STORY-073).
+
+    Implements STORY-073: Volmacht digitaal afgeven.
+    Allows owners to grant proxy voting rights to another owner or board member.
+    """
+
+    __tablename__ = "meeting_proxies"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    meeting_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("meetings.id", ondelete="CASCADE"), nullable=False
+    )
+    # The owner granting the proxy (volmachtgever)
+    grantor_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    # The person receiving the proxy (gevolmachtigde)
+    grantee_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    # Scope of the proxy
+    scope: Mapped[ProxyScope] = mapped_column(
+        SQLEnum(ProxyScope), nullable=False, default=ProxyScope.FULL
+    )
+    # Specific agenda item IDs (JSON array) - only used when scope is SPECIFIC
+    agenda_item_ids: Mapped[str | None] = mapped_column(Text)  # JSON array of UUIDs
+    # Status of the proxy
+    status: Mapped[ProxyStatus] = mapped_column(
+        SQLEnum(ProxyStatus), nullable=False, default=ProxyStatus.PENDING
+    )
+    # Notes from the grantor
+    notes: Mapped[str | None] = mapped_column(Text)
+    # Confirmation timestamp
+    confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Revocation timestamp
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Timestamps
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    __table_args__ = (
+        Index("ix_meeting_proxies_meeting_id", "meeting_id"),
+        Index("ix_meeting_proxies_grantor_id", "grantor_id"),
+        Index("ix_meeting_proxies_grantee_id", "grantee_id"),
+        # Each owner can only grant one proxy per meeting
+        UniqueConstraint("meeting_id", "grantor_id", name="uq_meeting_proxy_grantor"),
+        # Ensure grantor and grantee are different
+        CheckConstraint("grantor_id != grantee_id", name="ck_proxy_different_users"),
+    )
+
+
+class MinutesStatus(str, Enum):
+    """Status of meeting minutes (STORY-075)."""
+
+    DRAFT = "draft"  # Concept
+    PUBLISHED = "published"  # Gepubliceerd
+    APPROVED = "approved"  # Goedgekeurd
+
+
+class MeetingMinutes(Base):
+    """Meeting minutes/notulen for an ALV meeting (STORY-075).
+
+    Implements STORY-075: Notulen opstellen met template.
+    Allows secretaris to create and edit meeting minutes.
+    """
+
+    __tablename__ = "meeting_minutes"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    meeting_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("meetings.id", ondelete="CASCADE"), nullable=False
+    )
+    # Rich text content (HTML format for WYSIWYG editor)
+    content: Mapped[str | None] = mapped_column(Text)
+    # Status of the minutes
+    status: Mapped[MinutesStatus] = mapped_column(
+        SQLEnum(MinutesStatus), nullable=False, default=MinutesStatus.DRAFT
+    )
+    # Metadata
+    created_by_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    # Published/approval timestamps
+    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    approved_by_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    # Auto-save timestamp
+    last_saved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Timestamps
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    __table_args__ = (
+        Index("ix_meeting_minutes_meeting_id", "meeting_id"),
+        # One minutes document per meeting
+        UniqueConstraint("meeting_id", name="uq_meeting_minutes"),
+    )
+
+
+class DecisionType(str, Enum):
+    """Type of decision in meeting minutes (STORY-075)."""
+
+    BESLUIT = "besluit"  # Official decision
+    ACTIEPUNT = "actiepunt"  # Action item
+    AANDACHTSPUNT = "aandachtspunt"  # Point of attention
+
+
+class MeetingDecision(Base):
+    """Decision or action item extracted from meeting minutes (STORY-075, STORY-076).
+
+    Implements STORY-075: Markeren van besluiten en actiepunten.
+    """
+
+    __tablename__ = "meeting_decisions"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    meeting_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("meetings.id", ondelete="CASCADE"), nullable=False
+    )
+    minutes_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("meeting_minutes.id", ondelete="SET NULL")
+    )
+    # Decision details
+    decision_type: Mapped[DecisionType] = mapped_column(
+        SQLEnum(DecisionType), nullable=False
+    )
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text)
+    # Related agenda item
+    agenda_item_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("meeting_agenda_items.id", ondelete="SET NULL")
+    )
+    # Action item specific fields
+    assignee_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    due_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    is_completed: Mapped[bool] = mapped_column(Boolean, default=False)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Metadata
+    created_by_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    __table_args__ = (
+        Index("ix_meeting_decisions_meeting_id", "meeting_id"),
+        Index("ix_meeting_decisions_minutes_id", "minutes_id"),
+    )

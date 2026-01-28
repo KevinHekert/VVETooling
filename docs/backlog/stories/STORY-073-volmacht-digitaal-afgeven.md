@@ -3,7 +3,7 @@
 ## Documentinformatie
 - **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: ⬜ Backlog
+- **Status**: ✅ Geïmplementeerd
 - **Versie**: 1.0
 - **Prioriteit**: Must (Horizon 2)
 - **Geneste nummering**: 15.2.2
@@ -28,3 +28,4 @@ Als **eigenaar** wil ik een digitale volmacht kunnen afgeven aan een andere eige
 
 ## Bronverwijzingen
 - [docs/backlog/features/FEAT-033-presentie-volmachten.md](../features/FEAT-033-presentie-volmachten.md)
+- [Implementatierapport](../implementation-reports/STORY-073-implementatie.md)

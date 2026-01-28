@@ -21,10 +21,18 @@ from app.db.models.models import (
     Document,
     Meeting,
     MeetingAgendaItem,
+    MeetingDecision,
+    MeetingMinutes,
+    MeetingProxy,
     MeetingRsvp,
     MeetingRsvpStatus as DBMeetingRsvpStatus,
     MeetingStatus as DBMeetingStatus,
     MeetingType as DBMeetingType,
+    MinutesStatus as DBMinutesStatus,
+    DecisionType as DBDecisionType,
+    ProxyScope as DBProxyScope,
+    ProxyStatus as DBProxyStatus,
+    Unit,
     User,
     VVEMember,
 )
@@ -34,6 +42,11 @@ from app.schemas.meeting import (
     AgendaItemReorder,
     AgendaItemResponse,
     AgendaItemUpdate,
+    DecisionCreate,
+    DecisionResponse,
+    DecisionType,
+    DecisionUpdate,
+    EligibleGrantee,
     MeetingCreate,
     MeetingInvitationCreate,
     MeetingInvitationPreview,
@@ -43,6 +56,21 @@ from app.schemas.meeting import (
     MeetingStatus,
     MeetingType,
     MeetingUpdate,
+    MinutesCreate,
+    MinutesResponse,
+    MinutesStatus,
+    MinutesTemplate,
+    MinutesUpdate,
+    ProxyCreate,
+    ProxyListResponse,
+    ProxyResponse,
+    ProxyScope,
+    ProxyStatus,
+    ProxySummary,
+    ProxyUpdate,
+    QuorumCalculation,
+    QuorumMemberDetail,
+    QuorumStatus,
     RsvpCreate,
     RsvpResponse,
     RsvpStatus,
@@ -1071,4 +1099,1206 @@ async def get_rsvp_summary(
         with_proxy_count=with_proxy_count,
         no_response_count=no_response_count,
         response_rate=round(response_rate, 1),
+    )
+
+
+# STORY-073: Proxy (Volmacht) endpoints
+@router.get(
+    "/{meeting_id}/proxies/eligible-grantees",
+    response_model=list[EligibleGrantee],
+    summary="Lijst gevolmachtigden",
+    description="Haal lijst van eigenaren/bestuursleden op die als gevolmachtigde kunnen worden aangewezen (STORY-073).",
+)
+async def list_eligible_grantees(
+    vve_id: uuid.UUID,
+    meeting_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_member)],
+    db: AsyncSession = Depends(get_db),
+) -> list[EligibleGrantee]:
+    """List users who can be proxy recipients (STORY-073)."""
+    # Verify meeting exists
+    meeting_result = await db.execute(
+        select(Meeting).where(Meeting.id == meeting_id, Meeting.vve_id == vve_id)
+    )
+    if not meeting_result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Vergadering niet gevonden")
+
+    # Get all VVE members except the current user
+    members_result = await db.execute(
+        select(VVEMember, User)
+        .join(User, VVEMember.user_id == User.id)
+        .where(
+            VVEMember.vve_id == vve_id,
+            VVEMember.is_active == True,
+            VVEMember.user_id != current_user.id,
+        )
+    )
+    members = members_result.all()
+
+    return [
+        EligibleGrantee(
+            id=user.id,
+            first_name=user.first_name,
+            last_name=user.last_name,
+            full_name=f"{user.first_name} {user.last_name}",
+            is_board_member=member.role.value in ("bestuurslid", "penningmeester"),
+        )
+        for member, user in members
+    ]
+
+
+@router.post(
+    "/{meeting_id}/proxies",
+    response_model=ProxyResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Volmacht afgeven",
+    description="Geef een digitale volmacht af aan een andere eigenaar of bestuurslid (STORY-073).",
+)
+async def create_proxy(
+    vve_id: uuid.UUID,
+    meeting_id: uuid.UUID,
+    proxy_data: ProxyCreate,
+    current_user: Annotated[CurrentUser, Depends(require_member)],
+    db: AsyncSession = Depends(get_db),
+) -> ProxyResponse:
+    """Create a digital proxy/volmacht (STORY-073)."""
+    import json
+
+    # Verify meeting exists and is not closed
+    meeting_result = await db.execute(
+        select(Meeting).where(Meeting.id == meeting_id, Meeting.vve_id == vve_id)
+    )
+    meeting = meeting_result.scalar_one_or_none()
+    if not meeting:
+        raise HTTPException(status_code=404, detail="Vergadering niet gevonden")
+    if meeting.status in (DBMeetingStatus.AFGESLOTEN, DBMeetingStatus.GEANNULEERD):
+        raise HTTPException(status_code=400, detail="Kan geen volmacht afgeven voor afgesloten vergadering")
+
+    # Verify grantee exists and is a VVE member
+    grantee_result = await db.execute(
+        select(VVEMember, User)
+        .join(User, VVEMember.user_id == User.id)
+        .where(
+            VVEMember.vve_id == vve_id,
+            VVEMember.user_id == proxy_data.grantee_id,
+            VVEMember.is_active == True,
+        )
+    )
+    grantee_data = grantee_result.first()
+    if not grantee_data:
+        raise HTTPException(status_code=400, detail="Gevolmachtigde is geen lid van deze VVE")
+
+    grantee_member, grantee_user = grantee_data
+
+    # Verify grantor cannot grant proxy to themselves
+    if proxy_data.grantee_id == current_user.id:
+        raise HTTPException(status_code=400, detail="U kunt geen volmacht aan uzelf afgeven")
+
+    # Check if user already has an active proxy for this meeting
+    existing_result = await db.execute(
+        select(MeetingProxy).where(
+            MeetingProxy.meeting_id == meeting_id,
+            MeetingProxy.grantor_id == current_user.id,
+            MeetingProxy.status != DBProxyStatus.REVOKED,
+        )
+    )
+    if existing_result.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="U heeft al een actieve volmacht voor deze vergadering")
+
+    # If scope is SPECIFIC, verify agenda items exist
+    if proxy_data.scope == ProxyScope.SPECIFIC and proxy_data.agenda_item_ids:
+        agenda_items_result = await db.execute(
+            select(MeetingAgendaItem.id).where(
+                MeetingAgendaItem.meeting_id == meeting_id,
+                MeetingAgendaItem.id.in_(proxy_data.agenda_item_ids),
+            )
+        )
+        found_items = [row[0] for row in agenda_items_result.all()]
+        if len(found_items) != len(proxy_data.agenda_item_ids):
+            raise HTTPException(status_code=400, detail="Eén of meer agendapunten niet gevonden")
+
+    # Create proxy
+    agenda_item_ids_json = None
+    if proxy_data.agenda_item_ids:
+        agenda_item_ids_json = json.dumps([str(item_id) for item_id in proxy_data.agenda_item_ids])
+
+    proxy = MeetingProxy(
+        meeting_id=meeting_id,
+        grantor_id=current_user.id,
+        grantee_id=proxy_data.grantee_id,
+        scope=DBProxyScope(proxy_data.scope.value),
+        agenda_item_ids=agenda_item_ids_json,
+        status=DBProxyStatus.PENDING,
+        notes=proxy_data.notes,
+    )
+
+    db.add(proxy)
+    await db.commit()
+    await db.refresh(proxy)
+
+    # Get grantor name
+    grantor_result = await db.execute(select(User).where(User.id == current_user.id))
+    grantor = grantor_result.scalar_one()
+
+    # Parse agenda_item_ids back to list
+    parsed_agenda_items = None
+    if proxy.agenda_item_ids:
+        parsed_agenda_items = [uuid.UUID(item_id) for item_id in json.loads(proxy.agenda_item_ids)]
+
+    return ProxyResponse(
+        id=proxy.id,
+        meeting_id=proxy.meeting_id,
+        grantor_id=proxy.grantor_id,
+        grantor_name=f"{grantor.first_name} {grantor.last_name}",
+        grantee_id=proxy.grantee_id,
+        grantee_name=f"{grantee_user.first_name} {grantee_user.last_name}",
+        scope=ProxyScope(proxy.scope.value),
+        agenda_item_ids=parsed_agenda_items,
+        status=ProxyStatus(proxy.status.value),
+        notes=proxy.notes,
+        confirmed_at=proxy.confirmed_at,
+        revoked_at=proxy.revoked_at,
+        created_at=proxy.created_at,
+        updated_at=proxy.updated_at,
+    )
+
+
+@router.get(
+    "/{meeting_id}/proxies",
+    response_model=list[ProxyListResponse],
+    summary="Lijst volmachten",
+    description="Haal alle volmachten op voor een vergadering (STORY-073).",
+)
+async def list_proxies(
+    vve_id: uuid.UUID,
+    meeting_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: AsyncSession = Depends(get_db),
+) -> list[ProxyListResponse]:
+    """List all proxies for a meeting (STORY-073). Board members only."""
+    # Verify meeting exists
+    meeting_result = await db.execute(
+        select(Meeting).where(Meeting.id == meeting_id, Meeting.vve_id == vve_id)
+    )
+    if not meeting_result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Vergadering niet gevonden")
+
+    # Get all proxies
+    proxies_result = await db.execute(
+        select(MeetingProxy).where(MeetingProxy.meeting_id == meeting_id)
+        .order_by(MeetingProxy.created_at.desc())
+    )
+    proxies = proxies_result.scalars().all()
+
+    if not proxies:
+        return []
+
+    # Batch fetch all users to avoid N+1 queries
+    user_ids = set()
+    for proxy in proxies:
+        user_ids.add(proxy.grantor_id)
+        user_ids.add(proxy.grantee_id)
+
+    users_result = await db.execute(
+        select(User).where(User.id.in_(user_ids))
+    )
+    users_by_id = {user.id: user for user in users_result.scalars().all()}
+
+    result = []
+    for proxy in proxies:
+        grantor = users_by_id.get(proxy.grantor_id)
+        grantee = users_by_id.get(proxy.grantee_id)
+
+        result.append(ProxyListResponse(
+            id=proxy.id,
+            meeting_id=proxy.meeting_id,
+            grantor_id=proxy.grantor_id,
+            grantor_name=f"{grantor.first_name} {grantor.last_name}" if grantor else None,
+            grantee_id=proxy.grantee_id,
+            grantee_name=f"{grantee.first_name} {grantee.last_name}" if grantee else None,
+            scope=ProxyScope(proxy.scope.value),
+            status=ProxyStatus(proxy.status.value),
+            created_at=proxy.created_at,
+        ))
+
+    return result
+
+
+@router.get(
+    "/{meeting_id}/proxies/my",
+    response_model=ProxyResponse | None,
+    summary="Mijn volmacht",
+    description="Haal mijn volmacht op voor een vergadering (STORY-073).",
+)
+async def get_my_proxy(
+    vve_id: uuid.UUID,
+    meeting_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_member)],
+    db: AsyncSession = Depends(get_db),
+) -> ProxyResponse | None:
+    """Get the current user's proxy for a meeting (STORY-073)."""
+    import json
+
+    # Verify meeting exists
+    meeting_result = await db.execute(
+        select(Meeting).where(Meeting.id == meeting_id, Meeting.vve_id == vve_id)
+    )
+    if not meeting_result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Vergadering niet gevonden")
+
+    # Get proxy
+    proxy_result = await db.execute(
+        select(MeetingProxy).where(
+            MeetingProxy.meeting_id == meeting_id,
+            MeetingProxy.grantor_id == current_user.id,
+        )
+    )
+    proxy = proxy_result.scalar_one_or_none()
+
+    if not proxy:
+        return None
+
+    # Get user names
+    grantor_result = await db.execute(select(User).where(User.id == proxy.grantor_id))
+    grantor = grantor_result.scalar_one()
+    grantee_result = await db.execute(select(User).where(User.id == proxy.grantee_id))
+    grantee = grantee_result.scalar_one()
+
+    # Parse agenda_item_ids
+    parsed_agenda_items = None
+    if proxy.agenda_item_ids:
+        parsed_agenda_items = [uuid.UUID(item_id) for item_id in json.loads(proxy.agenda_item_ids)]
+
+    return ProxyResponse(
+        id=proxy.id,
+        meeting_id=proxy.meeting_id,
+        grantor_id=proxy.grantor_id,
+        grantor_name=f"{grantor.first_name} {grantor.last_name}",
+        grantee_id=proxy.grantee_id,
+        grantee_name=f"{grantee.first_name} {grantee.last_name}",
+        scope=ProxyScope(proxy.scope.value),
+        agenda_item_ids=parsed_agenda_items,
+        status=ProxyStatus(proxy.status.value),
+        notes=proxy.notes,
+        confirmed_at=proxy.confirmed_at,
+        revoked_at=proxy.revoked_at,
+        created_at=proxy.created_at,
+        updated_at=proxy.updated_at,
+    )
+
+
+@router.get(
+    "/{meeting_id}/proxies/received",
+    response_model=list[ProxyListResponse],
+    summary="Ontvangen volmachten",
+    description="Haal volmachten op die aan mij zijn afgegeven (STORY-073).",
+)
+async def list_received_proxies(
+    vve_id: uuid.UUID,
+    meeting_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_member)],
+    db: AsyncSession = Depends(get_db),
+) -> list[ProxyListResponse]:
+    """List proxies received by the current user (STORY-073)."""
+    # Verify meeting exists
+    meeting_result = await db.execute(
+        select(Meeting).where(Meeting.id == meeting_id, Meeting.vve_id == vve_id)
+    )
+    if not meeting_result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Vergadering niet gevonden")
+
+    # Get received proxies
+    proxies_result = await db.execute(
+        select(MeetingProxy).where(
+            MeetingProxy.meeting_id == meeting_id,
+            MeetingProxy.grantee_id == current_user.id,
+        ).order_by(MeetingProxy.created_at.desc())
+    )
+    proxies = proxies_result.scalars().all()
+
+    if not proxies:
+        return []
+
+    # Batch fetch all users to avoid N+1 queries
+    user_ids = set()
+    for proxy in proxies:
+        user_ids.add(proxy.grantor_id)
+        user_ids.add(proxy.grantee_id)
+
+    users_result = await db.execute(
+        select(User).where(User.id.in_(user_ids))
+    )
+    users_by_id = {user.id: user for user in users_result.scalars().all()}
+
+    result = []
+    for proxy in proxies:
+        grantor = users_by_id.get(proxy.grantor_id)
+        grantee = users_by_id.get(proxy.grantee_id)
+
+        result.append(ProxyListResponse(
+            id=proxy.id,
+            meeting_id=proxy.meeting_id,
+            grantor_id=proxy.grantor_id,
+            grantor_name=f"{grantor.first_name} {grantor.last_name}" if grantor else None,
+            grantee_id=proxy.grantee_id,
+            grantee_name=f"{grantee.first_name} {grantee.last_name}" if grantee else None,
+            scope=ProxyScope(proxy.scope.value),
+            status=ProxyStatus(proxy.status.value),
+            created_at=proxy.created_at,
+        ))
+
+    return result
+
+
+@router.patch(
+    "/{meeting_id}/proxies/{proxy_id}/confirm",
+    response_model=ProxyResponse,
+    summary="Volmacht bevestigen",
+    description="Bevestig een aan u afgegeven volmacht (STORY-073).",
+)
+async def confirm_proxy(
+    vve_id: uuid.UUID,
+    meeting_id: uuid.UUID,
+    proxy_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_member)],
+    db: AsyncSession = Depends(get_db),
+) -> ProxyResponse:
+    """Confirm a proxy received by the current user (STORY-073)."""
+    import json
+
+    # Get proxy
+    proxy_result = await db.execute(
+        select(MeetingProxy).where(
+            MeetingProxy.id == proxy_id,
+            MeetingProxy.meeting_id == meeting_id,
+        )
+    )
+    proxy = proxy_result.scalar_one_or_none()
+
+    if not proxy:
+        raise HTTPException(status_code=404, detail="Volmacht niet gevonden")
+
+    # Verify current user is the grantee
+    if proxy.grantee_id != current_user.id:
+        raise HTTPException(status_code=403, detail="U bent niet de gevolmachtigde")
+
+    # Verify proxy is pending
+    if proxy.status != DBProxyStatus.PENDING:
+        raise HTTPException(status_code=400, detail="Volmacht kan alleen worden bevestigd als deze nog wacht op bevestiging")
+
+    # Update status
+    proxy.status = DBProxyStatus.CONFIRMED
+    proxy.confirmed_at = datetime.now(timezone.utc)
+
+    await db.commit()
+    await db.refresh(proxy)
+
+    # Get user names
+    grantor_result = await db.execute(select(User).where(User.id == proxy.grantor_id))
+    grantor = grantor_result.scalar_one()
+    grantee_result = await db.execute(select(User).where(User.id == proxy.grantee_id))
+    grantee = grantee_result.scalar_one()
+
+    # Parse agenda_item_ids
+    parsed_agenda_items = None
+    if proxy.agenda_item_ids:
+        parsed_agenda_items = [uuid.UUID(item_id) for item_id in json.loads(proxy.agenda_item_ids)]
+
+    return ProxyResponse(
+        id=proxy.id,
+        meeting_id=proxy.meeting_id,
+        grantor_id=proxy.grantor_id,
+        grantor_name=f"{grantor.first_name} {grantor.last_name}",
+        grantee_id=proxy.grantee_id,
+        grantee_name=f"{grantee.first_name} {grantee.last_name}",
+        scope=ProxyScope(proxy.scope.value),
+        agenda_item_ids=parsed_agenda_items,
+        status=ProxyStatus(proxy.status.value),
+        notes=proxy.notes,
+        confirmed_at=proxy.confirmed_at,
+        revoked_at=proxy.revoked_at,
+        created_at=proxy.created_at,
+        updated_at=proxy.updated_at,
+    )
+
+
+@router.patch(
+    "/{meeting_id}/proxies/{proxy_id}/revoke",
+    response_model=ProxyResponse,
+    summary="Volmacht intrekken",
+    description="Trek een door u afgegeven volmacht in (STORY-073).",
+)
+async def revoke_proxy(
+    vve_id: uuid.UUID,
+    meeting_id: uuid.UUID,
+    proxy_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_member)],
+    db: AsyncSession = Depends(get_db),
+) -> ProxyResponse:
+    """Revoke a proxy granted by the current user (STORY-073)."""
+    import json
+
+    # Get proxy
+    proxy_result = await db.execute(
+        select(MeetingProxy).where(
+            MeetingProxy.id == proxy_id,
+            MeetingProxy.meeting_id == meeting_id,
+        )
+    )
+    proxy = proxy_result.scalar_one_or_none()
+
+    if not proxy:
+        raise HTTPException(status_code=404, detail="Volmacht niet gevonden")
+
+    # Verify current user is the grantor
+    if proxy.grantor_id != current_user.id:
+        raise HTTPException(status_code=403, detail="U bent niet de volmachtgever")
+
+    # Verify proxy is not already revoked
+    if proxy.status == DBProxyStatus.REVOKED:
+        raise HTTPException(status_code=400, detail="Volmacht is al ingetrokken")
+
+    # Update status
+    proxy.status = DBProxyStatus.REVOKED
+    proxy.revoked_at = datetime.now(timezone.utc)
+
+    await db.commit()
+    await db.refresh(proxy)
+
+    # Get user names
+    grantor_result = await db.execute(select(User).where(User.id == proxy.grantor_id))
+    grantor = grantor_result.scalar_one()
+    grantee_result = await db.execute(select(User).where(User.id == proxy.grantee_id))
+    grantee = grantee_result.scalar_one()
+
+    # Parse agenda_item_ids
+    parsed_agenda_items = None
+    if proxy.agenda_item_ids:
+        parsed_agenda_items = [uuid.UUID(item_id) for item_id in json.loads(proxy.agenda_item_ids)]
+
+    return ProxyResponse(
+        id=proxy.id,
+        meeting_id=proxy.meeting_id,
+        grantor_id=proxy.grantor_id,
+        grantor_name=f"{grantor.first_name} {grantor.last_name}",
+        grantee_id=proxy.grantee_id,
+        grantee_name=f"{grantee.first_name} {grantee.last_name}",
+        scope=ProxyScope(proxy.scope.value),
+        agenda_item_ids=parsed_agenda_items,
+        status=ProxyStatus(proxy.status.value),
+        notes=proxy.notes,
+        confirmed_at=proxy.confirmed_at,
+        revoked_at=proxy.revoked_at,
+        created_at=proxy.created_at,
+        updated_at=proxy.updated_at,
+    )
+
+
+@router.get(
+    "/{meeting_id}/proxies/summary",
+    response_model=ProxySummary,
+    summary="Volmachten samenvatting",
+    description="Haal een samenvatting op van alle volmachten voor een vergadering (STORY-073).",
+)
+async def get_proxy_summary(
+    vve_id: uuid.UUID,
+    meeting_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: AsyncSession = Depends(get_db),
+) -> ProxySummary:
+    """Get proxy summary for a meeting (STORY-073). Board members only."""
+    # Verify meeting exists
+    meeting_result = await db.execute(
+        select(Meeting).where(Meeting.id == meeting_id, Meeting.vve_id == vve_id)
+    )
+    if not meeting_result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Vergadering niet gevonden")
+
+    # Get all proxies
+    proxies_result = await db.execute(
+        select(MeetingProxy).where(MeetingProxy.meeting_id == meeting_id)
+    )
+    proxies = proxies_result.scalars().all()
+
+    pending_count = sum(1 for p in proxies if p.status == DBProxyStatus.PENDING)
+    confirmed_count = sum(1 for p in proxies if p.status == DBProxyStatus.CONFIRMED)
+    revoked_count = sum(1 for p in proxies if p.status == DBProxyStatus.REVOKED)
+
+    return ProxySummary(
+        meeting_id=meeting_id,
+        total_proxies=len(proxies),
+        pending_count=pending_count,
+        confirmed_count=confirmed_count,
+        revoked_count=revoked_count,
+    )
+
+
+# STORY-074: Quorum Calculation endpoint
+@router.get(
+    "/{meeting_id}/quorum",
+    response_model=QuorumCalculation,
+    summary="Quorum berekenen",
+    description="Bereken het quorum voor een vergadering op basis van aanwezigen en volmachten (STORY-074).",
+)
+async def calculate_quorum(
+    vve_id: uuid.UUID,
+    meeting_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_member)],
+    db: AsyncSession = Depends(get_db),
+    required_percentage: float = Query(default=50.0, ge=0.0, le=100.0, description="Vereist percentage voor quorum"),
+) -> QuorumCalculation:
+    """Calculate quorum for a meeting based on attendance and proxies (STORY-074)."""
+    # Verify meeting exists
+    meeting_result = await db.execute(
+        select(Meeting).where(Meeting.id == meeting_id, Meeting.vve_id == vve_id)
+    )
+    meeting = meeting_result.scalar_one_or_none()
+    if not meeting:
+        raise HTTPException(status_code=404, detail="Vergadering niet gevonden")
+
+    # Get all units with their share percentages for this VVE
+    units_result = await db.execute(
+        select(Unit).where(Unit.vve_id == vve_id, Unit.is_active == True)
+    )
+    units = {unit.id: unit for unit in units_result.scalars().all()}
+    total_shares = float(sum(unit.share_percentage for unit in units.values()))
+
+    # Get all VVE members with their units
+    members_result = await db.execute(
+        select(VVEMember, User)
+        .join(User, VVEMember.user_id == User.id)
+        .where(VVEMember.vve_id == vve_id, VVEMember.is_active == True)
+    )
+    members = members_result.all()
+    member_by_user_id = {user.id: (member, user) for member, user in members}
+    total_owners = len([m for m, u in members if m.unit_id is not None])
+
+    # Get RSVPs with PRESENT status
+    rsvps_result = await db.execute(
+        select(MeetingRsvp).where(
+            MeetingRsvp.meeting_id == meeting_id,
+            MeetingRsvp.status == DBMeetingRsvpStatus.PRESENT,
+        )
+    )
+    present_rsvps = rsvps_result.scalars().all()
+
+    # Get confirmed proxies
+    proxies_result = await db.execute(
+        select(MeetingProxy).where(
+            MeetingProxy.meeting_id == meeting_id,
+            MeetingProxy.status == DBProxyStatus.CONFIRMED,
+        )
+    )
+    confirmed_proxies = proxies_result.scalars().all()
+
+    # Calculate present shares
+    present_shares = 0.0
+    present_details = []
+    present_user_ids = set()
+
+    for rsvp in present_rsvps:
+        if rsvp.user_id in member_by_user_id:
+            member, user = member_by_user_id[rsvp.user_id]
+            if member.unit_id and member.unit_id in units:
+                unit = units[member.unit_id]
+                share = float(unit.share_percentage)
+                present_shares += share
+                present_user_ids.add(rsvp.user_id)
+                present_details.append(QuorumMemberDetail(
+                    user_id=user.id,
+                    user_name=f"{user.first_name} {user.last_name}",
+                    unit_id=unit.id,
+                    unit_number=unit.unit_number,
+                    share_percentage=share,
+                    attendance_type="present",
+                ))
+
+    # Calculate proxy shares (only for owners not already present)
+    proxy_shares = 0.0
+    proxy_details = []
+
+    for proxy in confirmed_proxies:
+        # Only count if the grantor is not already present
+        if proxy.grantor_id not in present_user_ids:
+            if proxy.grantor_id in member_by_user_id:
+                member, user = member_by_user_id[proxy.grantor_id]
+                if member.unit_id and member.unit_id in units:
+                    unit = units[member.unit_id]
+                    share = float(unit.share_percentage)
+                    proxy_shares += share
+
+                    # Get grantee name
+                    grantee_name = None
+                    if proxy.grantee_id in member_by_user_id:
+                        _, grantee_user = member_by_user_id[proxy.grantee_id]
+                        grantee_name = f"{grantee_user.first_name} {grantee_user.last_name}"
+
+                    proxy_details.append(QuorumMemberDetail(
+                        user_id=user.id,
+                        user_name=f"{user.first_name} {user.last_name}",
+                        unit_id=unit.id,
+                        unit_number=unit.unit_number,
+                        share_percentage=share,
+                        attendance_type="proxy",
+                        proxy_holder_name=grantee_name,
+                    ))
+
+    # Calculate totals
+    represented_shares = present_shares + proxy_shares
+    represented_percentage = (represented_shares / total_shares * 100) if total_shares > 0 else 0.0
+    is_quorum_reached = represented_percentage >= required_percentage
+
+    return QuorumCalculation(
+        meeting_id=meeting_id,
+        total_shares=total_shares,
+        present_shares=present_shares,
+        proxy_shares=proxy_shares,
+        represented_shares=represented_shares,
+        represented_percentage=round(represented_percentage, 2),
+        required_percentage=required_percentage,
+        quorum_status=QuorumStatus.REACHED if is_quorum_reached else QuorumStatus.NOT_REACHED,
+        is_quorum_reached=is_quorum_reached,
+        total_owners=total_owners,
+        present_count=len(present_details),
+        proxy_count=len(proxy_details),
+        represented_count=len(present_details) + len(proxy_details),
+        present_details=present_details,
+        proxy_details=proxy_details,
+        calculated_at=datetime.now(timezone.utc),
+    )
+
+
+# STORY-075: Meeting Minutes endpoints
+@router.get(
+    "/{meeting_id}/minutes/template",
+    response_model=MinutesTemplate,
+    summary="Notulen template ophalen",
+    description="Haal een vooraf ingevulde template op voor de notulen met datum, aanwezigen en agenda (STORY-075).",
+)
+async def get_minutes_template(
+    vve_id: uuid.UUID,
+    meeting_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: AsyncSession = Depends(get_db),
+) -> MinutesTemplate:
+    """Get a pre-populated template for meeting minutes (STORY-075)."""
+    # Get meeting
+    meeting_result = await db.execute(
+        select(Meeting).where(Meeting.id == meeting_id, Meeting.vve_id == vve_id)
+    )
+    meeting = meeting_result.scalar_one_or_none()
+    if not meeting:
+        raise HTTPException(status_code=404, detail="Vergadering niet gevonden")
+
+    # Get agenda items
+    agenda_result = await db.execute(
+        select(MeetingAgendaItem)
+        .where(MeetingAgendaItem.meeting_id == meeting_id)
+        .order_by(MeetingAgendaItem.order_index)
+    )
+    agenda_items = agenda_result.scalars().all()
+
+    # Get attendees (RSVPs with PRESENT status)
+    rsvps_result = await db.execute(
+        select(MeetingRsvp, User)
+        .join(User, MeetingRsvp.user_id == User.id)
+        .where(
+            MeetingRsvp.meeting_id == meeting_id,
+            MeetingRsvp.status == DBMeetingRsvpStatus.PRESENT,
+        )
+    )
+    attendees = [f"{user.first_name} {user.last_name}" for _, user in rsvps_result.all()]
+
+    # Build HTML template
+    date_str = meeting.meeting_date.strftime("%d %B %Y")
+    agenda_html = ""
+    for i, item in enumerate(agenda_items, 1):
+        agenda_html += f"""
+<h3>{i}. {item.title}</h3>
+<p><em>[Notities voor agendapunt {i}]</em></p>
+"""
+
+    html_template = f"""<h1>Notulen: {meeting.title}</h1>
+<p><strong>Datum:</strong> {date_str}</p>
+<p><strong>Locatie:</strong> {meeting.location_address or 'Online'}</p>
+
+<h2>Aanwezigen</h2>
+<p>{', '.join(attendees) if attendees else '<em>[Geen aanwezigen geregistreerd]</em>'}</p>
+
+<h2>Agenda en Bespreking</h2>
+{agenda_html if agenda_html else '<p><em>[Geen agendapunten]</em></p>'}
+
+<h2>Besluiten</h2>
+<p><em>[Voeg hier besluiten toe]</em></p>
+
+<h2>Actiepunten</h2>
+<p><em>[Voeg hier actiepunten toe]</em></p>
+
+<h2>Sluiting</h2>
+<p><em>[Afsluiting van de vergadering]</em></p>
+"""
+
+    return MinutesTemplate(
+        meeting_id=meeting_id,
+        meeting_title=meeting.title,
+        meeting_date=meeting.meeting_date,
+        attendees=attendees,
+        agenda_items=[item.title for item in agenda_items],
+        html_template=html_template,
+    )
+
+
+@router.post(
+    "/{meeting_id}/minutes",
+    response_model=MinutesResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Notulen aanmaken",
+    description="Maak notulen aan voor een vergadering (STORY-075).",
+)
+async def create_minutes(
+    vve_id: uuid.UUID,
+    meeting_id: uuid.UUID,
+    minutes_data: MinutesCreate,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: AsyncSession = Depends(get_db),
+) -> MinutesResponse:
+    """Create meeting minutes (STORY-075)."""
+    # Verify meeting exists
+    meeting_result = await db.execute(
+        select(Meeting).where(Meeting.id == meeting_id, Meeting.vve_id == vve_id)
+    )
+    if not meeting_result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Vergadering niet gevonden")
+
+    # Check if minutes already exist
+    existing_result = await db.execute(
+        select(MeetingMinutes).where(MeetingMinutes.meeting_id == meeting_id)
+    )
+    if existing_result.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="Notulen bestaan al voor deze vergadering")
+
+    # Create minutes
+    minutes = MeetingMinutes(
+        meeting_id=meeting_id,
+        content=minutes_data.content,
+        status=DBMinutesStatus.DRAFT,
+        created_by_id=current_user.id,
+        last_saved_at=datetime.now(timezone.utc),
+    )
+
+    db.add(minutes)
+    await db.commit()
+    await db.refresh(minutes)
+
+    # Get creator name
+    creator_result = await db.execute(select(User).where(User.id == current_user.id))
+    creator = creator_result.scalar_one()
+
+    return MinutesResponse(
+        id=minutes.id,
+        meeting_id=minutes.meeting_id,
+        content=minutes.content,
+        status=MinutesStatus(minutes.status.value),
+        created_by_id=minutes.created_by_id,
+        created_by_name=f"{creator.first_name} {creator.last_name}",
+        last_saved_at=minutes.last_saved_at,
+        created_at=minutes.created_at,
+        updated_at=minutes.updated_at,
+    )
+
+
+@router.get(
+    "/{meeting_id}/minutes",
+    response_model=MinutesResponse | None,
+    summary="Notulen ophalen",
+    description="Haal de notulen op voor een vergadering (STORY-075).",
+)
+async def get_minutes(
+    vve_id: uuid.UUID,
+    meeting_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_member)],
+    db: AsyncSession = Depends(get_db),
+) -> MinutesResponse | None:
+    """Get meeting minutes (STORY-075)."""
+    # Verify meeting exists
+    meeting_result = await db.execute(
+        select(Meeting).where(Meeting.id == meeting_id, Meeting.vve_id == vve_id)
+    )
+    if not meeting_result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Vergadering niet gevonden")
+
+    # Get minutes
+    minutes_result = await db.execute(
+        select(MeetingMinutes).where(MeetingMinutes.meeting_id == meeting_id)
+    )
+    minutes = minutes_result.scalar_one_or_none()
+
+    if not minutes:
+        return None
+
+    # Get user names
+    creator_name = None
+    if minutes.created_by_id:
+        creator_result = await db.execute(select(User).where(User.id == minutes.created_by_id))
+        creator = creator_result.scalar_one_or_none()
+        if creator:
+            creator_name = f"{creator.first_name} {creator.last_name}"
+
+    approved_by_name = None
+    if minutes.approved_by_id:
+        approver_result = await db.execute(select(User).where(User.id == minutes.approved_by_id))
+        approver = approver_result.scalar_one_or_none()
+        if approver:
+            approved_by_name = f"{approver.first_name} {approver.last_name}"
+
+    return MinutesResponse(
+        id=minutes.id,
+        meeting_id=minutes.meeting_id,
+        content=minutes.content,
+        status=MinutesStatus(minutes.status.value),
+        created_by_id=minutes.created_by_id,
+        created_by_name=creator_name,
+        published_at=minutes.published_at,
+        approved_at=minutes.approved_at,
+        approved_by_id=minutes.approved_by_id,
+        approved_by_name=approved_by_name,
+        last_saved_at=minutes.last_saved_at,
+        created_at=minutes.created_at,
+        updated_at=minutes.updated_at,
+    )
+
+
+@router.patch(
+    "/{meeting_id}/minutes",
+    response_model=MinutesResponse,
+    summary="Notulen bijwerken",
+    description="Werk de notulen bij voor een vergadering met auto-save (STORY-075).",
+)
+async def update_minutes(
+    vve_id: uuid.UUID,
+    meeting_id: uuid.UUID,
+    minutes_data: MinutesUpdate,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: AsyncSession = Depends(get_db),
+) -> MinutesResponse:
+    """Update meeting minutes with auto-save (STORY-075)."""
+    # Get minutes
+    minutes_result = await db.execute(
+        select(MeetingMinutes).where(MeetingMinutes.meeting_id == meeting_id)
+    )
+    minutes = minutes_result.scalar_one_or_none()
+
+    if not minutes:
+        raise HTTPException(status_code=404, detail="Notulen niet gevonden")
+
+    # Update fields
+    if minutes_data.content is not None:
+        minutes.content = minutes_data.content
+        minutes.last_saved_at = datetime.now(timezone.utc)
+
+    if minutes_data.status is not None:
+        minutes.status = DBMinutesStatus(minutes_data.status.value)
+        if minutes_data.status == MinutesStatus.PUBLISHED:
+            minutes.published_at = datetime.now(timezone.utc)
+        elif minutes_data.status == MinutesStatus.APPROVED:
+            minutes.approved_at = datetime.now(timezone.utc)
+            minutes.approved_by_id = current_user.id
+
+    await db.commit()
+    await db.refresh(minutes)
+
+    # Get user names
+    creator_name = None
+    if minutes.created_by_id:
+        creator_result = await db.execute(select(User).where(User.id == minutes.created_by_id))
+        creator = creator_result.scalar_one_or_none()
+        if creator:
+            creator_name = f"{creator.first_name} {creator.last_name}"
+
+    approved_by_name = None
+    if minutes.approved_by_id:
+        approver_result = await db.execute(select(User).where(User.id == minutes.approved_by_id))
+        approver = approver_result.scalar_one_or_none()
+        if approver:
+            approved_by_name = f"{approver.first_name} {approver.last_name}"
+
+    return MinutesResponse(
+        id=minutes.id,
+        meeting_id=minutes.meeting_id,
+        content=minutes.content,
+        status=MinutesStatus(minutes.status.value),
+        created_by_id=minutes.created_by_id,
+        created_by_name=creator_name,
+        published_at=minutes.published_at,
+        approved_at=minutes.approved_at,
+        approved_by_id=minutes.approved_by_id,
+        approved_by_name=approved_by_name,
+        last_saved_at=minutes.last_saved_at,
+        created_at=minutes.created_at,
+        updated_at=minutes.updated_at,
+    )
+
+
+# STORY-075: Decision endpoints
+@router.post(
+    "/{meeting_id}/decisions",
+    response_model=DecisionResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Besluit/actiepunt toevoegen",
+    description="Voeg een besluit of actiepunt toe aan de vergadering (STORY-075).",
+)
+async def create_decision(
+    vve_id: uuid.UUID,
+    meeting_id: uuid.UUID,
+    decision_data: DecisionCreate,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: AsyncSession = Depends(get_db),
+) -> DecisionResponse:
+    """Create a decision or action item (STORY-075)."""
+    # Verify meeting exists
+    meeting_result = await db.execute(
+        select(Meeting).where(Meeting.id == meeting_id, Meeting.vve_id == vve_id)
+    )
+    if not meeting_result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Vergadering niet gevonden")
+
+    # Get minutes if exists
+    minutes_result = await db.execute(
+        select(MeetingMinutes).where(MeetingMinutes.meeting_id == meeting_id)
+    )
+    minutes = minutes_result.scalar_one_or_none()
+
+    # Create decision
+    decision = MeetingDecision(
+        meeting_id=meeting_id,
+        minutes_id=minutes.id if minutes else None,
+        decision_type=DBDecisionType(decision_data.decision_type.value),
+        title=decision_data.title,
+        description=decision_data.description,
+        agenda_item_id=decision_data.agenda_item_id,
+        assignee_id=decision_data.assignee_id,
+        due_date=decision_data.due_date,
+        created_by_id=current_user.id,
+    )
+
+    db.add(decision)
+    await db.commit()
+    await db.refresh(decision)
+
+    # Get names
+    creator_name = None
+    creator_result = await db.execute(select(User).where(User.id == current_user.id))
+    creator = creator_result.scalar_one()
+    creator_name = f"{creator.first_name} {creator.last_name}"
+
+    assignee_name = None
+    if decision.assignee_id:
+        assignee_result = await db.execute(select(User).where(User.id == decision.assignee_id))
+        assignee = assignee_result.scalar_one_or_none()
+        if assignee:
+            assignee_name = f"{assignee.first_name} {assignee.last_name}"
+
+    agenda_item_title = None
+    if decision.agenda_item_id:
+        agenda_result = await db.execute(
+            select(MeetingAgendaItem).where(MeetingAgendaItem.id == decision.agenda_item_id)
+        )
+        agenda_item = agenda_result.scalar_one_or_none()
+        if agenda_item:
+            agenda_item_title = agenda_item.title
+
+    return DecisionResponse(
+        id=decision.id,
+        meeting_id=decision.meeting_id,
+        minutes_id=decision.minutes_id,
+        decision_type=DecisionType(decision.decision_type.value),
+        title=decision.title,
+        description=decision.description,
+        agenda_item_id=decision.agenda_item_id,
+        agenda_item_title=agenda_item_title,
+        assignee_id=decision.assignee_id,
+        assignee_name=assignee_name,
+        due_date=decision.due_date,
+        is_completed=decision.is_completed,
+        completed_at=decision.completed_at,
+        created_by_id=decision.created_by_id,
+        created_by_name=creator_name,
+        created_at=decision.created_at,
+        updated_at=decision.updated_at,
+    )
+
+
+@router.get(
+    "/{meeting_id}/decisions",
+    response_model=list[DecisionResponse],
+    summary="Besluiten/actiepunten ophalen",
+    description="Haal alle besluiten en actiepunten op voor een vergadering (STORY-075).",
+)
+async def list_decisions(
+    vve_id: uuid.UUID,
+    meeting_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_member)],
+    db: AsyncSession = Depends(get_db),
+    decision_type: DecisionType | None = Query(None, description="Filter op type"),
+) -> list[DecisionResponse]:
+    """List decisions and action items for a meeting (STORY-075)."""
+    # Verify meeting exists
+    meeting_result = await db.execute(
+        select(Meeting).where(Meeting.id == meeting_id, Meeting.vve_id == vve_id)
+    )
+    if not meeting_result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Vergadering niet gevonden")
+
+    # Build query
+    query = select(MeetingDecision).where(MeetingDecision.meeting_id == meeting_id)
+    if decision_type:
+        query = query.where(MeetingDecision.decision_type == DBDecisionType(decision_type.value))
+    query = query.order_by(MeetingDecision.created_at)
+
+    decisions_result = await db.execute(query)
+    decisions = decisions_result.scalars().all()
+
+    if not decisions:
+        return []
+
+    # Batch fetch all users and agenda items to avoid N+1 queries
+    user_ids = set()
+    agenda_item_ids = set()
+    for decision in decisions:
+        if decision.created_by_id:
+            user_ids.add(decision.created_by_id)
+        if decision.assignee_id:
+            user_ids.add(decision.assignee_id)
+        if decision.agenda_item_id:
+            agenda_item_ids.add(decision.agenda_item_id)
+
+    users_by_id = {}
+    if user_ids:
+        users_result = await db.execute(select(User).where(User.id.in_(user_ids)))
+        users_by_id = {user.id: user for user in users_result.scalars().all()}
+
+    agenda_items_by_id = {}
+    if agenda_item_ids:
+        agenda_result = await db.execute(
+            select(MeetingAgendaItem).where(MeetingAgendaItem.id.in_(agenda_item_ids))
+        )
+        agenda_items_by_id = {item.id: item for item in agenda_result.scalars().all()}
+
+    result = []
+    for decision in decisions:
+        creator = users_by_id.get(decision.created_by_id) if decision.created_by_id else None
+        assignee = users_by_id.get(decision.assignee_id) if decision.assignee_id else None
+        agenda_item = agenda_items_by_id.get(decision.agenda_item_id) if decision.agenda_item_id else None
+
+        result.append(DecisionResponse(
+            id=decision.id,
+            meeting_id=decision.meeting_id,
+            minutes_id=decision.minutes_id,
+            decision_type=DecisionType(decision.decision_type.value),
+            title=decision.title,
+            description=decision.description,
+            agenda_item_id=decision.agenda_item_id,
+            agenda_item_title=agenda_item.title if agenda_item else None,
+            assignee_id=decision.assignee_id,
+            assignee_name=f"{assignee.first_name} {assignee.last_name}" if assignee else None,
+            due_date=decision.due_date,
+            is_completed=decision.is_completed,
+            completed_at=decision.completed_at,
+            created_by_id=decision.created_by_id,
+            created_by_name=f"{creator.first_name} {creator.last_name}" if creator else None,
+            created_at=decision.created_at,
+            updated_at=decision.updated_at,
+        ))
+
+    return result
+
+
+@router.patch(
+    "/{meeting_id}/decisions/{decision_id}",
+    response_model=DecisionResponse,
+    summary="Besluit/actiepunt bijwerken",
+    description="Werk een besluit of actiepunt bij (STORY-075).",
+)
+async def update_decision(
+    vve_id: uuid.UUID,
+    meeting_id: uuid.UUID,
+    decision_id: uuid.UUID,
+    decision_data: DecisionUpdate,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: AsyncSession = Depends(get_db),
+) -> DecisionResponse:
+    """Update a decision or action item (STORY-075)."""
+    # Get decision
+    decision_result = await db.execute(
+        select(MeetingDecision).where(
+            MeetingDecision.id == decision_id,
+            MeetingDecision.meeting_id == meeting_id,
+        )
+    )
+    decision = decision_result.scalar_one_or_none()
+
+    if not decision:
+        raise HTTPException(status_code=404, detail="Besluit niet gevonden")
+
+    # Update fields
+    if decision_data.title is not None:
+        decision.title = decision_data.title
+    if decision_data.description is not None:
+        decision.description = decision_data.description
+    if decision_data.assignee_id is not None:
+        decision.assignee_id = decision_data.assignee_id
+    if decision_data.due_date is not None:
+        decision.due_date = decision_data.due_date
+    if decision_data.is_completed is not None:
+        decision.is_completed = decision_data.is_completed
+        if decision_data.is_completed:
+            decision.completed_at = datetime.now(timezone.utc)
+        else:
+            decision.completed_at = None
+
+    await db.commit()
+    await db.refresh(decision)
+
+    # Get names
+    creator_name = None
+    if decision.created_by_id:
+        creator_result = await db.execute(select(User).where(User.id == decision.created_by_id))
+        creator = creator_result.scalar_one_or_none()
+        if creator:
+            creator_name = f"{creator.first_name} {creator.last_name}"
+
+    assignee_name = None
+    if decision.assignee_id:
+        assignee_result = await db.execute(select(User).where(User.id == decision.assignee_id))
+        assignee = assignee_result.scalar_one_or_none()
+        if assignee:
+            assignee_name = f"{assignee.first_name} {assignee.last_name}"
+
+    agenda_item_title = None
+    if decision.agenda_item_id:
+        agenda_result = await db.execute(
+            select(MeetingAgendaItem).where(MeetingAgendaItem.id == decision.agenda_item_id)
+        )
+        agenda_item = agenda_result.scalar_one_or_none()
+        if agenda_item:
+            agenda_item_title = agenda_item.title
+
+    return DecisionResponse(
+        id=decision.id,
+        meeting_id=decision.meeting_id,
+        minutes_id=decision.minutes_id,
+        decision_type=DecisionType(decision.decision_type.value),
+        title=decision.title,
+        description=decision.description,
+        agenda_item_id=decision.agenda_item_id,
+        agenda_item_title=agenda_item_title,
+        assignee_id=decision.assignee_id,
+        assignee_name=assignee_name,
+        due_date=decision.due_date,
+        is_completed=decision.is_completed,
+        completed_at=decision.completed_at,
+        created_by_id=decision.created_by_id,
+        created_by_name=creator_name,
+        created_at=decision.created_at,
+        updated_at=decision.updated_at,
     )

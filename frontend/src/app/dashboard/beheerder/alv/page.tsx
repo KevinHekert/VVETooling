@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
-import type { MeetingListItem, MeetingCreate, MeetingType, MeetingStatus, AgendaItem, AgendaItemCreate, MeetingInvitationPreview, MeetingRsvp, RsvpSummary, RsvpStatus } from '@/types';
+import type { MeetingListItem, MeetingCreate, MeetingType, MeetingStatus, AgendaItem, AgendaItemCreate, MeetingInvitationPreview, MeetingRsvp, RsvpSummary, RsvpStatus, QuorumCalculation, ProxySummary } from '@/types';
 
 /**
- * ALV (Algemene Ledenvergadering) Management - STORY-069, STORY-070, STORY-071, STORY-072
+ * ALV (Algemene Ledenvergadering) Management - STORY-069, STORY-070, STORY-071, STORY-072, STORY-074
  * 
  * Allows beheerder/secretaris to:
  * - Plan new ALV meetings with date, time, type and location
@@ -13,6 +13,7 @@ import type { MeetingListItem, MeetingCreate, MeetingType, MeetingStatus, Agenda
  * - Update meeting status
  * - STORY-070: Manage agenda with items, durations, and drag & drop
  * - STORY-071: Send invitations to all members
+ * - STORY-074: View quorum calculation with real-time updates
  */
 
 const MEETING_TYPE_LABELS: Record<MeetingType, { label: string; icon: string }> = {
@@ -69,6 +70,12 @@ export default function ALVPage() {
   const [rsvpList, setRsvpList] = useState<MeetingRsvp[]>([]);
   const [rsvpSummary, setRsvpSummary] = useState<RsvpSummary | null>(null);
   const [isLoadingRsvp, setIsLoadingRsvp] = useState(false);
+
+  // STORY-074: Quorum state
+  const [showQuorumModal, setShowQuorumModal] = useState(false);
+  const [quorumData, setQuorumData] = useState<QuorumCalculation | null>(null);
+  const [proxySummary, setProxySummary] = useState<ProxySummary | null>(null);
+  const [isLoadingQuorum, setIsLoadingQuorum] = useState(false);
 
   // TODO: Get VVE ID from context/session
   const vveId = 'demo-vve-id';
@@ -286,6 +293,45 @@ export default function ALVPage() {
     setShowRsvpModal(false);
     setRsvpList([]);
     setRsvpSummary(null);
+  };
+
+  // STORY-074: Quorum modal functions
+  const openQuorumModal = async (meeting: MeetingListItem) => {
+    setSelectedMeeting(meeting);
+    setShowQuorumModal(true);
+    setIsLoadingQuorum(true);
+    setError(null);
+    try {
+      const [quorum, proxies] = await Promise.all([
+        api.getQuorum(vveId, meeting.id),
+        api.getProxySummary(vveId, meeting.id),
+      ]);
+      setQuorumData(quorum);
+      setProxySummary(proxies);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Kon quorum niet berekenen');
+    } finally {
+      setIsLoadingQuorum(false);
+    }
+  };
+
+  const closeQuorumModal = () => {
+    setShowQuorumModal(false);
+    setQuorumData(null);
+    setProxySummary(null);
+  };
+
+  const refreshQuorum = async () => {
+    if (!selectedMeeting) return;
+    setIsLoadingQuorum(true);
+    try {
+      const quorum = await api.getQuorum(vveId, selectedMeeting.id);
+      setQuorumData(quorum);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Kon quorum niet verversen');
+    } finally {
+      setIsLoadingQuorum(false);
+    }
   };
 
   const RSVP_STATUS_LABELS: Record<RsvpStatus, { label: string; icon: string; color: string }> = {
@@ -588,6 +634,13 @@ export default function ALVPage() {
                       >
                         📊 RSVP
                       </button>
+                      {/* STORY-074: Quorum button */}
+                      <button
+                        onClick={() => openQuorumModal(meeting)}
+                        className="text-sm text-purple-600 hover:text-purple-800"
+                      >
+                        ⚖️ Quorum
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -598,7 +651,7 @@ export default function ALVPage() {
       )}
 
       {/* STORY-070: Agenda Modal */}
-      {selectedMeeting && !showRsvpModal && !showInvitationModal && (
+      {selectedMeeting && !showRsvpModal && !showInvitationModal && !showQuorumModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
@@ -1016,6 +1069,159 @@ export default function ALVPage() {
                   Sluiten
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* STORY-074: Quorum Modal */}
+      {showQuorumModal && selectedMeeting && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              {/* Modal Header */}
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">
+                    ⚖️ Quorum Berekening - {selectedMeeting.title}
+                  </h2>
+                  <p className="text-sm text-gray-600">
+                    {new Date(selectedMeeting.meeting_date).toLocaleDateString('nl-NL', {
+                      weekday: 'long',
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric',
+                    })}
+                  </p>
+                </div>
+                <button
+                  onClick={closeQuorumModal}
+                  className="text-gray-400 hover:text-gray-600 text-2xl"
+                >
+                  ×
+                </button>
+              </div>
+
+              {isLoadingQuorum ? (
+                <div className="text-center py-8 text-gray-500">Quorum berekenen...</div>
+              ) : quorumData ? (
+                <div className="space-y-6">
+                  {/* Quorum Status Indicator */}
+                  <div className={`p-6 rounded-lg text-center ${
+                    quorumData.is_quorum_reached 
+                      ? 'bg-green-50 border-2 border-green-400' 
+                      : 'bg-red-50 border-2 border-red-400'
+                  }`}>
+                    <div className="text-4xl mb-2">
+                      {quorumData.is_quorum_reached ? '✅' : '❌'}
+                    </div>
+                    <h3 className={`text-xl font-bold ${
+                      quorumData.is_quorum_reached ? 'text-green-700' : 'text-red-700'
+                    }`}>
+                      {quorumData.is_quorum_reached ? 'Quorum Bereikt!' : 'Quorum Niet Bereikt'}
+                    </h3>
+                    <p className={`text-lg mt-1 ${
+                      quorumData.is_quorum_reached ? 'text-green-600' : 'text-red-600'
+                    }`}>
+                      {quorumData.represented_percentage.toFixed(1)}% van {quorumData.required_percentage}% vereist
+                    </p>
+                  </div>
+
+                  {/* Progress Bar */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm text-gray-600">
+                      <span>Vertegenwoordigd</span>
+                      <span>{quorumData.represented_percentage.toFixed(1)}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+                      <div
+                        className={`h-4 rounded-full transition-all ${
+                          quorumData.is_quorum_reached ? 'bg-green-500' : 'bg-red-500'
+                        }`}
+                        style={{ width: `${Math.min(quorumData.represented_percentage, 100)}%` }}
+                      />
+                    </div>
+                    <div className="relative h-2">
+                      <div 
+                        className="absolute bottom-0 w-0.5 h-4 bg-gray-800"
+                        style={{ left: `${quorumData.required_percentage}%` }}
+                      />
+                      <span 
+                        className="absolute text-xs text-gray-600 -translate-x-1/2"
+                        style={{ left: `${quorumData.required_percentage}%`, top: '8px' }}
+                      >
+                        Vereist: {quorumData.required_percentage}%
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Statistics Grid */}
+                  <div className="grid grid-cols-2 gap-4 mt-6">
+                    <div className="bg-blue-50 rounded-lg p-4 text-center">
+                      <div className="text-2xl font-bold text-blue-700">{quorumData.present_count}</div>
+                      <div className="text-sm text-blue-600">Aanwezig</div>
+                      <div className="text-xs text-blue-500">{quorumData.present_shares.toFixed(2)}%</div>
+                    </div>
+                    <div className="bg-yellow-50 rounded-lg p-4 text-center">
+                      <div className="text-2xl font-bold text-yellow-700">{quorumData.proxy_count}</div>
+                      <div className="text-sm text-yellow-600">Via Volmacht</div>
+                      <div className="text-xs text-yellow-500">{quorumData.proxy_shares.toFixed(2)}%</div>
+                    </div>
+                    <div className="bg-green-50 rounded-lg p-4 text-center">
+                      <div className="text-2xl font-bold text-green-700">{quorumData.represented_count}</div>
+                      <div className="text-sm text-green-600">Totaal Vertegenwoordigd</div>
+                      <div className="text-xs text-green-500">{quorumData.represented_shares.toFixed(2)}%</div>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-4 text-center">
+                      <div className="text-2xl font-bold text-gray-700">{quorumData.total_owners}</div>
+                      <div className="text-sm text-gray-600">Totaal Eigenaren</div>
+                      <div className="text-xs text-gray-500">{quorumData.total_shares.toFixed(2)}%</div>
+                    </div>
+                  </div>
+
+                  {/* Proxy Summary */}
+                  {proxySummary && (
+                    <div className="bg-purple-50 rounded-lg p-4">
+                      <h4 className="font-semibold text-purple-800 mb-2">Volmachten Status</h4>
+                      <div className="grid grid-cols-3 gap-2 text-sm">
+                        <div>
+                          <span className="text-purple-600">Bevestigd:</span>{' '}
+                          <strong>{proxySummary.confirmed_count}</strong>
+                        </div>
+                        <div>
+                          <span className="text-purple-600">Wachtend:</span>{' '}
+                          <strong>{proxySummary.pending_count}</strong>
+                        </div>
+                        <div>
+                          <span className="text-purple-600">Ingetrokken:</span>{' '}
+                          <strong>{proxySummary.revoked_count}</strong>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Refresh and Close buttons */}
+                  <div className="flex justify-between mt-6">
+                    <button
+                      onClick={refreshQuorum}
+                      disabled={isLoadingQuorum}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300"
+                    >
+                      🔄 Vernieuwen
+                    </button>
+                    <button
+                      onClick={closeQuorumModal}
+                      className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+                    >
+                      Sluiten
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  Geen quorum gegevens beschikbaar.
+                </div>
+              )}
             </div>
           </div>
         </div>

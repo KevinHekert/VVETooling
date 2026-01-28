@@ -254,3 +254,257 @@ class RsvpSummary(BaseModel):
     with_proxy_count: int
     no_response_count: int
     response_rate: float
+
+
+# STORY-073: Proxy (Volmacht) schemas
+class ProxyScope(str, Enum):
+    """Scope of the proxy - full or specific agenda items (STORY-073)."""
+
+    FULL = "full"  # Volmacht voor alle agendapunten
+    SPECIFIC = "specific"  # Volmacht voor specifieke agendapunten
+
+
+class ProxyStatus(str, Enum):
+    """Status of a proxy/volmacht (STORY-073)."""
+
+    PENDING = "pending"  # Wachtend op bevestiging
+    CONFIRMED = "confirmed"  # Bevestigd door gevolmachtigde
+    REVOKED = "revoked"  # Ingetrokken door volmachtgever
+
+
+class ProxyCreate(BaseModel):
+    """Schema for creating a digital proxy/volmacht (STORY-073)."""
+
+    grantee_id: uuid.UUID = Field(..., description="ID of the person receiving the proxy")
+    scope: ProxyScope = Field(ProxyScope.FULL, description="Scope of the proxy")
+    agenda_item_ids: list[uuid.UUID] | None = Field(
+        None, description="Specific agenda item IDs (required if scope is SPECIFIC)"
+    )
+    notes: str | None = Field(None, max_length=500, description="Optional notes from grantor")
+
+    @field_validator('agenda_item_ids')
+    @classmethod
+    def validate_agenda_items_for_scope(cls, v: list[uuid.UUID] | None, info) -> list[uuid.UUID] | None:
+        """Validate that agenda_item_ids is provided when scope is SPECIFIC."""
+        scope = info.data.get('scope')
+        if scope == ProxyScope.SPECIFIC and (not v or len(v) == 0):
+            raise ValueError('Agendapunten zijn verplicht bij beperkte volmacht')
+        return v
+
+
+class ProxyUpdate(BaseModel):
+    """Schema for updating a proxy status (STORY-073)."""
+
+    status: ProxyStatus | None = None
+    notes: str | None = Field(None, max_length=500)
+
+
+class ProxyResponse(BaseModel):
+    """Response schema for a proxy/volmacht (STORY-073)."""
+
+    id: uuid.UUID
+    meeting_id: uuid.UUID
+    grantor_id: uuid.UUID
+    grantor_name: str | None = None
+    grantee_id: uuid.UUID
+    grantee_name: str | None = None
+    scope: ProxyScope
+    agenda_item_ids: list[uuid.UUID] | None = None
+    status: ProxyStatus
+    notes: str | None = None
+    confirmed_at: datetime | None = None
+    revoked_at: datetime | None = None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ProxyListResponse(BaseModel):
+    """List response schema for proxies (STORY-073)."""
+
+    id: uuid.UUID
+    meeting_id: uuid.UUID
+    grantor_id: uuid.UUID
+    grantor_name: str | None = None
+    grantee_id: uuid.UUID
+    grantee_name: str | None = None
+    scope: ProxyScope
+    status: ProxyStatus
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ProxySummary(BaseModel):
+    """Summary of proxies for a meeting (STORY-073)."""
+
+    meeting_id: uuid.UUID
+    total_proxies: int
+    pending_count: int
+    confirmed_count: int
+    revoked_count: int
+
+
+class EligibleGrantee(BaseModel):
+    """Response schema for eligible proxy recipients (STORY-073)."""
+
+    id: uuid.UUID
+    first_name: str
+    last_name: str
+    full_name: str
+    is_board_member: bool = False
+
+
+# STORY-074: Quorum Calculation schemas
+class QuorumStatus(str, Enum):
+    """Quorum status options (STORY-074)."""
+
+    REACHED = "reached"  # Quorum bereikt
+    NOT_REACHED = "not_reached"  # Quorum niet bereikt
+
+
+class QuorumMemberDetail(BaseModel):
+    """Detail of a member contributing to quorum (STORY-074)."""
+
+    user_id: uuid.UUID
+    user_name: str
+    unit_id: uuid.UUID | None = None
+    unit_number: str | None = None
+    share_percentage: float
+    attendance_type: str  # 'present', 'proxy'
+    proxy_holder_name: str | None = None
+
+
+class QuorumCalculation(BaseModel):
+    """Quorum calculation response for a meeting (STORY-074)."""
+
+    meeting_id: uuid.UUID
+    # Total shares in VVE
+    total_shares: float
+    # Shares represented at meeting
+    present_shares: float  # Owners physically present
+    proxy_shares: float  # Owners represented via proxy
+    represented_shares: float  # Total represented (present + proxy)
+    # Percentages
+    represented_percentage: float  # % of total shares represented
+    required_percentage: float = 50.0  # Minimum required for quorum (configurable)
+    # Quorum status
+    quorum_status: QuorumStatus
+    is_quorum_reached: bool
+    # Counts
+    total_owners: int
+    present_count: int
+    proxy_count: int
+    represented_count: int
+    # Breakdown details
+    present_details: list[QuorumMemberDetail] = []
+    proxy_details: list[QuorumMemberDetail] = []
+    # Timestamp
+    calculated_at: datetime
+
+
+# STORY-075: Meeting Minutes schemas
+class MinutesStatus(str, Enum):
+    """Status of meeting minutes (STORY-075)."""
+
+    DRAFT = "draft"  # Concept
+    PUBLISHED = "published"  # Gepubliceerd
+    APPROVED = "approved"  # Goedgekeurd
+
+
+class DecisionType(str, Enum):
+    """Type of decision in meeting minutes (STORY-075)."""
+
+    BESLUIT = "besluit"  # Official decision
+    ACTIEPUNT = "actiepunt"  # Action item
+    AANDACHTSPUNT = "aandachtspunt"  # Point of attention
+
+
+class MinutesCreate(BaseModel):
+    """Schema for creating meeting minutes (STORY-075)."""
+
+    content: str | None = Field(None, description="Rich text content (HTML)")
+
+
+class MinutesUpdate(BaseModel):
+    """Schema for updating meeting minutes (STORY-075)."""
+
+    content: str | None = Field(None, description="Rich text content (HTML)")
+    status: MinutesStatus | None = None
+
+
+class MinutesResponse(BaseModel):
+    """Response schema for meeting minutes (STORY-075)."""
+
+    id: uuid.UUID
+    meeting_id: uuid.UUID
+    content: str | None = None
+    status: MinutesStatus
+    created_by_id: uuid.UUID | None = None
+    created_by_name: str | None = None
+    published_at: datetime | None = None
+    approved_at: datetime | None = None
+    approved_by_id: uuid.UUID | None = None
+    approved_by_name: str | None = None
+    last_saved_at: datetime | None = None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class MinutesTemplate(BaseModel):
+    """Template for pre-populated meeting minutes (STORY-075)."""
+
+    meeting_id: uuid.UUID
+    meeting_title: str
+    meeting_date: datetime
+    attendees: list[str] = []
+    agenda_items: list[str] = []
+    html_template: str
+
+
+class DecisionCreate(BaseModel):
+    """Schema for creating a decision/action item (STORY-075)."""
+
+    decision_type: DecisionType
+    title: str = Field(..., min_length=2, max_length=255)
+    description: str | None = Field(None, max_length=2000)
+    agenda_item_id: uuid.UUID | None = None
+    assignee_id: uuid.UUID | None = None
+    due_date: datetime | None = None
+
+
+class DecisionUpdate(BaseModel):
+    """Schema for updating a decision/action item (STORY-075)."""
+
+    title: str | None = Field(None, min_length=2, max_length=255)
+    description: str | None = Field(None, max_length=2000)
+    assignee_id: uuid.UUID | None = None
+    due_date: datetime | None = None
+    is_completed: bool | None = None
+
+
+class DecisionResponse(BaseModel):
+    """Response schema for a decision/action item (STORY-075)."""
+
+    id: uuid.UUID
+    meeting_id: uuid.UUID
+    minutes_id: uuid.UUID | None = None
+    decision_type: DecisionType
+    title: str
+    description: str | None = None
+    agenda_item_id: uuid.UUID | None = None
+    agenda_item_title: str | None = None
+    assignee_id: uuid.UUID | None = None
+    assignee_name: str | None = None
+    due_date: datetime | None = None
+    is_completed: bool
+    completed_at: datetime | None = None
+    created_by_id: uuid.UUID | None = None
+    created_by_name: str | None = None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
