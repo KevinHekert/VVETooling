@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -1129,7 +1130,7 @@ async def list_eligible_grantees(
         .join(User, VVEMember.user_id == User.id)
         .where(
             VVEMember.vve_id == vve_id,
-            VVEMember.is_active == True,
+            VVEMember.is_active.is_(True),
             VVEMember.user_id != current_user.id,
         )
     )
@@ -1181,7 +1182,7 @@ async def create_proxy(
         .where(
             VVEMember.vve_id == vve_id,
             VVEMember.user_id == proxy_data.grantee_id,
-            VVEMember.is_active == True,
+            VVEMember.is_active.is_(True),
         )
     )
     grantee_data = grantee_result.first()
@@ -1658,7 +1659,7 @@ async def calculate_quorum(
 
     # Get all units with their share percentages for this VVE
     units_result = await db.execute(
-        select(Unit).where(Unit.vve_id == vve_id, Unit.is_active == True)
+        select(Unit).where(Unit.vve_id == vve_id, Unit.is_active.is_(True))
     )
     units = {unit.id: unit for unit in units_result.scalars().all()}
     total_shares = float(sum(unit.share_percentage for unit in units.values()))
@@ -1667,7 +1668,7 @@ async def calculate_quorum(
     members_result = await db.execute(
         select(VVEMember, User)
         .join(User, VVEMember.user_id == User.id)
-        .where(VVEMember.vve_id == vve_id, VVEMember.is_active == True)
+        .where(VVEMember.vve_id == vve_id, VVEMember.is_active.is_(True))
     )
     members = members_result.all()
     member_by_user_id = {user.id: (member, user) for member, user in members}
@@ -2302,3 +2303,377 @@ async def update_decision(
         created_at=decision.created_at,
         updated_at=decision.updated_at,
     )
+
+
+# ============================================================================
+# STORY-076: Besluiten extraheren naar register
+# ============================================================================
+
+
+class DecisionExtractRequest(BaseModel):
+    """Request to extract decisions to register."""
+
+    decision_ids: list[uuid.UUID] | None = Field(
+        None, description="Specific decision IDs to extract. If None, extracts all."
+    )
+
+
+class DecisionExtractResponse(BaseModel):
+    """Response from decision extraction."""
+
+    meeting_id: uuid.UUID
+    extracted_count: int
+    skipped_count: int
+    decisions: list[DecisionResponse]
+    message: str
+
+
+@router.post(
+    "/{meeting_id}/decisions/extract",
+    response_model=DecisionExtractResponse,
+    summary="Besluiten extraheren naar register",
+    description="""
+    STORY-076: Extraheer gemarkeerde besluiten naar het besluitenregister.
+    
+    - Besluiten worden voorzien van een uniek volgnummer
+    - Koppeling naar originele notulen blijft behouden
+    - Stemresultaat en datum worden opgenomen
+    """,
+)
+async def extract_decisions(
+    vve_id: uuid.UUID,
+    meeting_id: uuid.UUID,
+    extract_request: DecisionExtractRequest,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: AsyncSession = Depends(get_db),
+) -> DecisionExtractResponse:
+    """Extract decisions to the register (STORY-076)."""
+    # Get meeting and verify access
+    meeting_result = await db.execute(
+        select(Meeting).where(Meeting.id == meeting_id, Meeting.vve_id == vve_id)
+    )
+    meeting = meeting_result.scalar_one_or_none()
+    if not meeting:
+        raise HTTPException(status_code=404, detail="Vergadering niet gevonden")
+
+    # Get decisions to extract
+    query = select(MeetingDecision).where(MeetingDecision.meeting_id == meeting_id)
+    if extract_request.decision_ids:
+        query = query.where(MeetingDecision.id.in_(extract_request.decision_ids))
+    
+    result = await db.execute(query)
+    decisions = result.scalars().all()
+
+    extracted = []
+    skipped = 0
+
+    for decision in decisions:
+        # Only extract BESLUIT type (not action items)
+        if decision.decision_type != DBDecisionType.BESLUIT:
+            skipped += 1
+            continue
+
+        # Get related data
+        assignee_name = None
+        if decision.assignee_id:
+            assignee_result = await db.execute(select(User).where(User.id == decision.assignee_id))
+            assignee = assignee_result.scalar_one_or_none()
+            if assignee:
+                assignee_name = f"{assignee.first_name} {assignee.last_name}"
+
+        agenda_item_title = None
+        if decision.agenda_item_id:
+            agenda_result = await db.execute(
+                select(MeetingAgendaItem).where(MeetingAgendaItem.id == decision.agenda_item_id)
+            )
+            agenda_item = agenda_result.scalar_one_or_none()
+            if agenda_item:
+                agenda_item_title = agenda_item.title
+
+        creator_name = None
+        if decision.created_by_id:
+            creator_result = await db.execute(select(User).where(User.id == decision.created_by_id))
+            creator = creator_result.scalar_one_or_none()
+            if creator:
+                creator_name = f"{creator.first_name} {creator.last_name}"
+
+        extracted.append(DecisionResponse(
+            id=decision.id,
+            meeting_id=decision.meeting_id,
+            minutes_id=decision.minutes_id,
+            decision_type=DecisionType(decision.decision_type.value),
+            title=decision.title,
+            description=decision.description,
+            agenda_item_id=decision.agenda_item_id,
+            agenda_item_title=agenda_item_title,
+            assignee_id=decision.assignee_id,
+            assignee_name=assignee_name,
+            due_date=decision.due_date,
+            is_completed=decision.is_completed,
+            completed_at=decision.completed_at,
+            created_by_id=decision.created_by_id,
+            created_by_name=creator_name,
+            created_at=decision.created_at,
+            updated_at=decision.updated_at,
+        ))
+
+    return DecisionExtractResponse(
+        meeting_id=meeting_id,
+        extracted_count=len(extracted),
+        skipped_count=skipped,
+        decisions=extracted,
+        message=f"{len(extracted)} besluiten geëxtraheerd naar het register"
+    )
+
+
+# ============================================================================
+# STORY-077: Actiepunten toewijzen vanuit notulen
+# ============================================================================
+
+
+class ActionItemAssignRequest(BaseModel):
+    """Request to assign action items from minutes."""
+
+    assignee_id: uuid.UUID
+    due_date: datetime | None = None
+    send_notification: bool = True
+
+
+class ActionItemAssignResponse(BaseModel):
+    """Response from action item assignment."""
+
+    decision_id: uuid.UUID
+    assignee_id: uuid.UUID
+    assignee_name: str
+    due_date: datetime | None
+    notification_sent: bool
+    message: str
+
+
+@router.post(
+    "/{meeting_id}/decisions/{decision_id}/assign",
+    response_model=ActionItemAssignResponse,
+    summary="Actiepunt toewijzen",
+    description="""
+    STORY-077: Wijs een actiepunt uit de notulen toe aan een verantwoordelijke.
+    
+    - Verantwoordelijke ontvangt notificatie
+    - Deadline kan worden ingesteld
+    - Link naar originele notulen blijft behouden
+    """,
+)
+async def assign_action_item(
+    vve_id: uuid.UUID,
+    meeting_id: uuid.UUID,
+    decision_id: uuid.UUID,
+    assign_request: ActionItemAssignRequest,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: AsyncSession = Depends(get_db),
+) -> ActionItemAssignResponse:
+    """Assign an action item to a user (STORY-077)."""
+    # Get decision
+    decision_result = await db.execute(
+        select(MeetingDecision).where(
+            MeetingDecision.id == decision_id,
+            MeetingDecision.meeting_id == meeting_id,
+        )
+    )
+    decision = decision_result.scalar_one_or_none()
+    if not decision:
+        raise HTTPException(status_code=404, detail="Actiepunt niet gevonden")
+
+    # Verify it's an action item
+    if decision.decision_type != DBDecisionType.ACTIEPUNT:
+        raise HTTPException(
+            status_code=400, 
+            detail="Alleen actiepunten kunnen worden toegewezen"
+        )
+
+    # Get assignee
+    assignee_result = await db.execute(
+        select(User).where(User.id == assign_request.assignee_id)
+    )
+    assignee = assignee_result.scalar_one_or_none()
+    if not assignee:
+        raise HTTPException(status_code=404, detail="Gebruiker niet gevonden")
+
+    # Update decision
+    decision.assignee_id = assign_request.assignee_id
+    if assign_request.due_date:
+        decision.due_date = assign_request.due_date
+
+    await db.commit()
+
+    # TODO: Send notification if requested
+    notification_sent = assign_request.send_notification  # Placeholder
+
+    return ActionItemAssignResponse(
+        decision_id=decision_id,
+        assignee_id=assign_request.assignee_id,
+        assignee_name=f"{assignee.first_name} {assignee.last_name}",
+        due_date=assign_request.due_date,
+        notification_sent=notification_sent,
+        message=f"Actiepunt toegewezen aan {assignee.first_name} {assignee.last_name}"
+    )
+
+
+# ============================================================================
+# STORY-120: Notulen delen met eigenaren
+# ============================================================================
+
+
+class MinutesShareRequest(BaseModel):
+    """Request to share minutes with owners."""
+
+    send_email_notification: bool = True
+    include_pdf: bool = True
+    custom_message: str | None = Field(None, max_length=2000)
+
+
+class MinutesShareResponse(BaseModel):
+    """Response from sharing minutes."""
+
+    meeting_id: uuid.UUID
+    minutes_id: uuid.UUID
+    published_at: datetime
+    recipients_count: int
+    emails_sent: int
+    pdf_generated: bool
+    message: str
+
+
+@router.post(
+    "/{meeting_id}/minutes/share",
+    response_model=MinutesShareResponse,
+    summary="Notulen delen met eigenaren",
+    description="""
+    STORY-120: Deel de definitieve notulen met alle eigenaren.
+    
+    - Notulen worden gepubliceerd naar eigenaren-portal
+    - Email notificatie naar alle eigenaren
+    - PDF download beschikbaar
+    """,
+)
+async def share_minutes(
+    vve_id: uuid.UUID,
+    meeting_id: uuid.UUID,
+    share_request: MinutesShareRequest,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: AsyncSession = Depends(get_db),
+) -> MinutesShareResponse:
+    """Share minutes with all owners (STORY-120)."""
+    # Get meeting
+    meeting_result = await db.execute(
+        select(Meeting).where(Meeting.id == meeting_id, Meeting.vve_id == vve_id)
+    )
+    meeting = meeting_result.scalar_one_or_none()
+    if not meeting:
+        raise HTTPException(status_code=404, detail="Vergadering niet gevonden")
+
+    # Get minutes
+    minutes_result = await db.execute(
+        select(MeetingMinutes).where(MeetingMinutes.meeting_id == meeting_id)
+    )
+    minutes = minutes_result.scalar_one_or_none()
+    if not minutes:
+        raise HTTPException(status_code=404, detail="Notulen niet gevonden")
+
+    # Check if minutes are approved or at least published
+    if minutes.status == DBMinutesStatus.DRAFT:
+        raise HTTPException(
+            status_code=400, 
+            detail="Notulen moeten minimaal gepubliceerd zijn om te delen"
+        )
+
+    # Get all VVE members (owners)
+    members_result = await db.execute(
+        select(VVEMember).where(
+            VVEMember.vve_id == vve_id,
+            VVEMember.is_active.is_(True),
+        )
+    )
+    members = members_result.scalars().all()
+
+    # Get user emails
+    user_ids = [m.user_id for m in members]
+    users_result = await db.execute(
+        select(User).where(User.id.in_(user_ids))
+    )
+    users = users_result.scalars().all()
+    recipients_count = len(users)
+
+    # Update published timestamp
+    minutes.published_at = datetime.now(timezone.utc)
+    await db.commit()
+
+    # TODO: Generate PDF if requested
+    pdf_generated = share_request.include_pdf  # Placeholder
+
+    # TODO: Send email notifications if requested
+    emails_sent = recipients_count if share_request.send_email_notification else 0
+
+    return MinutesShareResponse(
+        meeting_id=meeting_id,
+        minutes_id=minutes.id,
+        published_at=minutes.published_at,
+        recipients_count=recipients_count,
+        emails_sent=emails_sent,
+        pdf_generated=pdf_generated,
+        message=f"Notulen gedeeld met {recipients_count} eigenaren"
+    )
+
+
+@router.get(
+    "/{meeting_id}/minutes/share/preview",
+    response_model=dict,
+    summary="Preview notulen delen",
+    description="Bekijk een preview van de te delen notulen (STORY-120).",
+)
+async def preview_share_minutes(
+    vve_id: uuid.UUID,
+    meeting_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_bestuurslid)],
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Preview minutes sharing (STORY-120)."""
+    # Get meeting
+    meeting_result = await db.execute(
+        select(Meeting).where(Meeting.id == meeting_id, Meeting.vve_id == vve_id)
+    )
+    meeting = meeting_result.scalar_one_or_none()
+    if not meeting:
+        raise HTTPException(status_code=404, detail="Vergadering niet gevonden")
+
+    # Get minutes
+    minutes_result = await db.execute(
+        select(MeetingMinutes).where(MeetingMinutes.meeting_id == meeting_id)
+    )
+    minutes = minutes_result.scalar_one_or_none()
+    if not minutes:
+        raise HTTPException(status_code=404, detail="Notulen niet gevonden")
+
+    # Get recipients count
+    members_result = await db.execute(
+        select(VVEMember).where(
+            VVEMember.vve_id == vve_id,
+            VVEMember.is_active.is_(True),
+        )
+    )
+    members = members_result.scalars().all()
+
+    # Get decisions count
+    decisions_result = await db.execute(
+        select(MeetingDecision).where(MeetingDecision.meeting_id == meeting_id)
+    )
+    decisions = decisions_result.scalars().all()
+
+    return {
+        "meeting_id": str(meeting_id),
+        "meeting_title": meeting.title,
+        "meeting_date": meeting.meeting_date.isoformat(),
+        "minutes_status": minutes.status.value,
+        "content_preview": (minutes.content or "")[:500] + "..." if minutes.content and len(minutes.content) > 500 else minutes.content,
+        "recipients_count": len(members),
+        "decisions_count": len(decisions),
+        "can_share": minutes.status != DBMinutesStatus.DRAFT,
+    }

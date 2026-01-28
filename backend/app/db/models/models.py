@@ -1403,3 +1403,455 @@ class MeetingDecision(Base):
         Index("ix_meeting_decisions_meeting_id", "meeting_id"),
         Index("ix_meeting_decisions_minutes_id", "minutes_id"),
     )
+
+
+# ============================================================================
+# MJOP (Maintenance Plan) Models - EPIC-014
+# ============================================================================
+
+
+class MaintenanceElementCategory(str, Enum):
+    """Category of maintenance element (FEAT-029 MJOP Import & Beheer)."""
+
+    ROOF = "roof"  # Dak
+    FACADE = "facade"  # Gevel
+    FOUNDATION = "foundation"  # Fundering
+    WINDOWS = "windows"  # Ramen
+    DOORS = "doors"  # Deuren
+    ELEVATOR = "elevator"  # Lift
+    HEATING = "heating"  # Verwarming
+    PLUMBING = "plumbing"  # Leidingwerk
+    ELECTRICAL = "electrical"  # Elektra
+    COMMON_AREAS = "common_areas"  # Gemeenschappelijke ruimtes
+    GARDEN = "garden"  # Tuin
+    PARKING = "parking"  # Parkeerplaats
+    OTHER = "other"  # Overig
+
+
+class MaintenanceStatus(str, Enum):
+    """Status of maintenance element (FEAT-031 Onderhoudstaak Beheer)."""
+
+    PLANNED = "planned"  # Gepland
+    IN_PROGRESS = "in_progress"  # In uitvoering
+    COMPLETED = "completed"  # Voltooid
+    POSTPONED = "postponed"  # Uitgesteld
+    CANCELLED = "cancelled"  # Geannuleerd
+
+
+class MaintenancePriority(str, Enum):
+    """Priority level for maintenance (FEAT-029)."""
+
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    URGENT = "urgent"
+
+
+class MaintenanceElement(Base):
+    """Maintenance element in MJOP (STORY-062, STORY-063).
+
+    Represents a building component requiring periodic maintenance.
+    Implements FEAT-029: MJOP Import & Beheer.
+    """
+
+    __tablename__ = "maintenance_elements"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    vve_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("vves.id", ondelete="CASCADE"), nullable=False
+    )
+    # Element details
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text)
+    category: Mapped[MaintenanceElementCategory] = mapped_column(
+        SQLEnum(MaintenanceElementCategory), nullable=False
+    )
+    # Physical details
+    location: Mapped[str | None] = mapped_column(String(255))
+    quantity: Mapped[int] = mapped_column(Integer, default=1)
+    unit: Mapped[str | None] = mapped_column(String(50))  # e.g., m², stuks
+    # Lifecycle info
+    installation_year: Mapped[int | None] = mapped_column(Integer)
+    expected_lifespan_years: Mapped[int | None] = mapped_column(Integer)
+    last_maintenance_year: Mapped[int | None] = mapped_column(Integer)
+    next_maintenance_year: Mapped[int | None] = mapped_column(Integer)
+    # Cost estimates
+    estimated_cost: Mapped[Decimal | None] = mapped_column(
+        Numeric(12, 2), nullable=True
+    )
+    # Priority and status
+    priority: Mapped[MaintenancePriority] = mapped_column(
+        SQLEnum(MaintenancePriority), default=MaintenancePriority.MEDIUM
+    )
+    # Import tracking (STORY-062)
+    import_batch_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    import_row_number: Mapped[int | None] = mapped_column(Integer)
+    # Metadata
+    created_by_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    # Relationships
+    tasks: Mapped[list["MaintenanceTask"]] = relationship(
+        "MaintenanceTask", back_populates="element", cascade="all, delete-orphan"
+    )
+
+    __table_args__ = (
+        Index("ix_maintenance_elements_vve_id", "vve_id"),
+        Index("ix_maintenance_elements_category", "category"),
+        Index("ix_maintenance_elements_next_maintenance", "next_maintenance_year"),
+    )
+
+
+class MaintenanceTask(Base):
+    """Maintenance task for an element (STORY-067, STORY-068).
+
+    Implements FEAT-031: Onderhoudstaak Beheer.
+    """
+
+    __tablename__ = "maintenance_tasks"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    element_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("maintenance_elements.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    vve_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("vves.id", ondelete="CASCADE"), nullable=False
+    )
+    # Task details
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text)
+    status: Mapped[MaintenanceStatus] = mapped_column(
+        SQLEnum(MaintenanceStatus), default=MaintenanceStatus.PLANNED
+    )
+    priority: Mapped[MaintenancePriority] = mapped_column(
+        SQLEnum(MaintenancePriority), default=MaintenancePriority.MEDIUM
+    )
+    # Scheduling
+    planned_year: Mapped[int | None] = mapped_column(Integer)
+    planned_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    completed_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Cost tracking
+    estimated_cost: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
+    actual_cost: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
+    # Assignment
+    assignee_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    supplier_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("suppliers.id", ondelete="SET NULL")
+    )
+    # Notes
+    notes: Mapped[str | None] = mapped_column(Text)
+    # Metadata
+    created_by_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    # Relationships
+    element: Mapped["MaintenanceElement"] = relationship(
+        "MaintenanceElement", back_populates="tasks"
+    )
+
+    __table_args__ = (
+        Index("ix_maintenance_tasks_element_id", "element_id"),
+        Index("ix_maintenance_tasks_vve_id", "vve_id"),
+        Index("ix_maintenance_tasks_status", "status"),
+        Index("ix_maintenance_tasks_planned_year", "planned_year"),
+    )
+
+
+class MJOPImportBatch(Base):
+    """Track MJOP import batches for audit (STORY-062).
+
+    Records each Excel import with validation status.
+    """
+
+    __tablename__ = "mjop_import_batches"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    vve_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("vves.id", ondelete="CASCADE"), nullable=False
+    )
+    # Import details
+    filename: Mapped[str] = mapped_column(String(255), nullable=False)
+    total_rows: Mapped[int] = mapped_column(Integer, default=0)
+    imported_rows: Mapped[int] = mapped_column(Integer, default=0)
+    failed_rows: Mapped[int] = mapped_column(Integer, default=0)
+    # Column mapping used
+    column_mapping: Mapped[str | None] = mapped_column(Text)  # JSON string
+    # Status
+    is_completed: Mapped[bool] = mapped_column(Boolean, default=False)
+    error_log: Mapped[str | None] = mapped_column(Text)  # JSON string of errors
+    # Metadata
+    created_by_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+    __table_args__ = (Index("ix_mjop_import_batches_vve_id", "vve_id"),)
+
+
+# ============================================================================
+# Compliance Models - EPIC-016 Juridisch & Compliance
+# ============================================================================
+
+
+class ComplianceCategory(str, Enum):
+    """Compliance categories (FEAT-035 Compliance Dashboard)."""
+
+    KVK = "kvk"  # Kamer van Koophandel
+    VERZEKERING = "verzekering"  # Insurance
+    AVG = "avg"  # Privacy/GDPR
+    ALV = "alv"  # Annual meeting requirements
+    ONDERHOUD = "onderhoud"  # Maintenance obligations
+    FINANCIEEL = "financieel"  # Financial reporting
+    OVERIG = "overig"  # Other
+
+
+class ComplianceStatus(str, Enum):
+    """Status of compliance item (STORY-078)."""
+
+    COMPLIANT = "compliant"
+    AANDACHT = "aandacht"  # Needs attention
+    NIET_COMPLIANT = "niet_compliant"  # Non-compliant
+
+
+class ComplianceItem(Base):
+    """Compliance checklist item (STORY-078, STORY-079).
+
+    Represents a compliance requirement that must be fulfilled.
+    Implements FEAT-035: Compliance Dashboard.
+    """
+
+    __tablename__ = "compliance_items"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    vve_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("vves.id", ondelete="CASCADE"), nullable=False
+    )
+    # Item details
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text)
+    category: Mapped[ComplianceCategory] = mapped_column(
+        SQLEnum(ComplianceCategory), nullable=False
+    )
+    # Status tracking (STORY-078)
+    status: Mapped[ComplianceStatus] = mapped_column(
+        SQLEnum(ComplianceStatus), default=ComplianceStatus.AANDACHT
+    )
+    # Completion tracking (STORY-079)
+    is_completed: Mapped[bool] = mapped_column(Boolean, default=False)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    completed_by_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    # Evidence document (STORY-079)
+    evidence_document_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("documents.id", ondelete="SET NULL")
+    )
+    # Deadline tracking (STORY-121)
+    deadline: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    alert_days_before: Mapped[int] = mapped_column(Integer, default=30)
+    # Recurrence
+    is_recurring: Mapped[bool] = mapped_column(Boolean, default=False)
+    recurrence_months: Mapped[int | None] = mapped_column(Integer)  # e.g., 12 for yearly
+    # Metadata
+    created_by_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    __table_args__ = (
+        Index("ix_compliance_items_vve_id", "vve_id"),
+        Index("ix_compliance_items_category", "category"),
+        Index("ix_compliance_items_deadline", "deadline"),
+    )
+
+
+class ComplianceHistory(Base):
+    """History of compliance item completions (STORY-079).
+
+    Tracks when items were completed for audit purposes.
+    """
+
+    __tablename__ = "compliance_history"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    compliance_item_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("compliance_items.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    # Completion details
+    completed_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+    completed_by_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    # Evidence
+    evidence_document_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("documents.id", ondelete="SET NULL")
+    )
+    notes: Mapped[str | None] = mapped_column(Text)
+    # Metadata
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+    __table_args__ = (
+        Index("ix_compliance_history_item_id", "compliance_item_id"),
+    )
+
+
+# ============================================================================
+# Digital Voting Models - EPIC-027 Digitaal Stemmen & Polls
+# ============================================================================
+
+
+class VotingStatus(str, Enum):
+    """Status of a voting/poll (FEAT-067 Digitale Stemming)."""
+
+    DRAFT = "draft"
+    OPEN = "open"
+    CLOSED = "closed"
+    CANCELLED = "cancelled"
+
+
+class VoteChoice(str, Enum):
+    """Vote choices (STORY-114)."""
+
+    VOOR = "voor"  # For
+    TEGEN = "tegen"  # Against
+    BLANCO = "blanco"  # Abstain
+
+
+class Voting(Base):
+    """Digital voting/proposal for VVE decisions (STORY-113).
+
+    Implements FEAT-067: Digitale Stemming.
+    """
+
+    __tablename__ = "votings"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    vve_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("vves.id", ondelete="CASCADE"), nullable=False
+    )
+    # Voting details
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text)
+    status: Mapped[VotingStatus] = mapped_column(
+        SQLEnum(VotingStatus), default=VotingStatus.DRAFT
+    )
+    # Timing
+    start_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    end_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    # Connection to meeting (optional)
+    meeting_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("meetings.id", ondelete="SET NULL")
+    )
+    # Quorum requirement
+    quorum_percentage: Mapped[int] = mapped_column(Integer, default=50)  # % of shares needed
+    # Results (populated after closing)
+    total_votes: Mapped[int] = mapped_column(Integer, default=0)
+    votes_for: Mapped[int] = mapped_column(Integer, default=0)
+    votes_against: Mapped[int] = mapped_column(Integer, default=0)
+    votes_abstain: Mapped[int] = mapped_column(Integer, default=0)
+    quorum_reached: Mapped[bool | None] = mapped_column(Boolean)
+    result_percentage_for: Mapped[Decimal | None] = mapped_column(Numeric(5, 2))
+    # Metadata
+    created_by_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    # Relationships
+    votes: Mapped[list["Vote"]] = relationship(
+        "Vote", back_populates="voting", cascade="all, delete-orphan"
+    )
+
+    __table_args__ = (
+        Index("ix_votings_vve_id", "vve_id"),
+        Index("ix_votings_status", "status"),
+        Index("ix_votings_end_date", "end_date"),
+    )
+
+
+class Vote(Base):
+    """Individual vote cast by an owner (STORY-114).
+
+    One vote per unit/ownership right.
+    """
+
+    __tablename__ = "votes"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    voting_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("votings.id", ondelete="CASCADE"), nullable=False
+    )
+    unit_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("units.id", ondelete="CASCADE"), nullable=False
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    # Vote choice
+    choice: Mapped[VoteChoice] = mapped_column(SQLEnum(VoteChoice), nullable=False)
+    # Share weight (from unit at time of voting)
+    share_percentage: Mapped[Decimal] = mapped_column(Numeric(10, 5), nullable=False)
+    # Metadata
+    voted_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+    # Relationships
+    voting: Mapped["Voting"] = relationship("Voting", back_populates="votes")
+
+    __table_args__ = (
+        Index("ix_votes_voting_id", "voting_id"),
+        UniqueConstraint("voting_id", "unit_id", name="uq_votes_voting_unit"),
+    )

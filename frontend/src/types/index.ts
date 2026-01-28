@@ -1071,3 +1071,205 @@ export interface DecisionUpdate {
   due_date?: string;
   is_completed?: boolean;
 }
+
+// EPIC-014: MJOP & Onderhoudsplanning types
+
+// Maintenance Element Categories (STORY-062, STORY-063)
+export type MaintenanceElementCategory =
+  | 'roof'
+  | 'facade'
+  | 'foundation'
+  | 'windows'
+  | 'doors'
+  | 'elevator'
+  | 'heating'
+  | 'plumbing'
+  | 'electrical'
+  | 'common_areas'
+  | 'garden'
+  | 'parking'
+  | 'other';
+
+export type MaintenanceStatus = 'planned' | 'in_progress' | 'completed' | 'postponed' | 'cancelled';
+export type MaintenancePriority = 'low' | 'medium' | 'high' | 'urgent';
+
+// Maintenance Element (STORY-062, STORY-063)
+export interface MaintenanceElement {
+  id: string;
+  vve_id: string;
+  name: string;
+  description?: string;
+  category: MaintenanceElementCategory;
+  location?: string;
+  quantity: number;
+  unit?: string;
+  installation_year?: number;
+  expected_lifespan_years?: number;
+  last_maintenance_year?: number;
+  next_maintenance_year?: number;
+  estimated_cost?: number;
+  priority: MaintenancePriority;
+  import_batch_id?: string;
+  import_row_number?: number;
+  created_by_id?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MaintenanceElementCreate {
+  name: string;
+  description?: string;
+  category: MaintenanceElementCategory;
+  location?: string;
+  quantity?: number;
+  unit?: string;
+  installation_year?: number;
+  expected_lifespan_years?: number;
+  last_maintenance_year?: number;
+  next_maintenance_year?: number;
+  estimated_cost?: number;
+  priority?: MaintenancePriority;
+}
+
+export interface MaintenanceElementUpdate {
+  name?: string;
+  description?: string;
+  category?: MaintenanceElementCategory;
+  location?: string;
+  quantity?: number;
+  unit?: string;
+  installation_year?: number;
+  expected_lifespan_years?: number;
+  last_maintenance_year?: number;
+  next_maintenance_year?: number;
+  estimated_cost?: number;
+  priority?: MaintenancePriority;
+}
+
+// Maintenance Task (STORY-067, STORY-068)
+export interface MaintenanceTask {
+  id: string;
+  element_id: string;
+  vve_id: string;
+  title: string;
+  description?: string;
+  status: MaintenanceStatus;
+  priority: MaintenancePriority;
+  planned_year?: number;
+  planned_date?: string;
+  completed_date?: string;
+  estimated_cost?: number;
+  actual_cost?: number;
+  assignee_id?: string;
+  supplier_id?: string;
+  notes?: string;
+  created_by_id?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MaintenanceTaskCreate {
+  element_id: string;
+  title: string;
+  description?: string;
+  status?: MaintenanceStatus;
+  priority?: MaintenancePriority;
+  planned_year?: number;
+  planned_date?: string;
+  estimated_cost?: number;
+  assignee_id?: string;
+  supplier_id?: string;
+  notes?: string;
+}
+
+export interface MaintenanceTaskUpdate {
+  title?: string;
+  description?: string;
+  status?: MaintenanceStatus;
+  priority?: MaintenancePriority;
+  planned_year?: number;
+  planned_date?: string;
+  completed_date?: string;
+  estimated_cost?: number;
+  actual_cost?: number;
+  assignee_id?: string;
+  supplier_id?: string;
+  notes?: string;
+}
+
+// MJOP Import (STORY-062)
+export interface MJOPImportPreviewRow {
+  row_number: number;
+  data: Record<string, unknown>;
+  errors: string[];
+  is_valid: boolean;
+}
+
+export interface MJOPImportPreviewResponse {
+  filename: string;
+  total_rows: number;
+  valid_rows: number;
+  invalid_rows: number;
+  preview_rows: MJOPImportPreviewRow[];
+  detected_columns: string[];
+  suggested_mapping: Record<string, string>;
+}
+
+export interface MJOPImportResponse {
+  batch_id: string;
+  filename: string;
+  total_rows: number;
+  imported_rows: number;
+  failed_rows: number;
+  errors: Array<{ row: number; errors: string[] }>;
+}
+
+export interface MJOPImportBatch {
+  id: string;
+  vve_id: string;
+  filename: string;
+  total_rows: number;
+  imported_rows: number;
+  failed_rows: number;
+  is_completed: boolean;
+  created_by_id?: string;
+  created_at: string;
+}
+
+// Timeline Visualization (STORY-064)
+export interface TimelineItem {
+  element_id: string;
+  element_name: string;
+  category: MaintenanceElementCategory;
+  year: number;
+  estimated_cost?: number;
+  priority: MaintenancePriority;
+  has_task: boolean;
+  task_status?: MaintenanceStatus;
+}
+
+export interface MJOPTimelineResponse {
+  vve_id: string;
+  start_year: number;
+  end_year: number;
+  items: TimelineItem[];
+  total_by_year: Record<number, number>;
+  total_by_category: Record<string, number>;
+}
+
+// Reserve Calculation (STORY-065, STORY-066)
+export interface ReserveCalculationRequest {
+  years_ahead?: number;
+  include_contingency?: boolean;
+  contingency_percentage?: number;
+}
+
+export interface ReserveCalculationResponse {
+  vve_id: string;
+  years_ahead: number;
+  total_required: number;
+  annual_contribution: number;
+  by_year: Record<number, number>;
+  by_category: Record<string, number>;
+  contingency_amount?: number;
+}

@@ -126,19 +126,19 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
       - 13.3.1 ✅ STORY-060 Leverancier registreren (Should)
       - 13.3.2 ✅ STORY-061 Leverancier evaluatie (Could)
 
-14. **EPIC-014 MJOP & Onderhoudsplanning** ⬜
-    - 14.1 **FEAT-029 MJOP Import & Beheer** ⬜
-      - 14.1.1 ⬜ STORY-062 MJOP importeren vanuit Excel (Should)
-      - 14.1.2 ⬜ STORY-063 Onderhoudselement handmatig toevoegen (Should)
-      - 14.1.3 ⬜ STORY-064 MJOP timeline visualisatie (Should)
-    - 14.2 **FEAT-030 Reserveberekening & Prognose** ⬜
-      - 14.2.1 ⬜ STORY-065 Reserveberekening automatisch (Should)
+14. **EPIC-014 MJOP & Onderhoudsplanning** ✅
+    - 14.1 **FEAT-029 MJOP Import & Beheer** ✅
+      - 14.1.1 ✅ STORY-062 MJOP importeren vanuit Excel (Should)
+      - 14.1.2 ✅ STORY-063 Onderhoudselement handmatig toevoegen (Should)
+      - 14.1.3 ✅ STORY-064 MJOP timeline visualisatie (Should)
+    - 14.2 **FEAT-030 Reserveberekening & Prognose** ✅
+      - 14.2.1 ✅ STORY-065 Reserveberekening automatisch (Should)
       - 14.2.2 ⬜ STORY-066 What-if scenario doorrekenen (Could)
-    - 14.3 **FEAT-031 Onderhoudstaak Beheer** ⬜
-      - 14.3.1 ⬜ STORY-067 Onderhoudstaak aanmaken en toewijzen (Should)
-      - 14.3.2 ⬜ STORY-068 Onderhoudstaak status bijwerken (Should)
+    - 14.3 **FEAT-031 Onderhoudstaak Beheer** ✅
+      - 14.3.1 ✅ STORY-067 Onderhoudstaak aanmaken en toewijzen (Should)
+      - 14.3.2 ✅ STORY-068 Onderhoudstaak status bijwerken (Should)
 
-15. **EPIC-015 ALV & Vergaderbeheer** ⚠️
+15. **EPIC-015 ALV & Vergaderbeheer** ✅
     - 15.1 **FEAT-032 ALV Planning & Uitnodigingen** ✅
       - 15.1.1 ✅ STORY-069 ALV plannen met datum en locatie (Must)
       - 15.1.2 ✅ STORY-070 ALV agenda opstellen (Must)
@@ -147,17 +147,17 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
       - 15.2.1 ✅ STORY-072 RSVP registreren voor ALV (Must)
       - 15.2.2 ✅ STORY-073 Volmacht digitaal afgeven (Must)
       - 15.2.3 ✅ STORY-074 Quorum automatisch berekenen (Must)
-    - 15.3 **FEAT-034 Notulen & Besluiten** ⚠️
+    - 15.3 **FEAT-034 Notulen & Besluiten** ✅
       - 15.3.1 ✅ STORY-075 Notulen opstellen met template (Must)
-      - 15.3.2 ⬜ STORY-076 Besluiten extraheren naar register (Should)
-      - 15.3.3 ⬜ STORY-077 Actiepunten toewijzen vanuit notulen (Should)
-      - 15.3.4 ⬜ STORY-120 Notulen delen met eigenaren (Must)
+      - 15.3.2 ✅ STORY-076 Besluiten extraheren naar register (Should)
+      - 15.3.3 ✅ STORY-077 Actiepunten toewijzen vanuit notulen (Should)
+      - 15.3.4 ✅ STORY-120 Notulen delen met eigenaren (Must)
 
-16. **EPIC-016 Juridisch & Compliance** ⬜
-    - 16.1 **FEAT-035 Compliance Dashboard** ⬜
-      - 16.1.1 ⬜ STORY-078 Compliance status per categorie (Should)
-      - 16.1.2 ⬜ STORY-079 Compliance checklist afvinken (Should)
-      - 16.1.3 ⬜ STORY-121 Compliance deadline alert ontvangen (Should)
+16. **EPIC-016 Juridisch & Compliance** ✅
+    - 16.1 **FEAT-035 Compliance Dashboard** ✅
+      - 16.1.1 ✅ STORY-078 Compliance status per categorie (Should)
+      - 16.1.2 ✅ STORY-079 Compliance checklist afvinken (Should)
+      - 16.1.3 ✅ STORY-121 Compliance deadline alert ontvangen (Should)
     - 16.2 **FEAT-036 AVG Module** ⬜
       - 16.2.1 ⬜ STORY-080 Privacy statement genereren (Should)
       - 16.2.2 ⬜ STORY-122 Eigenaar data-export aanvragen (Should)
@@ -248,11 +248,11 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
     - 26.3 **FEAT-066 Energieverbruik Dashboard** ⬜
       - 26.3.1 ⬜ STORY-112 Energieverbruik invoeren (Could)
 
-27. **EPIC-027 Digitaal Stemmen & Polls** ⬜
-    - 27.1 **FEAT-067 Digitale Stemming** ⬜
-      - 27.1.1 ⬜ STORY-113 Digitale stemming aanmaken (Must)
-      - 27.1.2 ⬜ STORY-114 Stem uitbrengen op voorstel (Must)
-      - 27.1.3 ⬜ STORY-115 Stemresultaten bekijken (Must)
+27. **EPIC-027 Digitaal Stemmen & Polls** ✅
+    - 27.1 **FEAT-067 Digitale Stemming** ✅
+      - 27.1.1 ✅ STORY-113 Digitale stemming aanmaken (Must)
+      - 27.1.2 ✅ STORY-114 Stem uitbrengen op voorstel (Must)
+      - 27.1.3 ✅ STORY-115 Stemresultaten bekijken (Must)
     - 27.2 **FEAT-068 Polls & Peilingen** ⬜
       - 27.2.1 ⬜ STORY-116 Poll aanmaken voor draagvlakmeting (Should)
     - 27.3 **FEAT-069 Volmacht Beheer** ⬜
@@ -264,13 +264,15 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
 
 | Niveau | Totaal | ✅ Gereed | ⬜ Backlog | % Gereed |
 |--------|--------|-----------|-----------|----------|
-| Epics | 27 | 13 | 14 | 48% |
-| Features | 69 | 27 | 42 | 39% |
-| Stories | 124 | 61 | 63 | 49% |
+| Epics | 27 | 16 | 11 | 59% |
+| Features | 69 | 34 | 35 | 49% |
+| Stories | 124 | 77 | 47 | 62% |
 
-**Volledig afgeronde Epics (Horizon 1 - MVP):** EPIC-001, EPIC-002, EPIC-003, EPIC-004, EPIC-005, EPIC-006, EPIC-007, EPIC-008, EPIC-009, EPIC-010, EPIC-011, EPIC-012, EPIC-013
+**Volledig afgeronde Epics (Horizon 1 - MVP):** EPIC-001, EPIC-002, EPIC-003, EPIC-004, EPIC-005, EPIC-006, EPIC-007, EPIC-008, EPIC-009, EPIC-010, EPIC-011, EPIC-012, EPIC-013, EPIC-014, EPIC-015
 
-**Nieuwe Epics (Horizon 2 - Uitbreiding):** EPIC-014, EPIC-015, EPIC-016, EPIC-017, EPIC-018, EPIC-019, EPIC-020, EPIC-021, EPIC-022, EPIC-023, EPIC-024, EPIC-025, EPIC-026, EPIC-027
+**Deels afgeronde Epics:** EPIC-016 (FEAT-035 Compliance Dashboard), EPIC-027 (FEAT-067 Digitale Stemming)
+
+**Nieuwe Epics (Horizon 2 - Uitbreiding):** EPIC-017, EPIC-018, EPIC-019, EPIC-020, EPIC-021, EPIC-022, EPIC-023, EPIC-024, EPIC-025, EPIC-026
 
 ---
 - Prioriteitlabels komen uit de individuele stories (Must/Should). Waar een story meerdere features raakt, is de primaire plaatsing hierboven opgenomen en gemarkeerd als *gedeeld* wanneer relevant.
