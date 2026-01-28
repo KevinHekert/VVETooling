@@ -1059,6 +1059,13 @@ class ApiClient {
       `/vves/${vveId}/meetings/${meetingId}/proxies/summary`
     );
   }
+
+  // STORY-074: Quorum Calculation methods
+  async getQuorum(vveId: string, meetingId: string, requiredPercentage: number = 50.0) {
+    return this.fetch<import('@/types').QuorumCalculation>(
+      `/vves/${vveId}/meetings/${meetingId}/quorum?required_percentage=${requiredPercentage}`
+    );
+  }
 }
 
 export const api = new ApiClient(API_BASE_URL);

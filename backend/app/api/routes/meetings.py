@@ -28,6 +28,7 @@ from app.db.models.models import (
     MeetingType as DBMeetingType,
     ProxyScope as DBProxyScope,
     ProxyStatus as DBProxyStatus,
+    Unit,
     User,
     VVEMember,
 )
@@ -54,6 +55,9 @@ from app.schemas.meeting import (
     ProxyStatus,
     ProxySummary,
     ProxyUpdate,
+    QuorumCalculation,
+    QuorumMemberDetail,
+    QuorumStatus,
     RsvpCreate,
     RsvpResponse,
     RsvpStatus,
@@ -1602,4 +1606,139 @@ async def get_proxy_summary(
         pending_count=pending_count,
         confirmed_count=confirmed_count,
         revoked_count=revoked_count,
+    )
+
+
+# STORY-074: Quorum Calculation endpoint
+@router.get(
+    "/{meeting_id}/quorum",
+    response_model=QuorumCalculation,
+    summary="Quorum berekenen",
+    description="Bereken het quorum voor een vergadering op basis van aanwezigen en volmachten (STORY-074).",
+)
+async def calculate_quorum(
+    vve_id: uuid.UUID,
+    meeting_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(require_member)],
+    db: AsyncSession = Depends(get_db),
+    required_percentage: float = Query(default=50.0, ge=0.0, le=100.0, description="Vereist percentage voor quorum"),
+) -> QuorumCalculation:
+    """Calculate quorum for a meeting based on attendance and proxies (STORY-074)."""
+    # Verify meeting exists
+    meeting_result = await db.execute(
+        select(Meeting).where(Meeting.id == meeting_id, Meeting.vve_id == vve_id)
+    )
+    meeting = meeting_result.scalar_one_or_none()
+    if not meeting:
+        raise HTTPException(status_code=404, detail="Vergadering niet gevonden")
+
+    # Get all units with their share percentages for this VVE
+    units_result = await db.execute(
+        select(Unit).where(Unit.vve_id == vve_id, Unit.is_active == True)
+    )
+    units = {unit.id: unit for unit in units_result.scalars().all()}
+    total_shares = float(sum(unit.share_percentage for unit in units.values()))
+
+    # Get all VVE members with their units
+    members_result = await db.execute(
+        select(VVEMember, User)
+        .join(User, VVEMember.user_id == User.id)
+        .where(VVEMember.vve_id == vve_id, VVEMember.is_active == True)
+    )
+    members = members_result.all()
+    member_by_user_id = {user.id: (member, user) for member, user in members}
+    total_owners = len([m for m, u in members if m.unit_id is not None])
+
+    # Get RSVPs with PRESENT status
+    rsvps_result = await db.execute(
+        select(MeetingRsvp).where(
+            MeetingRsvp.meeting_id == meeting_id,
+            MeetingRsvp.status == DBMeetingRsvpStatus.PRESENT,
+        )
+    )
+    present_rsvps = rsvps_result.scalars().all()
+
+    # Get confirmed proxies
+    proxies_result = await db.execute(
+        select(MeetingProxy).where(
+            MeetingProxy.meeting_id == meeting_id,
+            MeetingProxy.status == DBProxyStatus.CONFIRMED,
+        )
+    )
+    confirmed_proxies = proxies_result.scalars().all()
+
+    # Calculate present shares
+    present_shares = 0.0
+    present_details = []
+    present_user_ids = set()
+
+    for rsvp in present_rsvps:
+        if rsvp.user_id in member_by_user_id:
+            member, user = member_by_user_id[rsvp.user_id]
+            if member.unit_id and member.unit_id in units:
+                unit = units[member.unit_id]
+                share = float(unit.share_percentage)
+                present_shares += share
+                present_user_ids.add(rsvp.user_id)
+                present_details.append(QuorumMemberDetail(
+                    user_id=user.id,
+                    user_name=f"{user.first_name} {user.last_name}",
+                    unit_id=unit.id,
+                    unit_number=unit.unit_number,
+                    share_percentage=share,
+                    attendance_type="present",
+                ))
+
+    # Calculate proxy shares (only for owners not already present)
+    proxy_shares = 0.0
+    proxy_details = []
+
+    for proxy in confirmed_proxies:
+        # Only count if the grantor is not already present
+        if proxy.grantor_id not in present_user_ids:
+            if proxy.grantor_id in member_by_user_id:
+                member, user = member_by_user_id[proxy.grantor_id]
+                if member.unit_id and member.unit_id in units:
+                    unit = units[member.unit_id]
+                    share = float(unit.share_percentage)
+                    proxy_shares += share
+
+                    # Get grantee name
+                    grantee_name = None
+                    if proxy.grantee_id in member_by_user_id:
+                        _, grantee_user = member_by_user_id[proxy.grantee_id]
+                        grantee_name = f"{grantee_user.first_name} {grantee_user.last_name}"
+
+                    proxy_details.append(QuorumMemberDetail(
+                        user_id=user.id,
+                        user_name=f"{user.first_name} {user.last_name}",
+                        unit_id=unit.id,
+                        unit_number=unit.unit_number,
+                        share_percentage=share,
+                        attendance_type="proxy",
+                        proxy_holder_name=grantee_name,
+                    ))
+
+    # Calculate totals
+    represented_shares = present_shares + proxy_shares
+    represented_percentage = (represented_shares / total_shares * 100) if total_shares > 0 else 0.0
+    is_quorum_reached = represented_percentage >= required_percentage
+
+    return QuorumCalculation(
+        meeting_id=meeting_id,
+        total_shares=total_shares,
+        present_shares=present_shares,
+        proxy_shares=proxy_shares,
+        represented_shares=represented_shares,
+        represented_percentage=round(represented_percentage, 2),
+        required_percentage=required_percentage,
+        quorum_status=QuorumStatus.REACHED if is_quorum_reached else QuorumStatus.NOT_REACHED,
+        is_quorum_reached=is_quorum_reached,
+        total_owners=total_owners,
+        present_count=len(present_details),
+        proxy_count=len(proxy_details),
+        represented_count=len(present_details) + len(proxy_details),
+        present_details=present_details,
+        proxy_details=proxy_details,
+        calculated_at=datetime.now(timezone.utc),
     )

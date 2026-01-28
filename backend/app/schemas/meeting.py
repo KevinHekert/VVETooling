@@ -354,3 +354,51 @@ class EligibleGrantee(BaseModel):
     last_name: str
     full_name: str
     is_board_member: bool = False
+
+
+# STORY-074: Quorum Calculation schemas
+class QuorumStatus(str, Enum):
+    """Quorum status options (STORY-074)."""
+
+    REACHED = "reached"  # Quorum bereikt
+    NOT_REACHED = "not_reached"  # Quorum niet bereikt
+
+
+class QuorumMemberDetail(BaseModel):
+    """Detail of a member contributing to quorum (STORY-074)."""
+
+    user_id: uuid.UUID
+    user_name: str
+    unit_id: uuid.UUID | None = None
+    unit_number: str | None = None
+    share_percentage: float
+    attendance_type: str  # 'present', 'proxy'
+    proxy_holder_name: str | None = None
+
+
+class QuorumCalculation(BaseModel):
+    """Quorum calculation response for a meeting (STORY-074)."""
+
+    meeting_id: uuid.UUID
+    # Total shares in VVE
+    total_shares: float
+    # Shares represented at meeting
+    present_shares: float  # Owners physically present
+    proxy_shares: float  # Owners represented via proxy
+    represented_shares: float  # Total represented (present + proxy)
+    # Percentages
+    represented_percentage: float  # % of total shares represented
+    required_percentage: float = 50.0  # Minimum required for quorum (configurable)
+    # Quorum status
+    quorum_status: QuorumStatus
+    is_quorum_reached: bool
+    # Counts
+    total_owners: int
+    present_count: int
+    proxy_count: int
+    represented_count: int
+    # Breakdown details
+    present_details: list[QuorumMemberDetail] = []
+    proxy_details: list[QuorumMemberDetail] = []
+    # Timestamp
+    calculated_at: datetime

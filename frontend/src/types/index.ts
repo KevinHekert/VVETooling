@@ -964,3 +964,35 @@ export interface EligibleGrantee {
   full_name: string;
   is_board_member: boolean;
 }
+
+// STORY-074: Quorum Calculation types
+export type QuorumStatus = 'reached' | 'not_reached';
+
+export interface QuorumMemberDetail {
+  user_id: string;
+  user_name: string;
+  unit_id?: string;
+  unit_number?: string;
+  share_percentage: number;
+  attendance_type: 'present' | 'proxy';
+  proxy_holder_name?: string;
+}
+
+export interface QuorumCalculation {
+  meeting_id: string;
+  total_shares: number;
+  present_shares: number;
+  proxy_shares: number;
+  represented_shares: number;
+  represented_percentage: number;
+  required_percentage: number;
+  quorum_status: QuorumStatus;
+  is_quorum_reached: boolean;
+  total_owners: number;
+  present_count: number;
+  proxy_count: number;
+  represented_count: number;
+  present_details: QuorumMemberDetail[];
+  proxy_details: QuorumMemberDetail[];
+  calculated_at: string;
+}
