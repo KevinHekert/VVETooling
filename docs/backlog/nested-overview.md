@@ -249,10 +249,10 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
       - 26.3.1 ⬜ STORY-112 Energieverbruik invoeren (Could)
 
 27. **EPIC-027 Digitaal Stemmen & Polls** ⚠️
-    - 27.1 **FEAT-067 Digitale Stemming** ⬜
-      - 27.1.1 ⬜ STORY-113 Digitale stemming aanmaken (Must)
-      - 27.1.2 ⬜ STORY-114 Stem uitbrengen op voorstel (Must)
-      - 27.1.3 ⬜ STORY-115 Stemresultaten bekijken (Must)
+    - 27.1 **FEAT-067 Digitale Stemming** ✅
+      - 27.1.1 ✅ STORY-113 Digitale stemming aanmaken (Must)
+      - 27.1.2 ✅ STORY-114 Stem uitbrengen op voorstel (Must)
+      - 27.1.3 ✅ STORY-115 Stemresultaten bekijken (Must)
     - 27.2 **FEAT-068 Polls & Peilingen** ✅
       - 27.2.1 ✅ STORY-116 Poll aanmaken voor draagvlakmeting (Should)
     - 27.3 **FEAT-069 Volmacht Beheer** ✅
@@ -265,8 +265,8 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
 | Niveau | Totaal | ✅ Gereed | ⚠️ Deels | ⬜ Backlog | % Gereed |
 |--------|--------|-----------|----------|-----------|----------|
 | Epics | 27 | 13 | 3 | 11 | 48% |
-| Features | 69 | 34 | 1 | 34 | 49% |
-| Stories | 124 | 73 | - | 51 | 59% |
+| Features | 69 | 35 | 1 | 33 | 51% |
+| Stories | 124 | 76 | - | 48 | 61% |
 
 **Volledig afgeronde Epics (Horizon 1 - MVP):** EPIC-001, EPIC-002, EPIC-003, EPIC-004, EPIC-005, EPIC-006, EPIC-007, EPIC-008, EPIC-009, EPIC-010, EPIC-011, EPIC-012, EPIC-013
 
