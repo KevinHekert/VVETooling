@@ -1614,3 +1614,125 @@ class MJOPImportBatch(Base):
     )
 
     __table_args__ = (Index("ix_mjop_import_batches_vve_id", "vve_id"),)
+
+
+# ============================================================================
+# Compliance Models - EPIC-016 Juridisch & Compliance
+# ============================================================================
+
+
+class ComplianceCategory(str, Enum):
+    """Compliance categories (FEAT-035 Compliance Dashboard)."""
+
+    KVK = "kvk"  # Kamer van Koophandel
+    VERZEKERING = "verzekering"  # Insurance
+    AVG = "avg"  # Privacy/GDPR
+    ALV = "alv"  # Annual meeting requirements
+    ONDERHOUD = "onderhoud"  # Maintenance obligations
+    FINANCIEEL = "financieel"  # Financial reporting
+    OVERIG = "overig"  # Other
+
+
+class ComplianceStatus(str, Enum):
+    """Status of compliance item (STORY-078)."""
+
+    COMPLIANT = "compliant"
+    AANDACHT = "aandacht"  # Needs attention
+    NIET_COMPLIANT = "niet_compliant"  # Non-compliant
+
+
+class ComplianceItem(Base):
+    """Compliance checklist item (STORY-078, STORY-079).
+
+    Represents a compliance requirement that must be fulfilled.
+    Implements FEAT-035: Compliance Dashboard.
+    """
+
+    __tablename__ = "compliance_items"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    vve_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("vves.id", ondelete="CASCADE"), nullable=False
+    )
+    # Item details
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text)
+    category: Mapped[ComplianceCategory] = mapped_column(
+        SQLEnum(ComplianceCategory), nullable=False
+    )
+    # Status tracking (STORY-078)
+    status: Mapped[ComplianceStatus] = mapped_column(
+        SQLEnum(ComplianceStatus), default=ComplianceStatus.AANDACHT
+    )
+    # Completion tracking (STORY-079)
+    is_completed: Mapped[bool] = mapped_column(Boolean, default=False)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    completed_by_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    # Evidence document (STORY-079)
+    evidence_document_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("documents.id", ondelete="SET NULL")
+    )
+    # Deadline tracking (STORY-121)
+    deadline: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    alert_days_before: Mapped[int] = mapped_column(Integer, default=30)
+    # Recurrence
+    is_recurring: Mapped[bool] = mapped_column(Boolean, default=False)
+    recurrence_months: Mapped[int | None] = mapped_column(Integer)  # e.g., 12 for yearly
+    # Metadata
+    created_by_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    __table_args__ = (
+        Index("ix_compliance_items_vve_id", "vve_id"),
+        Index("ix_compliance_items_category", "category"),
+        Index("ix_compliance_items_deadline", "deadline"),
+    )
+
+
+class ComplianceHistory(Base):
+    """History of compliance item completions (STORY-079).
+
+    Tracks when items were completed for audit purposes.
+    """
+
+    __tablename__ = "compliance_history"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    compliance_item_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("compliance_items.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    # Completion details
+    completed_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+    completed_by_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    # Evidence
+    evidence_document_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("documents.id", ondelete="SET NULL")
+    )
+    notes: Mapped[str | None] = mapped_column(Text)
+    # Metadata
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+    __table_args__ = (
+        Index("ix_compliance_history_item_id", "compliance_item_id"),
+    )
