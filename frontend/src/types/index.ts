@@ -1072,6 +1072,12 @@ export interface DecisionUpdate {
   is_completed?: boolean;
 }
 
+// STORY-076: Decision extraction response
+export interface DecisionExtractResponse {
+  extracted_count: number;
+  message: string;
+}
+
 // EPIC-014: MJOP & Onderhoudsplanning types
 
 // Maintenance Element Categories (STORY-062, STORY-063)

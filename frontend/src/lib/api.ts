@@ -1128,6 +1128,17 @@ class ApiClient {
     );
   }
 
+  // STORY-076: Extract decisions to register
+  async extractDecisions(vveId: string, meetingId: string, decisionIds?: string[]) {
+    return this.fetch<import('@/types').DecisionExtractResponse>(
+      `/vves/${vveId}/meetings/${meetingId}/decisions/extract`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ decision_ids: decisionIds || null }),
+      }
+    );
+  }
+
   // ============================================================================
   // Voting Proxy Methods (STORY-117)
   // ============================================================================
