@@ -12,8 +12,8 @@ Deze directory bevat implementatierapporten voor elke voltooide user story. Elk 
 
 | Categorie | Aantal | Percentage |
 |-----------|--------|------------|
-| ✅ Geïmplementeerd | 68 | 55% |
-| ⬜ Backlog | 56 | 45% |
+| ✅ Geïmplementeerd | 71 | 57% |
+| ⬜ Backlog | 53 | 43% |
 | **Totaal** | 124 | 100% |
 
 ## Geïmplementeerde Stories
@@ -134,6 +134,9 @@ Deze directory bevat implementatierapporten voor elke voltooide user story. Elk 
 | Story | Titel | Rapport |
 |-------|-------|---------|
 | STORY-069 | ALV plannen met datum en locatie | [Rapport](STORY-069-implementatie.md) |
+| STORY-070 | ALV agenda opstellen | [Rapport](STORY-070-implementatie.md) |
+| STORY-071 | ALV uitnodiging versturen | [Rapport](STORY-071-implementatie.md) |
+| STORY-072 | RSVP registreren voor ALV | [Rapport](STORY-072-implementatie.md) |
 | STORY-073 | Volmacht digitaal afgeven | [Rapport](STORY-073-implementatie.md) |
 | STORY-074 | Quorum automatisch berekenen | [Rapport](STORY-074-implementatie.md) |
 | STORY-075 | Notulen opstellen met template | [Rapport](STORY-075-implementatie.md) |
