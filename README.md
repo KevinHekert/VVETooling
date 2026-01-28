@@ -82,6 +82,15 @@ docker compose -f docker-compose.dev.yml up --build
 ```
 Frontend draait op http://localhost:81 en backend op http://localhost:7001/docs.
 
+De dev-omgeving seed automatisch een beheerder:
+- **E-mail:** `admin@vvetooling.local`
+- **Wachtwoord:** `Admin123!`
+- **VVE:** `VVETooling Demo VVE`
+
+Je kunt deze waarden overschrijven met `DEV_ADMIN_EMAIL`, `DEV_ADMIN_PASSWORD`,
+`DEV_ADMIN_FIRST_NAME`, `DEV_ADMIN_LAST_NAME` en `DEV_ADMIN_VVE_NAME` in je backend
+omgeving.
+
 ## 🧪 Tests
 ```bash
 cd backend

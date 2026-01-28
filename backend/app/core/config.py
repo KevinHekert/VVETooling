@@ -46,6 +46,13 @@ class Settings(BaseSettings):
     jwt_access_token_expire_minutes: int = 30
     jwt_refresh_token_expire_days: int = 7
 
+    # Development admin seed user
+    dev_admin_email: str = "admin@vvetooling.local"
+    dev_admin_password: str = "Admin123!"
+    dev_admin_first_name: str = "Dev"
+    dev_admin_last_name: str = "Admin"
+    dev_admin_vve_name: str = "VVETooling Demo VVE"
+
     # AWS S3 Storage (Document Storage - FEAT-011)
     s3_bucket_name: str = "vvetooling-documents"
     s3_region: str = "eu-central-1"
