@@ -9,6 +9,38 @@
 ## Doel
 Dit document beschrijft de richtlijnen voor AI-assisted development (GitHub Copilot Agent) binnen het VVE Tooling project. Alle AI-gegenereerde code moet voldoen aan dezelfde kwaliteitseisen als handgeschreven code.
 
+## Documentatie Routekaart (waar vind je wat?)
+Gebruik deze routekaart om snel de juiste documentatie te vinden voor AI-werkzaamheden, ontwerp en productbeslissingen.
+
+### 1. Startpunten
+- **Projectoverzicht**: `README.md` (root) – high-level intro, tech stack, en hoofdnavigatie door docs.
+- **Backlog-overzicht**: `docs/backlog/README.md` – epics, features, stories en procesdocumenten.
+- **Architectuur-index**: `docs/architecture/README.md` – technische kaders en besluiten.
+
+### 2. Product & Strategie
+- **Productrichting**: `docs/product/discovery/01-probleemdefinitie-productrichting.md`
+- **Strategie**: `docs/product/strategy/01-productstrategie-keuzes.md`
+- **Epics**: `docs/backlog/epics/`
+
+### 3. UX & UI
+- **UX flows & designs**: `docs/ux/design/`
+- **UX discovery & vraagstukken**: `docs/ux/discovery/`
+- **UI componenten**: `docs/ui/components/`
+- **Screenshots & naming**: `docs/screenshots/README.md`
+
+### 4. Backlog proces & templates
+- **Ways of working**: `docs/backlog/ways-of-working/`
+- **Story templates**: `docs/backlog/stories/`
+- **Implementatierapporten**: `docs/backlog/implementation-reports/`
+
+### 5. Onderzoek & Markt
+- **Marktonderzoek**: `docs/marktonderzoek/` (start: `docs/marktonderzoek/00-overzicht.md`)
+
+### 6. Code & runtime
+- **Frontend**: `frontend/` (Next.js)
+- **Backend**: `backend/` (FastAPI)
+- **Docs**: `docs/` (alle documentatie)
+
 ## Verplichte Testing Requirements
 
 ### 1. Unit Tests
