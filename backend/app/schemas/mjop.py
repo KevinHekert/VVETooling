@@ -298,22 +298,73 @@ class ReserveCalculationResponse(BaseModel):
     contingency_amount: Decimal | None = None
 
 
-class WhatIfScenario(BaseModel):
-    """What-if scenario parameters (STORY-066)."""
+class WhatIfScenarioRequest(BaseModel):
+    """Request for what-if scenario calculation (STORY-066).
+    
+    Allows penningmeester to adjust contribution per owner and see
+    impact on reserve projections for ALV presentation.
+    """
 
-    name: str = Field(..., min_length=1, max_length=255)
-    postpone_elements: list[uuid.UUID] = Field(default_factory=list)
-    postpone_years: int = Field(1, ge=1, le=10)
-    cost_increase_percentage: Decimal = Field(Decimal("0.0"), ge=-50, le=100)
+    name: str = Field(..., min_length=1, max_length=255, description="Scenario name for saving/presentation")
+    years_ahead: int = Field(10, ge=1, le=50, description="Number of years to project")
+    contribution_adjustment_percentage: Decimal = Field(
+        Decimal("0.0"), ge=-50, le=100,
+        description="Percentage adjustment to contributions (e.g., 10 = +10%)"
+    )
+    postpone_elements: list[uuid.UUID] = Field(
+        default_factory=list,
+        description="Elements to postpone maintenance for"
+    )
+    postpone_years: int = Field(1, ge=1, le=10, description="Years to postpone selected elements")
+    cost_increase_percentage: Decimal = Field(
+        Decimal("0.0"), ge=-50, le=100,
+        description="Assumed cost increase/decrease percentage"
+    )
+    include_contingency: bool = Field(True, description="Include contingency reserve")
+    contingency_percentage: Decimal = Field(Decimal("10.0"), ge=0, le=50)
+
+
+class WhatIfYearProjection(BaseModel):
+    """Yearly projection data for what-if scenario (STORY-066)."""
+
+    year: int
+    original_cost: Decimal
+    scenario_cost: Decimal
+    original_contribution: Decimal
+    scenario_contribution: Decimal
+    original_reserve_balance: Decimal
+    scenario_reserve_balance: Decimal
 
 
 class WhatIfScenarioResponse(BaseModel):
-    """Response with what-if scenario calculation (STORY-066)."""
+    """Response with what-if scenario calculation (STORY-066).
+    
+    Provides comparison between current vs scenario projections,
+    with yearly breakdown for graphing.
+    """
 
     scenario_name: str
+    years_ahead: int
     original_total: Decimal
     scenario_total: Decimal
     difference: Decimal
     difference_percentage: Decimal
     annual_contribution_original: Decimal
     annual_contribution_scenario: Decimal
+    yearly_projections: list[WhatIfYearProjection]
+    by_category_original: dict[str, Decimal]
+    by_category_scenario: dict[str, Decimal]
+    warnings: list[str] = Field(default_factory=list)
+
+
+class SavedScenario(BaseModel):
+    """Saved scenario for later retrieval (STORY-066)."""
+
+    id: uuid.UUID
+    vve_id: uuid.UUID
+    name: str
+    parameters: WhatIfScenarioRequest
+    created_at: datetime
+    created_by_id: uuid.UUID | None = None
+
+    model_config = ConfigDict(from_attributes=True)

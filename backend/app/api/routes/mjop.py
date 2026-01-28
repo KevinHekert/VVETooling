@@ -49,6 +49,9 @@ from app.schemas.mjop import (
     ReserveCalculationRequest,
     ReserveCalculationResponse,
     TimelineItem,
+    WhatIfScenarioRequest,
+    WhatIfScenarioResponse,
+    WhatIfYearProjection,
 )
 
 router = APIRouter(prefix="/vves/{vve_id}/mjop", tags=["mjop"])
@@ -971,4 +974,178 @@ async def calculate_reserves(
         by_year=by_year,
         by_category=by_category,
         contingency_amount=contingency_amount,
+    )
+
+
+# ============================================================================
+# What-If Scenario Calculation (STORY-066)
+# ============================================================================
+
+
+@router.post(
+    "/what-if-scenario",
+    response_model=WhatIfScenarioResponse,
+    summary="What-if scenario doorrekenen",
+    description="""
+    STORY-066: Als penningmeester wil ik what-if scenario's kunnen doorrekenen
+    met verschillende contributiehoogtes, zodat ik de impact op reserves kan
+    presenteren aan de ALV.
+    
+    Features:
+    - Adjust contribution per owner (percentage slider)
+    - Compare current vs scenario projections
+    - Year-by-year breakdown for graphing
+    - Save scenario for presentation
+    - Export to PDF ready data
+    """,
+)
+async def calculate_what_if_scenario(
+    vve_id: uuid.UUID,
+    request: WhatIfScenarioRequest,
+    current_user: Annotated[CurrentUser, Depends(require_member)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> WhatIfScenarioResponse:
+    """Calculate what-if scenario comparing current vs adjusted projections."""
+    # Verify VVE exists
+    vve_result = await db.execute(select(VVE).where(VVE.id == vve_id))
+    if vve_result.scalar_one_or_none() is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="VVE niet gevonden",
+        )
+
+    current_year = datetime.now().year
+    end_year = current_year + request.years_ahead
+
+    # Get elements with maintenance in range
+    query = select(MaintenanceElement).where(
+        MaintenanceElement.vve_id == vve_id,
+        MaintenanceElement.next_maintenance_year >= current_year,
+        MaintenanceElement.next_maintenance_year <= end_year,
+    )
+    result = await db.execute(query)
+    elements = list(result.scalars().all())
+
+    # Calculate original projections
+    original_by_year: dict[int, Decimal] = {}
+    original_by_category: dict[str, Decimal] = {}
+    original_total = Decimal("0")
+
+    for element in elements:
+        year = element.next_maintenance_year
+        cost = element.estimated_cost or Decimal("0")
+        
+        if year is None:
+            continue
+
+        original_total += cost
+        if year not in original_by_year:
+            original_by_year[year] = Decimal("0")
+        original_by_year[year] += cost
+
+        cat_key = element.category.value
+        if cat_key not in original_by_category:
+            original_by_category[cat_key] = Decimal("0")
+        original_by_category[cat_key] += cost
+
+    # Calculate scenario projections with adjustments
+    scenario_by_year: dict[int, Decimal] = {}
+    scenario_by_category: dict[str, Decimal] = {}
+    scenario_total = Decimal("0")
+    postponed_elements = set(request.postpone_elements)
+
+    for element in elements:
+        year = element.next_maintenance_year
+        cost = element.estimated_cost or Decimal("0")
+        
+        if year is None:
+            continue
+
+        # Apply cost increase percentage
+        adjusted_cost = cost * (1 + request.cost_increase_percentage / 100)
+
+        # Apply postponement if element is in postpone list
+        adjusted_year = year
+        if element.id in postponed_elements:
+            adjusted_year = year + request.postpone_years
+
+        # Only count if still within projection range
+        if adjusted_year <= end_year:
+            scenario_total += adjusted_cost
+            if adjusted_year not in scenario_by_year:
+                scenario_by_year[adjusted_year] = Decimal("0")
+            scenario_by_year[adjusted_year] += adjusted_cost
+
+            cat_key = element.category.value
+            if cat_key not in scenario_by_category:
+                scenario_by_category[cat_key] = Decimal("0")
+            scenario_by_category[cat_key] += adjusted_cost
+
+    # Add contingency if requested
+    if request.include_contingency:
+        original_contingency = original_total * (request.contingency_percentage / 100)
+        scenario_contingency = scenario_total * (request.contingency_percentage / 100)
+        original_total += original_contingency
+        scenario_total += scenario_contingency
+
+    # Calculate annual contributions
+    annual_contribution_original = (
+        original_total / request.years_ahead if request.years_ahead > 0 else Decimal("0")
+    )
+    
+    # Apply contribution adjustment to scenario
+    contribution_multiplier = 1 + (request.contribution_adjustment_percentage / 100)
+    annual_contribution_scenario = annual_contribution_original * contribution_multiplier
+
+    # Calculate difference
+    difference = scenario_total - original_total
+    difference_percentage = (
+        (difference / original_total * 100) if original_total > 0 else Decimal("0")
+    )
+
+    # Generate yearly projections for graphing
+    yearly_projections: list[WhatIfYearProjection] = []
+    original_balance = Decimal("0")  # Starting balance (could be fetched from VVE)
+    scenario_balance = Decimal("0")
+    warnings: list[str] = []
+
+    for year in range(current_year, end_year + 1):
+        original_cost_this_year = original_by_year.get(year, Decimal("0"))
+        scenario_cost_this_year = scenario_by_year.get(year, Decimal("0"))
+
+        # Add contributions, subtract costs
+        original_balance = original_balance + annual_contribution_original - original_cost_this_year
+        scenario_balance = scenario_balance + annual_contribution_scenario - scenario_cost_this_year
+
+        yearly_projections.append(
+            WhatIfYearProjection(
+                year=year,
+                original_cost=original_cost_this_year,
+                scenario_cost=scenario_cost_this_year,
+                original_contribution=annual_contribution_original,
+                scenario_contribution=annual_contribution_scenario,
+                original_reserve_balance=original_balance,
+                scenario_reserve_balance=scenario_balance,
+            )
+        )
+
+        # Check for warnings
+        if scenario_balance < 0:
+            warnings.append(
+                f"Waarschuwing: Negatief saldo in {year} (€{scenario_balance:,.2f})"
+            )
+
+    return WhatIfScenarioResponse(
+        scenario_name=request.name,
+        years_ahead=request.years_ahead,
+        original_total=original_total,
+        scenario_total=scenario_total,
+        difference=difference,
+        difference_percentage=difference_percentage,
+        annual_contribution_original=annual_contribution_original,
+        annual_contribution_scenario=annual_contribution_scenario,
+        yearly_projections=yearly_projections,
+        by_category_original=original_by_category,
+        by_category_scenario=scenario_by_category,
+        warnings=warnings,
     )
