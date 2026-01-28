@@ -1403,3 +1403,214 @@ class MeetingDecision(Base):
         Index("ix_meeting_decisions_meeting_id", "meeting_id"),
         Index("ix_meeting_decisions_minutes_id", "minutes_id"),
     )
+
+
+# ============================================================================
+# MJOP (Maintenance Plan) Models - EPIC-014
+# ============================================================================
+
+
+class MaintenanceElementCategory(str, Enum):
+    """Category of maintenance element (FEAT-029 MJOP Import & Beheer)."""
+
+    ROOF = "roof"  # Dak
+    FACADE = "facade"  # Gevel
+    FOUNDATION = "foundation"  # Fundering
+    WINDOWS = "windows"  # Ramen
+    DOORS = "doors"  # Deuren
+    ELEVATOR = "elevator"  # Lift
+    HEATING = "heating"  # Verwarming
+    PLUMBING = "plumbing"  # Leidingwerk
+    ELECTRICAL = "electrical"  # Elektra
+    COMMON_AREAS = "common_areas"  # Gemeenschappelijke ruimtes
+    GARDEN = "garden"  # Tuin
+    PARKING = "parking"  # Parkeerplaats
+    OTHER = "other"  # Overig
+
+
+class MaintenanceStatus(str, Enum):
+    """Status of maintenance element (FEAT-031 Onderhoudstaak Beheer)."""
+
+    PLANNED = "planned"  # Gepland
+    IN_PROGRESS = "in_progress"  # In uitvoering
+    COMPLETED = "completed"  # Voltooid
+    POSTPONED = "postponed"  # Uitgesteld
+    CANCELLED = "cancelled"  # Geannuleerd
+
+
+class MaintenancePriority(str, Enum):
+    """Priority level for maintenance (FEAT-029)."""
+
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    URGENT = "urgent"
+
+
+class MaintenanceElement(Base):
+    """Maintenance element in MJOP (STORY-062, STORY-063).
+
+    Represents a building component requiring periodic maintenance.
+    Implements FEAT-029: MJOP Import & Beheer.
+    """
+
+    __tablename__ = "maintenance_elements"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    vve_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("vves.id", ondelete="CASCADE"), nullable=False
+    )
+    # Element details
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text)
+    category: Mapped[MaintenanceElementCategory] = mapped_column(
+        SQLEnum(MaintenanceElementCategory), nullable=False
+    )
+    # Physical details
+    location: Mapped[str | None] = mapped_column(String(255))
+    quantity: Mapped[int] = mapped_column(Integer, default=1)
+    unit: Mapped[str | None] = mapped_column(String(50))  # e.g., m², stuks
+    # Lifecycle info
+    installation_year: Mapped[int | None] = mapped_column(Integer)
+    expected_lifespan_years: Mapped[int | None] = mapped_column(Integer)
+    last_maintenance_year: Mapped[int | None] = mapped_column(Integer)
+    next_maintenance_year: Mapped[int | None] = mapped_column(Integer)
+    # Cost estimates
+    estimated_cost: Mapped[Decimal | None] = mapped_column(
+        Numeric(12, 2), nullable=True
+    )
+    # Priority and status
+    priority: Mapped[MaintenancePriority] = mapped_column(
+        SQLEnum(MaintenancePriority), default=MaintenancePriority.MEDIUM
+    )
+    # Import tracking (STORY-062)
+    import_batch_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    import_row_number: Mapped[int | None] = mapped_column(Integer)
+    # Metadata
+    created_by_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    # Relationships
+    tasks: Mapped[list["MaintenanceTask"]] = relationship(
+        "MaintenanceTask", back_populates="element", cascade="all, delete-orphan"
+    )
+
+    __table_args__ = (
+        Index("ix_maintenance_elements_vve_id", "vve_id"),
+        Index("ix_maintenance_elements_category", "category"),
+        Index("ix_maintenance_elements_next_maintenance", "next_maintenance_year"),
+    )
+
+
+class MaintenanceTask(Base):
+    """Maintenance task for an element (STORY-067, STORY-068).
+
+    Implements FEAT-031: Onderhoudstaak Beheer.
+    """
+
+    __tablename__ = "maintenance_tasks"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    element_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("maintenance_elements.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    vve_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("vves.id", ondelete="CASCADE"), nullable=False
+    )
+    # Task details
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text)
+    status: Mapped[MaintenanceStatus] = mapped_column(
+        SQLEnum(MaintenanceStatus), default=MaintenanceStatus.PLANNED
+    )
+    priority: Mapped[MaintenancePriority] = mapped_column(
+        SQLEnum(MaintenancePriority), default=MaintenancePriority.MEDIUM
+    )
+    # Scheduling
+    planned_year: Mapped[int | None] = mapped_column(Integer)
+    planned_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    completed_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Cost tracking
+    estimated_cost: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
+    actual_cost: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
+    # Assignment
+    assignee_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    supplier_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("suppliers.id", ondelete="SET NULL")
+    )
+    # Notes
+    notes: Mapped[str | None] = mapped_column(Text)
+    # Metadata
+    created_by_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    # Relationships
+    element: Mapped["MaintenanceElement"] = relationship(
+        "MaintenanceElement", back_populates="tasks"
+    )
+
+    __table_args__ = (
+        Index("ix_maintenance_tasks_element_id", "element_id"),
+        Index("ix_maintenance_tasks_vve_id", "vve_id"),
+        Index("ix_maintenance_tasks_status", "status"),
+        Index("ix_maintenance_tasks_planned_year", "planned_year"),
+    )
+
+
+class MJOPImportBatch(Base):
+    """Track MJOP import batches for audit (STORY-062).
+
+    Records each Excel import with validation status.
+    """
+
+    __tablename__ = "mjop_import_batches"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    vve_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("vves.id", ondelete="CASCADE"), nullable=False
+    )
+    # Import details
+    filename: Mapped[str] = mapped_column(String(255), nullable=False)
+    total_rows: Mapped[int] = mapped_column(Integer, default=0)
+    imported_rows: Mapped[int] = mapped_column(Integer, default=0)
+    failed_rows: Mapped[int] = mapped_column(Integer, default=0)
+    # Column mapping used
+    column_mapping: Mapped[str | None] = mapped_column(Text)  # JSON string
+    # Status
+    is_completed: Mapped[bool] = mapped_column(Boolean, default=False)
+    error_log: Mapped[str | None] = mapped_column(Text)  # JSON string of errors
+    # Metadata
+    created_by_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+    __table_args__ = (Index("ix_mjop_import_batches_vve_id", "vve_id"),)
