@@ -1000,6 +1000,65 @@ class ApiClient {
       `/vves/${vveId}/meetings/${meetingId}/rsvps/summary`
     );
   }
+
+  // STORY-073: Proxy (Volmacht) methods
+  async getEligibleGrantees(vveId: string, meetingId: string) {
+    return this.fetch<import('@/types').EligibleGrantee[]>(
+      `/vves/${vveId}/meetings/${meetingId}/proxies/eligible-grantees`
+    );
+  }
+
+  async createProxy(vveId: string, meetingId: string, data: import('@/types').ProxyCreate) {
+    return this.fetch<import('@/types').MeetingProxy>(
+      `/vves/${vveId}/meetings/${meetingId}/proxies`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async getMyProxy(vveId: string, meetingId: string) {
+    return this.fetch<import('@/types').MeetingProxy | null>(
+      `/vves/${vveId}/meetings/${meetingId}/proxies/my`
+    );
+  }
+
+  async getReceivedProxies(vveId: string, meetingId: string) {
+    return this.fetch<import('@/types').ProxyListItem[]>(
+      `/vves/${vveId}/meetings/${meetingId}/proxies/received`
+    );
+  }
+
+  async listProxies(vveId: string, meetingId: string) {
+    return this.fetch<import('@/types').ProxyListItem[]>(
+      `/vves/${vveId}/meetings/${meetingId}/proxies`
+    );
+  }
+
+  async confirmProxy(vveId: string, meetingId: string, proxyId: string) {
+    return this.fetch<import('@/types').MeetingProxy>(
+      `/vves/${vveId}/meetings/${meetingId}/proxies/${proxyId}/confirm`,
+      {
+        method: 'PATCH',
+      }
+    );
+  }
+
+  async revokeProxy(vveId: string, meetingId: string, proxyId: string) {
+    return this.fetch<import('@/types').MeetingProxy>(
+      `/vves/${vveId}/meetings/${meetingId}/proxies/${proxyId}/revoke`,
+      {
+        method: 'PATCH',
+      }
+    );
+  }
+
+  async getProxySummary(vveId: string, meetingId: string) {
+    return this.fetch<import('@/types').ProxySummary>(
+      `/vves/${vveId}/meetings/${meetingId}/proxies/summary`
+    );
+  }
 }
 
 export const api = new ApiClient(API_BASE_URL);
