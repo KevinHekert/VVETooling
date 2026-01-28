@@ -704,6 +704,20 @@ async def create_voting_proxy(
     if unit is None:
         raise HTTPException(status_code=404, detail="Eenheid niet gevonden")
 
+    # Verify current user is owner of the unit (has voting rights)
+    owner_check = await db.execute(
+        select(VVEMember).where(
+            VVEMember.user_id == current_user.id,
+            VVEMember.unit_id == proxy_data.unit_id,
+            VVEMember.is_active.is_(True),
+        )
+    )
+    if owner_check.scalar_one_or_none() is None:
+        raise HTTPException(
+            status_code=403,
+            detail="U kunt alleen volmachten geven voor uw eigen eenheden"
+        )
+
     # Verify grantee exists and is member of VVE
     grantee_result = await db.execute(select(User).where(User.id == proxy_data.grantee_id))
     grantee = grantee_result.scalar_one_or_none()
@@ -1525,16 +1539,17 @@ async def vote_on_poll(
     if not is_poll_active(poll):
         raise HTTPException(status_code=400, detail="Poll is niet actief")
 
-    # Check if already voted (for non-anonymous polls)
-    if not poll.is_anonymous:
-        existing_vote = await db.execute(
-            select(PollVote).where(
-                PollVote.poll_id == poll_id,
-                PollVote.user_id == current_user.id,
-            )
+    # Check if already voted
+    # For anonymous polls, we still track participation to prevent double voting
+    # but don't expose the user_id in the vote record
+    existing_vote = await db.execute(
+        select(PollVote).where(
+            PollVote.poll_id == poll_id,
+            PollVote.user_id == current_user.id,
         )
-        if existing_vote.scalar_one_or_none() is not None:
-            raise HTTPException(status_code=400, detail="U heeft al gestemd op deze poll")
+    )
+    if existing_vote.scalar_one_or_none() is not None:
+        raise HTTPException(status_code=400, detail="U heeft al gestemd op deze poll")
 
     # Validate options
     if not poll.allow_multiple and len(vote_data.option_ids) > 1:
@@ -1556,13 +1571,15 @@ async def vote_on_poll(
         raise HTTPException(status_code=400, detail="Ongeldige optie geselecteerd")
 
     # Create votes
+    # Note: For anonymous polls, we still store user_id for duplicate prevention
+    # but the API responses should never expose this for anonymous polls
     now = datetime.now(timezone.utc)
     selected_texts = []
     for option in valid_options:
         vote = PollVote(
             poll_id=poll_id,
             option_id=option.id,
-            user_id=None if poll.is_anonymous else current_user.id,
+            user_id=current_user.id,  # Always store for duplicate prevention
             voted_at=now,
         )
         db.add(vote)

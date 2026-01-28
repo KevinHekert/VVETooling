@@ -25,6 +25,7 @@ from app.db.models.models import (
     DataExportFormat as DBDataExportFormat,
     User,
     VVE,
+    VVEMember,
 )
 from app.db.session import get_db
 from app.schemas.privacy import (
@@ -508,11 +509,25 @@ async def request_data_export(
     if vve_result.scalar_one_or_none() is None:
         raise HTTPException(status_code=404, detail="VVE niet gevonden")
 
+    # Verify user is a member of the VVE
+    member_result = await db.execute(
+        select(VVEMember).where(
+            VVEMember.user_id == current_user.id,
+            VVEMember.vve_id == target_vve_id,
+            VVEMember.is_active.is_(True),
+        )
+    )
+    if member_result.scalar_one_or_none() is None:
+        raise HTTPException(
+            status_code=403,
+            detail="U bent geen lid van deze VVE"
+        )
+
     # Check for existing pending/processing request
     existing = await db.execute(
         select(DataExportRequest).where(
             DataExportRequest.user_id == current_user.id,
-            DataExportRequest.status.in_([DataExportStatus.PENDING, DataExportStatus.PROCESSING]),
+            DataExportRequest.status.in_([DBDataExportStatus.PENDING, DBDataExportStatus.PROCESSING]),
         )
     )
     if existing.scalar_one_or_none() is not None:
