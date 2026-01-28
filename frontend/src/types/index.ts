@@ -1281,6 +1281,91 @@ export interface ReserveCalculationResponse {
 }
 
 // ============================================================================
+// Digital Voting Types (STORY-113, STORY-114, STORY-115)
+// ============================================================================
+
+export type VotingStatus = 'draft' | 'open' | 'closed' | 'cancelled';
+export type VoteChoice = 'voor' | 'tegen' | 'blanco';
+
+export interface VotingCreate {
+  title: string;
+  description?: string;
+  start_date: string;
+  end_date: string;
+  meeting_id?: string;
+  quorum_percentage?: number;
+}
+
+export interface VotingUpdate {
+  title?: string;
+  description?: string;
+  start_date?: string;
+  end_date?: string;
+  quorum_percentage?: number;
+  status?: VotingStatus;
+}
+
+export interface Voting {
+  id: string;
+  vve_id: string;
+  title: string;
+  description?: string;
+  status: VotingStatus;
+  start_date: string;
+  end_date: string;
+  meeting_id?: string;
+  quorum_percentage: number;
+  total_votes: number;
+  votes_for: number;
+  votes_against: number;
+  votes_abstain: number;
+  quorum_reached?: boolean;
+  result_percentage_for?: number;
+  is_active: boolean;
+  days_remaining?: number;
+  participation_percentage?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface VotingListItem {
+  id: string;
+  vve_id: string;
+  title: string;
+  status: VotingStatus;
+  start_date: string;
+  end_date: string;
+  total_votes: number;
+  is_active: boolean;
+  days_remaining?: number;
+}
+
+export interface VoteCreate {
+  choice: VoteChoice;
+}
+
+export interface Vote {
+  id: string;
+  voting_id: string;
+  user_id: string;
+  choice: VoteChoice;
+  created_at: string;
+}
+
+export interface VotingResults {
+  voting_id: string;
+  title: string;
+  total_votes: number;
+  votes_for: number;
+  votes_against: number;
+  votes_abstain: number;
+  participation_percentage: number;
+  quorum_percentage: number;
+  quorum_reached: boolean;
+  result: 'accepted' | 'rejected' | 'no_quorum' | 'in_progress';
+}
+
+// ============================================================================
 // Voting Proxy Types (STORY-117)
 // ============================================================================
 
