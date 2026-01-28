@@ -1,0 +1,50 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: vvetooling
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "7000:5432"
+    volumes:
+      - vvetooling_db:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      DATABASE_NAME: vvetooling
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: postgres
+      ALLOWED_ORIGINS: '["http://localhost:81"]'
+    ports:
+      - "7001:8000"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - db
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:7001/api/v1
+    ports:
+      - "81:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+
+volumes:
+  vvetooling_db:

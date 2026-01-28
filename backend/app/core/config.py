@@ -4,6 +4,7 @@ Based on ADR-001 (Authentication & Authorization) and ADR-003 (Multi-tenancy).
 """
 
 from functools import lru_cache
+from pydantic import model_validator
 from pydantic_settings import BaseSettings
 
 
@@ -24,7 +25,12 @@ class Settings(BaseSettings):
     ]
 
     # Database (PostgreSQL - ADR-003)
-    database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/vvetooling"
+    database_url: str | None = None
+    database_host: str = "localhost"
+    database_port: int = 5432
+    database_name: str = "vvetooling"
+    database_user: str = "postgres"
+    database_password: str = "postgres"
     database_pool_size: int = 10
     database_max_overflow: int = 20
 
@@ -54,6 +60,18 @@ class Settings(BaseSettings):
         env_file = ".env"
         env_file_encoding = "utf-8"
         case_sensitive = False
+
+    @model_validator(mode="after")
+    def build_database_url(self) -> "Settings":
+        """Construct DATABASE_URL from individual database settings when missing."""
+        if self.database_url:
+            return self
+        self.database_url = (
+            "postgresql+asyncpg://"
+            f"{self.database_user}:{self.database_password}"
+            f"@{self.database_host}:{self.database_port}/{self.database_name}"
+        )
+        return self
 
 
 @lru_cache

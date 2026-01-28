@@ -58,10 +58,29 @@ API docs: http://localhost:8000/docs
 ### Frontend
 ```bash
 cd frontend
+cp .env.example .env.local
 npm install
 npm run dev
 ```
 App: http://localhost:3000
+
+### Omgevingsvariabelen (deployment)
+Voor het online zetten van een omgeving configureer je de technische variabelen in `.env` bestanden.
+
+**Backend (./backend/.env)**
+- `DATABASE_URL` óf de losse `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_NAME`, `DATABASE_USER`, `DATABASE_PASSWORD`.
+- `ALLOWED_ORIGINS` met je frontend URL(s).
+- `COGNITO_*` en `JWT_*` afhankelijk van je auth-keuze.
+
+**Frontend (./frontend/.env.local)**
+- `NEXT_PUBLIC_API_URL` met de publieke backend URL.
+
+### Docker Compose (dev)
+```bash
+cp backend/.env.example backend/.env
+docker compose -f docker-compose.dev.yml up --build
+```
+Frontend draait op http://localhost:81 en backend op http://localhost:7001/docs.
 
 ## 🧪 Tests
 ```bash
