@@ -6,7 +6,7 @@ import logging
 
 from asyncpg.exceptions import UndefinedTableError
 from sqlalchemy import select
-from sqlalchemy.exc import ProgrammingError
+from sqlalchemy.exc import OperationalError, ProgrammingError
 
 from app.core.config import get_settings
 from app.core.security import UserRole, get_password_hash
@@ -68,6 +68,12 @@ async def ensure_dev_admin() -> None:
                             is_active=True,
                         )
                     )
+    except OperationalError as exc:
+        logger.warning(
+            "Skipping dev seed because database is unavailable.",
+            exc_info=exc,
+        )
+        return
     except ProgrammingError as exc:
         if isinstance(exc.orig, UndefinedTableError):
             logger.warning(
