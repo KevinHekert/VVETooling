@@ -402,3 +402,109 @@ class QuorumCalculation(BaseModel):
     proxy_details: list[QuorumMemberDetail] = []
     # Timestamp
     calculated_at: datetime
+
+
+# STORY-075: Meeting Minutes schemas
+class MinutesStatus(str, Enum):
+    """Status of meeting minutes (STORY-075)."""
+
+    DRAFT = "draft"  # Concept
+    PUBLISHED = "published"  # Gepubliceerd
+    APPROVED = "approved"  # Goedgekeurd
+
+
+class DecisionType(str, Enum):
+    """Type of decision in meeting minutes (STORY-075)."""
+
+    BESLUIT = "besluit"  # Official decision
+    ACTIEPUNT = "actiepunt"  # Action item
+    AANDACHTSPUNT = "aandachtspunt"  # Point of attention
+
+
+class MinutesCreate(BaseModel):
+    """Schema for creating meeting minutes (STORY-075)."""
+
+    content: str | None = Field(None, description="Rich text content (HTML)")
+
+
+class MinutesUpdate(BaseModel):
+    """Schema for updating meeting minutes (STORY-075)."""
+
+    content: str | None = Field(None, description="Rich text content (HTML)")
+    status: MinutesStatus | None = None
+
+
+class MinutesResponse(BaseModel):
+    """Response schema for meeting minutes (STORY-075)."""
+
+    id: uuid.UUID
+    meeting_id: uuid.UUID
+    content: str | None = None
+    status: MinutesStatus
+    created_by_id: uuid.UUID | None = None
+    created_by_name: str | None = None
+    published_at: datetime | None = None
+    approved_at: datetime | None = None
+    approved_by_id: uuid.UUID | None = None
+    approved_by_name: str | None = None
+    last_saved_at: datetime | None = None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class MinutesTemplate(BaseModel):
+    """Template for pre-populated meeting minutes (STORY-075)."""
+
+    meeting_id: uuid.UUID
+    meeting_title: str
+    meeting_date: datetime
+    attendees: list[str] = []
+    agenda_items: list[str] = []
+    html_template: str
+
+
+class DecisionCreate(BaseModel):
+    """Schema for creating a decision/action item (STORY-075)."""
+
+    decision_type: DecisionType
+    title: str = Field(..., min_length=2, max_length=255)
+    description: str | None = Field(None, max_length=2000)
+    agenda_item_id: uuid.UUID | None = None
+    assignee_id: uuid.UUID | None = None
+    due_date: datetime | None = None
+
+
+class DecisionUpdate(BaseModel):
+    """Schema for updating a decision/action item (STORY-075)."""
+
+    title: str | None = Field(None, min_length=2, max_length=255)
+    description: str | None = Field(None, max_length=2000)
+    assignee_id: uuid.UUID | None = None
+    due_date: datetime | None = None
+    is_completed: bool | None = None
+
+
+class DecisionResponse(BaseModel):
+    """Response schema for a decision/action item (STORY-075)."""
+
+    id: uuid.UUID
+    meeting_id: uuid.UUID
+    minutes_id: uuid.UUID | None = None
+    decision_type: DecisionType
+    title: str
+    description: str | None = None
+    agenda_item_id: uuid.UUID | None = None
+    agenda_item_title: str | None = None
+    assignee_id: uuid.UUID | None = None
+    assignee_name: str | None = None
+    due_date: datetime | None = None
+    is_completed: bool
+    completed_at: datetime | None = None
+    created_by_id: uuid.UUID | None = None
+    created_by_name: str | None = None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
