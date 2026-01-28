@@ -3,7 +3,7 @@
 ## Documentinformatie
 - **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: ⬜ Backlog
+- **Status**: ✅ Geïmplementeerd
 - **Versie**: 1.0
 - **Prioriteit**: Must (Horizon 2)
 - **Geneste nummering**: 15.2.3
@@ -29,3 +29,4 @@ Als **voorzitter** wil ik dat het quorum automatisch wordt berekend op basis van
 
 ## Bronverwijzingen
 - [docs/backlog/features/FEAT-033-presentie-volmachten.md](../features/FEAT-033-presentie-volmachten.md)
+- [Implementatierapport](../implementation-reports/STORY-074-implementatie.md)
