@@ -508,3 +508,80 @@ class DecisionResponse(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# ============================================================================
+# Decision Search Schemas (STORY-081)
+# ============================================================================
+
+
+class DecisionVoteResult(str, Enum):
+    """Vote result for official decisions (STORY-081)."""
+
+    AANGENOMEN = "aangenomen"  # Accepted
+    VERWORPEN = "verworpen"  # Rejected
+    AANGEHOUDEN = "aangehouden"  # Postponed
+    ONBEKEND = "onbekend"  # Unknown
+
+
+class DecisionSearchRequest(BaseModel):
+    """Request schema for searching decisions (STORY-081).
+    
+    Als bestuurslid wil ik besluiten kunnen doorzoeken op onderwerp, 
+    datum en stemresultaat.
+    """
+
+    query: str | None = Field(
+        None, 
+        min_length=2, 
+        max_length=255,
+        description="Full-text search query for subject/description"
+    )
+    date_from: datetime | None = Field(None, description="Filter from date")
+    date_to: datetime | None = Field(None, description="Filter to date")
+    vote_result: DecisionVoteResult | None = Field(
+        None, 
+        description="Filter by vote result (aangenomen/verworpen)"
+    )
+    decision_type: DecisionType | None = Field(
+        None, 
+        description="Filter by decision type (besluit/actiepunt)"
+    )
+    skip: int = Field(0, ge=0, description="Pagination offset")
+    limit: int = Field(20, ge=1, le=100, description="Page size")
+
+
+class DecisionSearchResult(BaseModel):
+    """Single result from decision search with relevance snippet (STORY-081)."""
+
+    id: uuid.UUID
+    meeting_id: uuid.UUID
+    meeting_title: str
+    meeting_date: datetime
+    decision_type: DecisionType
+    title: str
+    description: str | None = None
+    vote_result: DecisionVoteResult | None = None
+    vote_for: int | None = None
+    vote_against: int | None = None
+    vote_abstain: int | None = None
+    is_completed: bool
+    created_at: datetime
+    # Search-specific fields
+    relevance_snippet: str | None = Field(
+        None, 
+        description="Text snippet with highlighted search terms"
+    )
+    match_score: float = Field(1.0, description="Search relevance score")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DecisionSearchResponse(BaseModel):
+    """Response schema for decision search (STORY-081)."""
+
+    query: str | None
+    total_count: int
+    results: list[DecisionSearchResult]
+    has_more: bool
+    filters_applied: dict[str, str] = {}
