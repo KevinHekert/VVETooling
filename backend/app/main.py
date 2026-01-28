@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import auth, transactions, units, contributions, documents, budgets, audit, tickets, splitsingsakte, email, contracts, meetings, mjop, compliance, voting, privacy, analytics
 from app.core.config import get_settings
+from app.db.dev_seed import ensure_dev_admin
 
 settings = get_settings()
 
@@ -69,6 +70,11 @@ def create_app() -> FastAPI:
     app.include_router(voting.router, prefix=api_prefix)
     app.include_router(privacy.router, prefix=api_prefix)
     app.include_router(analytics.router, prefix=api_prefix)
+
+    @app.on_event("startup")
+    async def seed_dev_data() -> None:
+        """Seed development data on startup."""
+        await ensure_dev_admin()
 
     @app.get("/health", tags=["system"])
     async def health_check() -> dict[str, str]:
