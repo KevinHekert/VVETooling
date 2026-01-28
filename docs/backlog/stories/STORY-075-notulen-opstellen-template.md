@@ -3,7 +3,7 @@
 ## Documentinformatie
 - **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: ⬜ Backlog
+- **Status**: ✅ Geïmplementeerd
 - **Versie**: 1.0
 - **Prioriteit**: Must (Horizon 2)
 - **Geneste nummering**: 15.3.1
@@ -28,3 +28,4 @@ Als **secretaris** wil ik notulen kunnen opstellen met een template dat automati
 
 ## Bronverwijzingen
 - [docs/backlog/features/FEAT-034-notulen-besluiten.md](../features/FEAT-034-notulen-besluiten.md)
+- [Implementatierapport](../implementation-reports/STORY-075-implementatie.md)
