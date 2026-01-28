@@ -23,7 +23,9 @@ from app.schemas.mjop import (
     MJOPImportPreviewRow,
     TimelineItem,
     ReserveCalculationRequest,
-    WhatIfScenario,
+    WhatIfScenarioRequest,
+    WhatIfScenarioResponse,
+    WhatIfYearProjection,
 )
 
 
@@ -245,20 +247,121 @@ class TestReserveCalculationSchemas:
         with pytest.raises(ValueError):
             ReserveCalculationRequest(years_ahead=60)
 
-    def test_whatif_scenario(self):
-        """Test what-if scenario creation (STORY-066)."""
+    def test_whatif_scenario_request(self):
+        """Test what-if scenario request creation (STORY-066)."""
         element_ids = [uuid.uuid4(), uuid.uuid4()]
 
-        scenario = WhatIfScenario(
+        scenario = WhatIfScenarioRequest(
             name="Uitstel dakonderhoud",
+            years_ahead=10,
+            contribution_adjustment_percentage=Decimal("10.0"),
             postpone_elements=element_ids,
             postpone_years=2,
             cost_increase_percentage=Decimal("5.0"),
+            include_contingency=True,
+            contingency_percentage=Decimal("10.0"),
         )
 
         assert scenario.name == "Uitstel dakonderhoud"
+        assert scenario.years_ahead == 10
+        assert scenario.contribution_adjustment_percentage == Decimal("10.0")
         assert len(scenario.postpone_elements) == 2
         assert scenario.postpone_years == 2
+        assert scenario.cost_increase_percentage == Decimal("5.0")
+
+    def test_whatif_scenario_request_defaults(self):
+        """Test what-if scenario request with default values (STORY-066)."""
+        scenario = WhatIfScenarioRequest(name="Default scenario")
+
+        assert scenario.name == "Default scenario"
+        assert scenario.years_ahead == 10
+        assert scenario.contribution_adjustment_percentage == Decimal("0.0")
+        assert scenario.postpone_elements == []
+        assert scenario.postpone_years == 1
+        assert scenario.cost_increase_percentage == Decimal("0.0")
+        assert scenario.include_contingency is True
+        assert scenario.contingency_percentage == Decimal("10.0")
+
+    def test_whatif_scenario_request_validation(self):
+        """Test what-if scenario request validation bounds (STORY-066)."""
+        # Test contribution adjustment bounds
+        with pytest.raises(ValueError):
+            WhatIfScenarioRequest(
+                name="Invalid",
+                contribution_adjustment_percentage=Decimal("150.0"),  # Too high
+            )
+
+        with pytest.raises(ValueError):
+            WhatIfScenarioRequest(
+                name="Invalid",
+                contribution_adjustment_percentage=Decimal("-60.0"),  # Too low
+            )
+
+        # Test years ahead bounds
+        with pytest.raises(ValueError):
+            WhatIfScenarioRequest(name="Invalid", years_ahead=0)
+
+        with pytest.raises(ValueError):
+            WhatIfScenarioRequest(name="Invalid", years_ahead=60)
+
+        # Test postpone years bounds
+        with pytest.raises(ValueError):
+            WhatIfScenarioRequest(name="Invalid", postpone_years=0)
+
+        with pytest.raises(ValueError):
+            WhatIfScenarioRequest(name="Invalid", postpone_years=15)
+
+    def test_whatif_year_projection(self):
+        """Test what-if year projection schema (STORY-066)."""
+        projection = WhatIfYearProjection(
+            year=2026,
+            original_cost=Decimal("10000.00"),
+            scenario_cost=Decimal("12000.00"),
+            original_contribution=Decimal("5000.00"),
+            scenario_contribution=Decimal("5500.00"),
+            original_reserve_balance=Decimal("25000.00"),
+            scenario_reserve_balance=Decimal("23500.00"),
+        )
+
+        assert projection.year == 2026
+        assert projection.original_cost == Decimal("10000.00")
+        assert projection.scenario_cost == Decimal("12000.00")
+        assert projection.scenario_contribution == Decimal("5500.00")
+
+    def test_whatif_scenario_response(self):
+        """Test what-if scenario response schema (STORY-066)."""
+        projections = [
+            WhatIfYearProjection(
+                year=2026,
+                original_cost=Decimal("10000.00"),
+                scenario_cost=Decimal("11000.00"),
+                original_contribution=Decimal("5000.00"),
+                scenario_contribution=Decimal("5500.00"),
+                original_reserve_balance=Decimal("25000.00"),
+                scenario_reserve_balance=Decimal("24500.00"),
+            )
+        ]
+
+        response = WhatIfScenarioResponse(
+            scenario_name="Test Scenario",
+            years_ahead=10,
+            original_total=Decimal("50000.00"),
+            scenario_total=Decimal("55000.00"),
+            difference=Decimal("5000.00"),
+            difference_percentage=Decimal("10.0"),
+            annual_contribution_original=Decimal("5000.00"),
+            annual_contribution_scenario=Decimal("5500.00"),
+            yearly_projections=projections,
+            by_category_original={"roof": Decimal("30000.00")},
+            by_category_scenario={"roof": Decimal("33000.00")},
+            warnings=["Waarschuwing: Negatief saldo in 2030"],
+        )
+
+        assert response.scenario_name == "Test Scenario"
+        assert response.years_ahead == 10
+        assert response.difference == Decimal("5000.00")
+        assert len(response.yearly_projections) == 1
+        assert len(response.warnings) == 1
 
 
 class TestCategoryEnums:
