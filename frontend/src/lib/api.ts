@@ -1127,6 +1127,240 @@ class ApiClient {
       }
     );
   }
+
+  // ============================================================================
+  // Voting Proxy Methods (STORY-117)
+  // ============================================================================
+
+  async createVotingProxy(vveId: string, data: import('@/types').VotingProxyCreate) {
+    return this.fetch<import('@/types').VotingProxy>(
+      `/vves/${vveId}/voting/proxies`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async listVotingProxies(vveId: string, params?: { status?: string; voting_id?: string }) {
+    const queryParams = new URLSearchParams();
+    if (params?.status) queryParams.append('status', params.status);
+    if (params?.voting_id) queryParams.append('voting_id', params.voting_id);
+    const query = queryParams.toString() ? `?${queryParams.toString()}` : '';
+    return this.fetch<import('@/types').VotingProxyListItem[]>(
+      `/vves/${vveId}/voting/proxies${query}`
+    );
+  }
+
+  async getVotingProxy(vveId: string, proxyId: string) {
+    return this.fetch<import('@/types').VotingProxy>(
+      `/vves/${vveId}/voting/proxies/${proxyId}`
+    );
+  }
+
+  async confirmVotingProxy(vveId: string, proxyId: string) {
+    return this.fetch<import('@/types').VotingProxyConfirmation>(
+      `/vves/${vveId}/voting/proxies/${proxyId}/confirm`,
+      { method: 'POST' }
+    );
+  }
+
+  async revokeVotingProxy(vveId: string, proxyId: string) {
+    return this.fetch<import('@/types').VotingProxyConfirmation>(
+      `/vves/${vveId}/voting/proxies/${proxyId}/revoke`,
+      { method: 'POST' }
+    );
+  }
+
+  async deleteVotingProxy(vveId: string, proxyId: string) {
+    return this.fetch<void>(
+      `/vves/${vveId}/voting/proxies/${proxyId}`,
+      { method: 'DELETE' }
+    );
+  }
+
+  async getMyGrantedProxies(vveId: string) {
+    return this.fetch<import('@/types').VotingProxyListItem[]>(
+      `/vves/${vveId}/voting/proxies/my-proxies/granted`
+    );
+  }
+
+  async getMyReceivedProxies(vveId: string) {
+    return this.fetch<import('@/types').VotingProxyListItem[]>(
+      `/vves/${vveId}/voting/proxies/my-proxies/received`
+    );
+  }
+
+  // ============================================================================
+  // Poll Methods (STORY-116)
+  // ============================================================================
+
+  async createPoll(vveId: string, data: import('@/types').PollCreate) {
+    return this.fetch<import('@/types').Poll>(
+      `/vves/${vveId}/voting/polls`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async listPolls(vveId: string, status?: import('@/types').PollStatus) {
+    const query = status ? `?status=${status}` : '';
+    return this.fetch<import('@/types').PollListItem[]>(
+      `/vves/${vveId}/voting/polls${query}`
+    );
+  }
+
+  async getPoll(vveId: string, pollId: string) {
+    return this.fetch<import('@/types').Poll>(
+      `/vves/${vveId}/voting/polls/${pollId}`
+    );
+  }
+
+  async updatePoll(vveId: string, pollId: string, data: import('@/types').PollUpdate) {
+    return this.fetch<import('@/types').Poll>(
+      `/vves/${vveId}/voting/polls/${pollId}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async openPoll(vveId: string, pollId: string) {
+    return this.fetch<import('@/types').Poll>(
+      `/vves/${vveId}/voting/polls/${pollId}/open`,
+      { method: 'POST' }
+    );
+  }
+
+  async closePoll(vveId: string, pollId: string) {
+    return this.fetch<import('@/types').Poll>(
+      `/vves/${vveId}/voting/polls/${pollId}/close`,
+      { method: 'POST' }
+    );
+  }
+
+  async deletePoll(vveId: string, pollId: string) {
+    return this.fetch<void>(
+      `/vves/${vveId}/voting/polls/${pollId}`,
+      { method: 'DELETE' }
+    );
+  }
+
+  async votePoll(vveId: string, pollId: string, data: import('@/types').PollVoteCreate) {
+    return this.fetch<import('@/types').PollVoteResponse>(
+      `/vves/${vveId}/voting/polls/${pollId}/vote`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  // ============================================================================
+  // Privacy Statement Methods (STORY-080)
+  // ============================================================================
+
+  async createPrivacyStatement(vveId: string, data: import('@/types').PrivacyStatementCreate) {
+    return this.fetch<import('@/types').PrivacyStatement>(
+      `/vves/${vveId}/privacy/statements`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async listPrivacyStatements(vveId: string, status?: import('@/types').PrivacyStatementStatus) {
+    const query = status ? `?status=${status}` : '';
+    return this.fetch<import('@/types').PrivacyStatementListItem[]>(
+      `/vves/${vveId}/privacy/statements${query}`
+    );
+  }
+
+  async getCurrentPrivacyStatement(vveId: string) {
+    return this.fetch<import('@/types').PrivacyStatement | null>(
+      `/vves/${vveId}/privacy/statements/current`
+    );
+  }
+
+  async getPrivacyStatement(vveId: string, statementId: string) {
+    return this.fetch<import('@/types').PrivacyStatement>(
+      `/vves/${vveId}/privacy/statements/${statementId}`
+    );
+  }
+
+  async updatePrivacyStatement(vveId: string, statementId: string, data: Partial<import('@/types').PrivacyStatementCreate>) {
+    return this.fetch<import('@/types').PrivacyStatement>(
+      `/vves/${vveId}/privacy/statements/${statementId}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async publishPrivacyStatement(vveId: string, statementId: string) {
+    return this.fetch<import('@/types').PrivacyStatement>(
+      `/vves/${vveId}/privacy/statements/${statementId}/publish`,
+      { method: 'POST' }
+    );
+  }
+
+  async archivePrivacyStatement(vveId: string, statementId: string) {
+    return this.fetch<import('@/types').PrivacyStatement>(
+      `/vves/${vveId}/privacy/statements/${statementId}/archive`,
+      { method: 'POST' }
+    );
+  }
+
+  async deletePrivacyStatement(vveId: string, statementId: string) {
+    return this.fetch<void>(
+      `/vves/${vveId}/privacy/statements/${statementId}`,
+      { method: 'DELETE' }
+    );
+  }
+
+  async getPrivacyStatementTemplate(vveId: string) {
+    return this.fetch<import('@/types').PrivacyStatementTemplate>(
+      `/vves/${vveId}/privacy/template`
+    );
+  }
+
+  // ============================================================================
+  // Data Export Methods (STORY-122)
+  // ============================================================================
+
+  async requestDataExport(vveId: string, data: import('@/types').DataExportRequestCreate) {
+    return this.fetch<import('@/types').DataExportConfirmation>(
+      `/vves/${vveId}/privacy/data-export`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async listDataExports(vveId: string) {
+    return this.fetch<import('@/types').DataExportListItem[]>(
+      `/vves/${vveId}/privacy/data-export`
+    );
+  }
+
+  async getDataExport(vveId: string, requestId: string) {
+    return this.fetch<import('@/types').DataExportRequest>(
+      `/vves/${vveId}/privacy/data-export/${requestId}`
+    );
+  }
+
+  async cancelDataExport(vveId: string, requestId: string) {
+    return this.fetch<void>(
+      `/vves/${vveId}/privacy/data-export/${requestId}`,
+      { method: 'DELETE' }
+    );
+  }
 }
 
 export const api = new ApiClient(API_BASE_URL);
