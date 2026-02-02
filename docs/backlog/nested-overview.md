@@ -124,7 +124,7 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
       - 13.2.2 ✅ STORY-059 Dashboard widget aflopen contracten (Should)
     - 13.3 **FEAT-028 Leveranciersbeheer** ✅
       - 13.3.1 ✅ STORY-060 Leverancier registreren (Should)
-      - 13.3.2 ⬜ STORY-061 Leverancier evaluatie (Could)
+      - 13.3.2 ✅ STORY-061 Leverancier evaluatie (Could)
 
 14. **EPIC-014 MJOP & Onderhoudsplanning** ⬜
     - 14.1 **FEAT-029 MJOP Import & Beheer** ⬜
@@ -266,7 +266,7 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
 |--------|--------|-----------|----------|-----------|----------|
 | Epics | 27 | 13 | 3 | 11 | 48% |
 | Features | 69 | 35 | 1 | 33 | 51% |
-| Stories | 124 | 76 | - | 48 | 61% |
+| Stories | 124 | 77 | - | 47 | 62% |
 
 **Volledig afgeronde Epics (Horizon 1 - MVP):** EPIC-001, EPIC-002, EPIC-003, EPIC-004, EPIC-005, EPIC-006, EPIC-007, EPIC-008, EPIC-009, EPIC-010, EPIC-011, EPIC-012, EPIC-013
 
