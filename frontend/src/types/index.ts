@@ -1818,3 +1818,130 @@ export interface DecisionSearchResponse {
   has_more: boolean;
   filters_applied: string[];
 }
+
+// STORY-062-068: MJOP (Maintenance Plan) types
+export type MaintenanceElementCategory = 'roof' | 'facade' | 'foundation' | 'windows' | 'doors' | 'elevator' | 'heating' | 'plumbing' | 'electrical' | 'common_areas' | 'garden' | 'parking' | 'other';
+export type MaintenanceStatus = 'planned' | 'in_progress' | 'completed' | 'postponed' | 'cancelled';
+export type MaintenancePriority = 'low' | 'medium' | 'high' | 'urgent';
+
+export interface MaintenanceElement {
+  id: string;
+  vve_id: string;
+  name: string;
+  description?: string;
+  category: MaintenanceElementCategory;
+  location?: string;
+  quantity: number;
+  unit?: string;
+  installation_year?: number;
+  expected_lifespan_years?: number;
+  last_maintenance_year?: number;
+  next_maintenance_year?: number;
+  estimated_cost?: number;
+  priority: MaintenancePriority;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MaintenanceElementCreate {
+  name: string;
+  description?: string;
+  category: MaintenanceElementCategory;
+  location?: string;
+  quantity?: number;
+  unit?: string;
+  installation_year?: number;
+  expected_lifespan_years?: number;
+  last_maintenance_year?: number;
+  next_maintenance_year?: number;
+  estimated_cost?: number;
+  priority?: MaintenancePriority;
+}
+
+export interface MaintenanceTask {
+  id: string;
+  maintenance_element_id: string;
+  element_name: string;
+  title: string;
+  description?: string;
+  scheduled_year: number;
+  scheduled_month?: number;
+  estimated_cost?: number;
+  actual_cost?: number;
+  status: MaintenanceStatus;
+  priority: MaintenancePriority;
+  assigned_to_id?: string;
+  assigned_to_name?: string;
+  completed_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MaintenanceTaskCreate {
+  maintenance_element_id: string;
+  title: string;
+  description?: string;
+  scheduled_year: number;
+  scheduled_month?: number;
+  estimated_cost?: number;
+  status?: MaintenanceStatus;
+  priority?: MaintenancePriority;
+  assigned_to_id?: string;
+}
+
+export interface MJOPImportPreviewRow {
+  row_number: number;
+  data: Record<string, string>;
+  errors: string[];
+  is_valid: boolean;
+}
+
+export interface MJOPImportPreviewResponse {
+  file_name: string;
+  total_rows: number;
+  valid_rows: number;
+  invalid_rows: number;
+  column_mapping: Record<string, string>;
+  preview_rows: MJOPImportPreviewRow[];
+  available_columns: string[];
+}
+
+export interface MJOPImportResponse {
+  success: boolean;
+  imported_count: number;
+  failed_count: number;
+  errors: string[];
+  batch_id: string;
+}
+
+export interface MJOPTimelineItem {
+  year: number;
+  element_id: string;
+  element_name: string;
+  category: MaintenanceElementCategory;
+  estimated_cost: number;
+  priority: MaintenancePriority;
+  is_planned: boolean;
+}
+
+export interface MJOPTimelineResponse {
+  start_year: number;
+  end_year: number;
+  items: MJOPTimelineItem[];
+  total_estimated_cost: number;
+  yearly_totals: Record<number, number>;
+}
+
+export interface ReserveCalculationRequest {
+  horizon_years?: number;
+  annual_contribution?: number;
+  current_reserve?: number;
+}
+
+export interface ReserveCalculationResponse {
+  horizon_years: number;
+  current_reserve: number;
+  recommended_annual_contribution: number;
+  yearly_projections: { year: number; balance: number; contributions: number; expenses: number }[];
+  shortfall_years: number[];
+}

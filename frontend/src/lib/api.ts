@@ -1552,6 +1552,112 @@ class ApiClient {
       `/vves/${vveId}/compliance/items/${itemId}/history`
     );
   }
+
+  // ============================================================================
+  // MJOP Methods (STORY-062-068)
+  // ============================================================================
+
+  // STORY-062: Excel import
+  async uploadMJOPExcel(vveId: string, file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+    return fetch(`${this.baseUrl}/vves/${vveId}/mjop/import/upload`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: formData,
+    }).then(res => res.json()) as Promise<import('@/types').MJOPImportPreviewResponse>;
+  }
+
+  async confirmMJOPImport(vveId: string, columnMapping: Record<string, string>, fileName: string) {
+    return this.fetch<import('@/types').MJOPImportResponse>(
+      `/vves/${vveId}/mjop/import/confirm`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ column_mapping: columnMapping, file_name: fileName }),
+      }
+    );
+  }
+
+  // STORY-063: Maintenance elements
+  async listMaintenanceElements(vveId: string, category?: import('@/types').MaintenanceElementCategory) {
+    const params = category ? `?category=${category}` : '';
+    return this.fetch<import('@/types').MaintenanceElement[]>(
+      `/vves/${vveId}/mjop/elements${params}`
+    );
+  }
+
+  async createMaintenanceElement(vveId: string, data: import('@/types').MaintenanceElementCreate) {
+    return this.fetch<import('@/types').MaintenanceElement>(
+      `/vves/${vveId}/mjop/elements`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  // STORY-064: Timeline visualization
+  async getMJOPTimeline(vveId: string, startYear?: number, endYear?: number) {
+    const params = new URLSearchParams();
+    if (startYear) params.append('start_year', startYear.toString());
+    if (endYear) params.append('end_year', endYear.toString());
+    const query = params.toString() ? `?${params.toString()}` : '';
+    return this.fetch<import('@/types').MJOPTimelineResponse>(
+      `/vves/${vveId}/mjop/timeline${query}`
+    );
+  }
+
+  // STORY-065: Reserve calculation
+  async calculateReserve(vveId: string, request: import('@/types').ReserveCalculationRequest = {}) {
+    return this.fetch<import('@/types').ReserveCalculationResponse>(
+      `/vves/${vveId}/mjop/reserve-calculation`,
+      {
+        method: 'POST',
+        body: JSON.stringify(request),
+      }
+    );
+  }
+
+  // STORY-067: Maintenance tasks
+  async listMaintenanceTasks(vveId: string, elementId?: string, status?: import('@/types').MaintenanceStatus) {
+    const params = new URLSearchParams();
+    if (elementId) params.append('element_id', elementId);
+    if (status) params.append('status', status);
+    const query = params.toString() ? `?${params.toString()}` : '';
+    return this.fetch<import('@/types').MaintenanceTask[]>(
+      `/vves/${vveId}/mjop/tasks${query}`
+    );
+  }
+
+  async createMaintenanceTask(vveId: string, data: import('@/types').MaintenanceTaskCreate) {
+    return this.fetch<import('@/types').MaintenanceTask>(
+      `/vves/${vveId}/mjop/tasks`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  // STORY-068: Update task status
+  async updateMaintenanceTask(vveId: string, taskId: string, data: Partial<import('@/types').MaintenanceTask>) {
+    return this.fetch<import('@/types').MaintenanceTask>(
+      `/vves/${vveId}/mjop/tasks/${taskId}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  private getAuthHeaders(): Record<string, string> {
+    const headers: Record<string, string> = {};
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('auth_token');
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+    }
+    return headers;
+  }
 }
 
 export const api = new ApiClient(API_BASE_URL);
