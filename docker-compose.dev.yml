@@ -31,7 +31,7 @@ services:
       DATABASE_NAME: vvetooling
       DATABASE_USER: postgres
       DATABASE_PASSWORD: postgres
-      ALLOWED_ORIGINS: '["http://localhost:81"]'
+      ALLOWED_ORIGINS: '["http://localhost:81","http://localhost:8080"]'
     ports:
       - "7001:8000"
     volumes:
