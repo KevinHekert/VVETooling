@@ -1100,6 +1100,27 @@ class ApiClient {
     );
   }
 
+  // STORY-120: Minutes publishing methods
+  async publishMinutes(vveId: string, meetingId: string, data: import('@/types').MinutesPublishRequest = {}) {
+    return this.fetch<import('@/types').MinutesPublishResponse>(
+      `/vves/${vveId}/meetings/${meetingId}/minutes/publish`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async listPublishedMinutes(vveId: string, skip = 0, limit = 20) {
+    return this.fetch<import('@/types').PublishedMinutesListResponse>(
+      `/vves/${vveId}/meetings/published-minutes?skip=${skip}&limit=${limit}`
+    );
+  }
+
+  getMinutesPdfUrl(vveId: string, meetingId: string) {
+    return `${this.baseUrl}/vves/${vveId}/meetings/${meetingId}/minutes/pdf`;
+  }
+
   // STORY-075: Decision methods
   async createDecision(vveId: string, meetingId: string, data: import('@/types').DecisionCreate) {
     return this.fetch<import('@/types').MeetingDecision>(

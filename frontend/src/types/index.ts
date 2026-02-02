@@ -1035,6 +1035,37 @@ export interface MinutesTemplate {
   html_template: string;
 }
 
+// STORY-120: Minutes publishing types
+export interface MinutesPublishRequest {
+  send_email_notification?: boolean;
+  email_subject?: string;
+  email_message?: string;
+}
+
+export interface MinutesPublishResponse {
+  success: boolean;
+  minutes_id: string;
+  meeting_id: string;
+  published_at: string;
+  emails_sent: number;
+  emails_failed: number;
+  message: string;
+}
+
+export interface PublishedMinutesSummary {
+  id: string;
+  meeting_id: string;
+  meeting_title: string;
+  meeting_date: string;
+  published_at: string;
+  status: MinutesStatus;
+}
+
+export interface PublishedMinutesListResponse {
+  items: PublishedMinutesSummary[];
+  total: number;
+}
+
 export interface MeetingDecision {
   id: string;
   meeting_id: string;

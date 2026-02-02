@@ -465,6 +465,55 @@ class MinutesTemplate(BaseModel):
     html_template: str
 
 
+# STORY-120: Minutes publication schemas
+class MinutesPublishRequest(BaseModel):
+    """Request schema for publishing minutes to owners (STORY-120)."""
+
+    send_email_notification: bool = True
+    email_subject: str | None = Field(
+        None, 
+        max_length=255, 
+        description="Custom email subject (optional)"
+    )
+    email_message: str | None = Field(
+        None, 
+        max_length=2000, 
+        description="Custom email message (optional)"
+    )
+
+
+class MinutesPublishResponse(BaseModel):
+    """Response schema after publishing minutes (STORY-120)."""
+
+    success: bool
+    minutes_id: uuid.UUID
+    meeting_id: uuid.UUID
+    published_at: datetime
+    emails_sent: int
+    emails_failed: int
+    message: str
+
+
+class PublishedMinutesSummary(BaseModel):
+    """Summary of a published minutes document (STORY-120)."""
+
+    id: uuid.UUID
+    meeting_id: uuid.UUID
+    meeting_title: str
+    meeting_date: datetime
+    published_at: datetime
+    status: MinutesStatus
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PublishedMinutesListResponse(BaseModel):
+    """List of published minutes (STORY-120)."""
+
+    items: list[PublishedMinutesSummary]
+    total: int
+
+
 class DecisionCreate(BaseModel):
     """Schema for creating a decision/action item (STORY-075)."""
 
