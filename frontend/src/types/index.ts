@@ -1035,6 +1035,37 @@ export interface MinutesTemplate {
   html_template: string;
 }
 
+// STORY-120: Minutes publishing types
+export interface MinutesPublishRequest {
+  send_email_notification?: boolean;
+  email_subject?: string;
+  email_message?: string;
+}
+
+export interface MinutesPublishResponse {
+  success: boolean;
+  minutes_id: string;
+  meeting_id: string;
+  published_at: string;
+  emails_sent: number;
+  emails_failed: number;
+  message: string;
+}
+
+export interface PublishedMinutesSummary {
+  id: string;
+  meeting_id: string;
+  meeting_title: string;
+  meeting_date: string;
+  published_at: string;
+  status: MinutesStatus;
+}
+
+export interface PublishedMinutesListResponse {
+  items: PublishedMinutesSummary[];
+  total: number;
+}
+
 export interface MeetingDecision {
   id: string;
   meeting_id: string;
@@ -1625,4 +1656,292 @@ export interface DataExportConfirmation {
   status: DataExportStatus;
   message: string;
   estimated_completion_minutes: number;
+}
+
+// STORY-078, STORY-079, STORY-121: Compliance types
+export type ComplianceCategory = 'kvk' | 'verzekering' | 'avg' | 'alv' | 'onderhoud' | 'financieel' | 'overig';
+export type ComplianceStatus = 'compliant' | 'aandacht' | 'niet_compliant';
+
+export interface ComplianceItem {
+  id: string;
+  vve_id: string;
+  title: string;
+  description?: string;
+  category: ComplianceCategory;
+  deadline?: string;
+  alert_days_before: number;
+  is_recurring: boolean;
+  recurrence_months?: number;
+  status: ComplianceStatus;
+  is_completed: boolean;
+  completed_at?: string;
+  completed_by_id?: string;
+  completed_by_name?: string;
+  evidence_document_id?: string;
+  evidence_document_name?: string;
+  created_by_id?: string;
+  created_at: string;
+  updated_at: string;
+  days_until_deadline?: number;
+  is_deadline_approaching: boolean;
+  is_overdue: boolean;
+}
+
+export interface ComplianceItemCreate {
+  title: string;
+  description?: string;
+  category: ComplianceCategory;
+  deadline?: string;
+  alert_days_before?: number;
+  is_recurring?: boolean;
+  recurrence_months?: number;
+}
+
+export interface ComplianceItemUpdate {
+  title?: string;
+  description?: string;
+  category?: ComplianceCategory;
+  deadline?: string;
+  alert_days_before?: number;
+  is_recurring?: boolean;
+  recurrence_months?: number;
+}
+
+export interface ComplianceCategorySummary {
+  category: ComplianceCategory;
+  category_label: string;
+  total_items: number;
+  completed_items: number;
+  pending_items: number;
+  overdue_items: number;
+  status: ComplianceStatus;
+  compliance_percentage: number;
+}
+
+export interface ComplianceDashboard {
+  vve_id: string;
+  overall_compliance_percentage: number;
+  overall_status: ComplianceStatus;
+  total_items: number;
+  completed_items: number;
+  pending_items: number;
+  overdue_items: number;
+  categories: ComplianceCategorySummary[];
+  upcoming_deadlines: ComplianceItem[];
+}
+
+export interface ComplianceCompletionRequest {
+  evidence_document_id?: string;
+  notes?: string;
+  completion_date?: string;
+}
+
+export interface ComplianceCompletionResponse {
+  compliance_item_id: string;
+  completed_at: string;
+  completed_by_name: string;
+  evidence_document_name?: string;
+  message: string;
+}
+
+export interface ComplianceAlert {
+  compliance_item_id: string;
+  title: string;
+  category: ComplianceCategory;
+  deadline: string;
+  days_until_deadline: number;
+  alert_level: 'info' | 'warning' | 'critical';
+  action_url?: string;
+}
+
+export interface ComplianceAlertsResponse {
+  vve_id: string;
+  total_alerts: number;
+  critical_count: number;
+  warning_count: number;
+  info_count: number;
+  alerts: ComplianceAlert[];
+}
+
+export interface ComplianceHistoryEntry {
+  id: string;
+  compliance_item_id: string;
+  completed_at: string;
+  completed_by_id?: string;
+  completed_by_name?: string;
+  evidence_document_id?: string;
+  evidence_document_name?: string;
+  notes?: string;
+  created_at: string;
+}
+
+export interface ComplianceHistoryResponse {
+  compliance_item_id: string;
+  item_title: string;
+  entries: ComplianceHistoryEntry[];
+  total_completions: number;
+}
+
+// STORY-081: Decision Search types
+export type DecisionVoteResult = 'aangenomen' | 'verworpen' | 'aangehouden' | 'onbekend';
+
+export interface DecisionSearchRequest {
+  query?: string;
+  date_from?: string;
+  date_to?: string;
+  vote_result?: DecisionVoteResult;
+  decision_type?: DecisionType;
+  meeting_id?: string;
+  skip?: number;
+  limit?: number;
+}
+
+export interface DecisionSearchResult {
+  id: string;
+  meeting_id: string;
+  meeting_title: string;
+  meeting_date: string;
+  decision_type: DecisionType;
+  title: string;
+  description?: string;
+  vote_result?: DecisionVoteResult;
+  is_completed: boolean;
+  created_at: string;
+  relevance_snippet?: string;
+  match_score?: number;
+}
+
+export interface DecisionSearchResponse {
+  query?: string;
+  total_count: number;
+  results: DecisionSearchResult[];
+  has_more: boolean;
+  filters_applied: string[];
+}
+
+// STORY-062-068: MJOP (Maintenance Plan) types
+export type MaintenanceElementCategory = 'roof' | 'facade' | 'foundation' | 'windows' | 'doors' | 'elevator' | 'heating' | 'plumbing' | 'electrical' | 'common_areas' | 'garden' | 'parking' | 'other';
+export type MaintenanceStatus = 'planned' | 'in_progress' | 'completed' | 'postponed' | 'cancelled';
+export type MaintenancePriority = 'low' | 'medium' | 'high' | 'urgent';
+
+export interface MaintenanceElement {
+  id: string;
+  vve_id: string;
+  name: string;
+  description?: string;
+  category: MaintenanceElementCategory;
+  location?: string;
+  quantity: number;
+  unit?: string;
+  installation_year?: number;
+  expected_lifespan_years?: number;
+  last_maintenance_year?: number;
+  next_maintenance_year?: number;
+  estimated_cost?: number;
+  priority: MaintenancePriority;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MaintenanceElementCreate {
+  name: string;
+  description?: string;
+  category: MaintenanceElementCategory;
+  location?: string;
+  quantity?: number;
+  unit?: string;
+  installation_year?: number;
+  expected_lifespan_years?: number;
+  last_maintenance_year?: number;
+  next_maintenance_year?: number;
+  estimated_cost?: number;
+  priority?: MaintenancePriority;
+}
+
+export interface MaintenanceTask {
+  id: string;
+  maintenance_element_id: string;
+  element_name: string;
+  title: string;
+  description?: string;
+  scheduled_year: number;
+  scheduled_month?: number;
+  estimated_cost?: number;
+  actual_cost?: number;
+  status: MaintenanceStatus;
+  priority: MaintenancePriority;
+  assigned_to_id?: string;
+  assigned_to_name?: string;
+  completed_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MaintenanceTaskCreate {
+  maintenance_element_id: string;
+  title: string;
+  description?: string;
+  scheduled_year: number;
+  scheduled_month?: number;
+  estimated_cost?: number;
+  status?: MaintenanceStatus;
+  priority?: MaintenancePriority;
+  assigned_to_id?: string;
+}
+
+export interface MJOPImportPreviewRow {
+  row_number: number;
+  data: Record<string, string>;
+  errors: string[];
+  is_valid: boolean;
+}
+
+export interface MJOPImportPreviewResponse {
+  file_name: string;
+  total_rows: number;
+  valid_rows: number;
+  invalid_rows: number;
+  column_mapping: Record<string, string>;
+  preview_rows: MJOPImportPreviewRow[];
+  available_columns: string[];
+}
+
+export interface MJOPImportResponse {
+  success: boolean;
+  imported_count: number;
+  failed_count: number;
+  errors: string[];
+  batch_id: string;
+}
+
+export interface MJOPTimelineItem {
+  year: number;
+  element_id: string;
+  element_name: string;
+  category: MaintenanceElementCategory;
+  estimated_cost: number;
+  priority: MaintenancePriority;
+  is_planned: boolean;
+}
+
+export interface MJOPTimelineResponse {
+  start_year: number;
+  end_year: number;
+  items: MJOPTimelineItem[];
+  total_estimated_cost: number;
+  yearly_totals: Record<number, number>;
+}
+
+export interface ReserveCalculationRequest {
+  horizon_years?: number;
+  annual_contribution?: number;
+  current_reserve?: number;
+}
+
+export interface ReserveCalculationResponse {
+  horizon_years: number;
+  current_reserve: number;
+  recommended_annual_contribution: number;
+  yearly_projections: { year: number; balance: number; contributions: number; expenses: number }[];
+  shortfall_years: number[];
 }

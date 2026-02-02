@@ -1100,6 +1100,27 @@ class ApiClient {
     );
   }
 
+  // STORY-120: Minutes publishing methods
+  async publishMinutes(vveId: string, meetingId: string, data: import('@/types').MinutesPublishRequest = {}) {
+    return this.fetch<import('@/types').MinutesPublishResponse>(
+      `/vves/${vveId}/meetings/${meetingId}/minutes/publish`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async listPublishedMinutes(vveId: string, skip = 0, limit = 20) {
+    return this.fetch<import('@/types').PublishedMinutesListResponse>(
+      `/vves/${vveId}/meetings/published-minutes?skip=${skip}&limit=${limit}`
+    );
+  }
+
+  getMinutesPdfUrl(vveId: string, meetingId: string) {
+    return `${this.baseUrl}/vves/${vveId}/meetings/${meetingId}/minutes/pdf`;
+  }
+
   // STORY-075: Decision methods
   async createDecision(vveId: string, meetingId: string, data: import('@/types').DecisionCreate) {
     return this.fetch<import('@/types').MeetingDecision>(
@@ -1125,6 +1146,27 @@ class ApiClient {
         method: 'PATCH',
         body: JSON.stringify(data),
       }
+    );
+  }
+
+  // STORY-081: Decision search methods
+  async searchDecisions(vveId: string, request: import('@/types').DecisionSearchRequest) {
+    return this.fetch<import('@/types').DecisionSearchResponse>(
+      `/vves/${vveId}/meetings/decisions/search`,
+      {
+        method: 'POST',
+        body: JSON.stringify(request),
+      }
+    );
+  }
+
+  async getDecisionRegister(vveId: string, skip = 0, limit = 50, decisionType?: import('@/types').DecisionType) {
+    const params = new URLSearchParams();
+    params.append('skip', skip.toString());
+    params.append('limit', limit.toString());
+    if (decisionType) params.append('decision_type', decisionType);
+    return this.fetch<import('@/types').DecisionSearchResponse>(
+      `/vves/${vveId}/meetings/decisions/register?${params.toString()}`
     );
   }
 
@@ -1437,6 +1479,184 @@ class ApiClient {
       `/vves/${vveId}/privacy/data-export/${requestId}`,
       { method: 'DELETE' }
     );
+  }
+
+  // STORY-078, STORY-079, STORY-121: Compliance methods
+  async getComplianceDashboard(vveId: string) {
+    return this.fetch<import('@/types').ComplianceDashboard>(
+      `/vves/${vveId}/compliance/dashboard`
+    );
+  }
+
+  async listComplianceItems(vveId: string, category?: import('@/types').ComplianceCategory, status?: import('@/types').ComplianceStatus) {
+    const params = new URLSearchParams();
+    if (category) params.append('category', category);
+    if (status) params.append('status', status);
+    const query = params.toString() ? `?${params.toString()}` : '';
+    return this.fetch<import('@/types').ComplianceItem[]>(
+      `/vves/${vveId}/compliance/items${query}`
+    );
+  }
+
+  async getComplianceItem(vveId: string, itemId: string) {
+    return this.fetch<import('@/types').ComplianceItem>(
+      `/vves/${vveId}/compliance/items/${itemId}`
+    );
+  }
+
+  async createComplianceItem(vveId: string, data: import('@/types').ComplianceItemCreate) {
+    return this.fetch<import('@/types').ComplianceItem>(
+      `/vves/${vveId}/compliance/items`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async updateComplianceItem(vveId: string, itemId: string, data: import('@/types').ComplianceItemUpdate) {
+    return this.fetch<import('@/types').ComplianceItem>(
+      `/vves/${vveId}/compliance/items/${itemId}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async deleteComplianceItem(vveId: string, itemId: string) {
+    return this.fetch<void>(
+      `/vves/${vveId}/compliance/items/${itemId}`,
+      { method: 'DELETE' }
+    );
+  }
+
+  async completeComplianceItem(vveId: string, itemId: string, data: import('@/types').ComplianceCompletionRequest = {}) {
+    return this.fetch<import('@/types').ComplianceCompletionResponse>(
+      `/vves/${vveId}/compliance/items/${itemId}/complete`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async getComplianceAlerts(vveId: string) {
+    return this.fetch<import('@/types').ComplianceAlertsResponse>(
+      `/vves/${vveId}/compliance/alerts`
+    );
+  }
+
+  async getComplianceHistory(vveId: string, itemId: string) {
+    return this.fetch<import('@/types').ComplianceHistoryResponse>(
+      `/vves/${vveId}/compliance/items/${itemId}/history`
+    );
+  }
+
+  // ============================================================================
+  // MJOP Methods (STORY-062-068)
+  // ============================================================================
+
+  // STORY-062: Excel import
+  async uploadMJOPExcel(vveId: string, file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+    return fetch(`${this.baseUrl}/vves/${vveId}/mjop/import/upload`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: formData,
+    }).then(res => res.json()) as Promise<import('@/types').MJOPImportPreviewResponse>;
+  }
+
+  async confirmMJOPImport(vveId: string, columnMapping: Record<string, string>, fileName: string) {
+    return this.fetch<import('@/types').MJOPImportResponse>(
+      `/vves/${vveId}/mjop/import/confirm`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ column_mapping: columnMapping, file_name: fileName }),
+      }
+    );
+  }
+
+  // STORY-063: Maintenance elements
+  async listMaintenanceElements(vveId: string, category?: import('@/types').MaintenanceElementCategory) {
+    const params = category ? `?category=${category}` : '';
+    return this.fetch<import('@/types').MaintenanceElement[]>(
+      `/vves/${vveId}/mjop/elements${params}`
+    );
+  }
+
+  async createMaintenanceElement(vveId: string, data: import('@/types').MaintenanceElementCreate) {
+    return this.fetch<import('@/types').MaintenanceElement>(
+      `/vves/${vveId}/mjop/elements`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  // STORY-064: Timeline visualization
+  async getMJOPTimeline(vveId: string, startYear?: number, endYear?: number) {
+    const params = new URLSearchParams();
+    if (startYear) params.append('start_year', startYear.toString());
+    if (endYear) params.append('end_year', endYear.toString());
+    const query = params.toString() ? `?${params.toString()}` : '';
+    return this.fetch<import('@/types').MJOPTimelineResponse>(
+      `/vves/${vveId}/mjop/timeline${query}`
+    );
+  }
+
+  // STORY-065: Reserve calculation
+  async calculateReserve(vveId: string, request: import('@/types').ReserveCalculationRequest = {}) {
+    return this.fetch<import('@/types').ReserveCalculationResponse>(
+      `/vves/${vveId}/mjop/reserve-calculation`,
+      {
+        method: 'POST',
+        body: JSON.stringify(request),
+      }
+    );
+  }
+
+  // STORY-067: Maintenance tasks
+  async listMaintenanceTasks(vveId: string, elementId?: string, status?: import('@/types').MaintenanceStatus) {
+    const params = new URLSearchParams();
+    if (elementId) params.append('element_id', elementId);
+    if (status) params.append('status', status);
+    const query = params.toString() ? `?${params.toString()}` : '';
+    return this.fetch<import('@/types').MaintenanceTask[]>(
+      `/vves/${vveId}/mjop/tasks${query}`
+    );
+  }
+
+  async createMaintenanceTask(vveId: string, data: import('@/types').MaintenanceTaskCreate) {
+    return this.fetch<import('@/types').MaintenanceTask>(
+      `/vves/${vveId}/mjop/tasks`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  // STORY-068: Update task status
+  async updateMaintenanceTask(vveId: string, taskId: string, data: Partial<import('@/types').MaintenanceTask>) {
+    return this.fetch<import('@/types').MaintenanceTask>(
+      `/vves/${vveId}/mjop/tasks/${taskId}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  private getAuthHeaders(): Record<string, string> {
+    const headers: Record<string, string> = {};
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('auth_token');
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+    }
+    return headers;
   }
 }
 
