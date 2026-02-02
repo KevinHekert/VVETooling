@@ -1459,6 +1459,78 @@ class ApiClient {
       { method: 'DELETE' }
     );
   }
+
+  // STORY-078, STORY-079, STORY-121: Compliance methods
+  async getComplianceDashboard(vveId: string) {
+    return this.fetch<import('@/types').ComplianceDashboard>(
+      `/vves/${vveId}/compliance/dashboard`
+    );
+  }
+
+  async listComplianceItems(vveId: string, category?: import('@/types').ComplianceCategory, status?: import('@/types').ComplianceStatus) {
+    const params = new URLSearchParams();
+    if (category) params.append('category', category);
+    if (status) params.append('status', status);
+    const query = params.toString() ? `?${params.toString()}` : '';
+    return this.fetch<import('@/types').ComplianceItem[]>(
+      `/vves/${vveId}/compliance/items${query}`
+    );
+  }
+
+  async getComplianceItem(vveId: string, itemId: string) {
+    return this.fetch<import('@/types').ComplianceItem>(
+      `/vves/${vveId}/compliance/items/${itemId}`
+    );
+  }
+
+  async createComplianceItem(vveId: string, data: import('@/types').ComplianceItemCreate) {
+    return this.fetch<import('@/types').ComplianceItem>(
+      `/vves/${vveId}/compliance/items`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async updateComplianceItem(vveId: string, itemId: string, data: import('@/types').ComplianceItemUpdate) {
+    return this.fetch<import('@/types').ComplianceItem>(
+      `/vves/${vveId}/compliance/items/${itemId}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async deleteComplianceItem(vveId: string, itemId: string) {
+    return this.fetch<void>(
+      `/vves/${vveId}/compliance/items/${itemId}`,
+      { method: 'DELETE' }
+    );
+  }
+
+  async completeComplianceItem(vveId: string, itemId: string, data: import('@/types').ComplianceCompletionRequest = {}) {
+    return this.fetch<import('@/types').ComplianceCompletionResponse>(
+      `/vves/${vveId}/compliance/items/${itemId}/complete`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async getComplianceAlerts(vveId: string) {
+    return this.fetch<import('@/types').ComplianceAlertsResponse>(
+      `/vves/${vveId}/compliance/alerts`
+    );
+  }
+
+  async getComplianceHistory(vveId: string, itemId: string) {
+    return this.fetch<import('@/types').ComplianceHistoryResponse>(
+      `/vves/${vveId}/compliance/items/${itemId}/history`
+    );
+  }
 }
 
 export const api = new ApiClient(API_BASE_URL);

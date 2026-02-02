@@ -1657,3 +1657,127 @@ export interface DataExportConfirmation {
   message: string;
   estimated_completion_minutes: number;
 }
+
+// STORY-078, STORY-079, STORY-121: Compliance types
+export type ComplianceCategory = 'kvk' | 'verzekering' | 'avg' | 'alv' | 'onderhoud' | 'financieel' | 'overig';
+export type ComplianceStatus = 'compliant' | 'aandacht' | 'niet_compliant';
+
+export interface ComplianceItem {
+  id: string;
+  vve_id: string;
+  title: string;
+  description?: string;
+  category: ComplianceCategory;
+  deadline?: string;
+  alert_days_before: number;
+  is_recurring: boolean;
+  recurrence_months?: number;
+  status: ComplianceStatus;
+  is_completed: boolean;
+  completed_at?: string;
+  completed_by_id?: string;
+  completed_by_name?: string;
+  evidence_document_id?: string;
+  evidence_document_name?: string;
+  created_by_id?: string;
+  created_at: string;
+  updated_at: string;
+  days_until_deadline?: number;
+  is_deadline_approaching: boolean;
+  is_overdue: boolean;
+}
+
+export interface ComplianceItemCreate {
+  title: string;
+  description?: string;
+  category: ComplianceCategory;
+  deadline?: string;
+  alert_days_before?: number;
+  is_recurring?: boolean;
+  recurrence_months?: number;
+}
+
+export interface ComplianceItemUpdate {
+  title?: string;
+  description?: string;
+  category?: ComplianceCategory;
+  deadline?: string;
+  alert_days_before?: number;
+  is_recurring?: boolean;
+  recurrence_months?: number;
+}
+
+export interface ComplianceCategorySummary {
+  category: ComplianceCategory;
+  category_label: string;
+  total_items: number;
+  completed_items: number;
+  pending_items: number;
+  overdue_items: number;
+  status: ComplianceStatus;
+  compliance_percentage: number;
+}
+
+export interface ComplianceDashboard {
+  vve_id: string;
+  overall_compliance_percentage: number;
+  overall_status: ComplianceStatus;
+  total_items: number;
+  completed_items: number;
+  pending_items: number;
+  overdue_items: number;
+  categories: ComplianceCategorySummary[];
+  upcoming_deadlines: ComplianceItem[];
+}
+
+export interface ComplianceCompletionRequest {
+  evidence_document_id?: string;
+  notes?: string;
+  completion_date?: string;
+}
+
+export interface ComplianceCompletionResponse {
+  compliance_item_id: string;
+  completed_at: string;
+  completed_by_name: string;
+  evidence_document_name?: string;
+  message: string;
+}
+
+export interface ComplianceAlert {
+  compliance_item_id: string;
+  title: string;
+  category: ComplianceCategory;
+  deadline: string;
+  days_until_deadline: number;
+  alert_level: 'info' | 'warning' | 'critical';
+  action_url?: string;
+}
+
+export interface ComplianceAlertsResponse {
+  vve_id: string;
+  total_alerts: number;
+  critical_count: number;
+  warning_count: number;
+  info_count: number;
+  alerts: ComplianceAlert[];
+}
+
+export interface ComplianceHistoryEntry {
+  id: string;
+  compliance_item_id: string;
+  completed_at: string;
+  completed_by_id?: string;
+  completed_by_name?: string;
+  evidence_document_id?: string;
+  evidence_document_name?: string;
+  notes?: string;
+  created_at: string;
+}
+
+export interface ComplianceHistoryResponse {
+  compliance_item_id: string;
+  item_title: string;
+  entries: ComplianceHistoryEntry[];
+  total_completions: number;
+}
