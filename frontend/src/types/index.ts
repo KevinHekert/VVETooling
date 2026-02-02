@@ -1781,3 +1781,40 @@ export interface ComplianceHistoryResponse {
   entries: ComplianceHistoryEntry[];
   total_completions: number;
 }
+
+// STORY-081: Decision Search types
+export type DecisionVoteResult = 'aangenomen' | 'verworpen' | 'aangehouden' | 'onbekend';
+
+export interface DecisionSearchRequest {
+  query?: string;
+  date_from?: string;
+  date_to?: string;
+  vote_result?: DecisionVoteResult;
+  decision_type?: DecisionType;
+  meeting_id?: string;
+  skip?: number;
+  limit?: number;
+}
+
+export interface DecisionSearchResult {
+  id: string;
+  meeting_id: string;
+  meeting_title: string;
+  meeting_date: string;
+  decision_type: DecisionType;
+  title: string;
+  description?: string;
+  vote_result?: DecisionVoteResult;
+  is_completed: boolean;
+  created_at: string;
+  relevance_snippet?: string;
+  match_score?: number;
+}
+
+export interface DecisionSearchResponse {
+  query?: string;
+  total_count: number;
+  results: DecisionSearchResult[];
+  has_more: boolean;
+  filters_applied: string[];
+}

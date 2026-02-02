@@ -1149,6 +1149,27 @@ class ApiClient {
     );
   }
 
+  // STORY-081: Decision search methods
+  async searchDecisions(vveId: string, request: import('@/types').DecisionSearchRequest) {
+    return this.fetch<import('@/types').DecisionSearchResponse>(
+      `/vves/${vveId}/meetings/decisions/search`,
+      {
+        method: 'POST',
+        body: JSON.stringify(request),
+      }
+    );
+  }
+
+  async getDecisionRegister(vveId: string, skip = 0, limit = 50, decisionType?: import('@/types').DecisionType) {
+    const params = new URLSearchParams();
+    params.append('skip', skip.toString());
+    params.append('limit', limit.toString());
+    if (decisionType) params.append('decision_type', decisionType);
+    return this.fetch<import('@/types').DecisionSearchResponse>(
+      `/vves/${vveId}/meetings/decisions/register?${params.toString()}`
+    );
+  }
+
   // STORY-076: Extract decisions to register
   async extractDecisions(vveId: string, meetingId: string, decisionIds?: string[]) {
     return this.fetch<import('@/types').DecisionExtractResponse>(
