@@ -122,7 +122,7 @@ export default function Chatbot({ vveId, onClose }: ChatbotProps) {
     if (!inputValue.trim() || isLoading) return;
 
     const userMessage: ChatMessage = {
-      id: crypto.randomUUID(),
+      id: `temp-${crypto.randomUUID()}`,
       role: 'user',
       content: inputValue.trim(),
       created_at: new Date().toISOString(),
@@ -152,7 +152,7 @@ export default function Chatbot({ vveId, onClose }: ChatbotProps) {
     } catch (error) {
       // Add error message
       const errorMessage: ChatMessage = {
-        id: crypto.randomUUID(),
+        id: `temp-error-${crypto.randomUUID()}`,
         role: 'system',
         content: 'Er is een fout opgetreden. Probeer het later opnieuw.',
         created_at: new Date().toISOString(),
@@ -190,7 +190,7 @@ export default function Chatbot({ vveId, onClose }: ChatbotProps) {
 
       // Add system message about escalation
       const systemMessage: ChatMessage = {
-        id: crypto.randomUUID(),
+        id: `temp-system-${crypto.randomUUID()}`,
         role: 'system',
         content: 'Uw vraag is doorgestuurd naar het bestuur. U ontvangt een reactie via e-mail.',
         created_at: new Date().toISOString(),
@@ -199,7 +199,16 @@ export default function Chatbot({ vveId, onClose }: ChatbotProps) {
       };
       setMessages((prev) => [...prev, systemMessage]);
     } catch (error) {
-      // Show error
+      // Add error message
+      const errorMessage: ChatMessage = {
+        id: `temp-error-${crypto.randomUUID()}`,
+        role: 'system',
+        content: 'Er is een fout opgetreden bij het escaleren. Probeer het later opnieuw.',
+        created_at: new Date().toISOString(),
+        document_references: [],
+        follow_up_suggestions: [],
+      };
+      setMessages((prev) => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
     }
