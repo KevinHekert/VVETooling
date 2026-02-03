@@ -89,7 +89,7 @@ docker compose -f docker-compose.dev.yml exec backend python -m app.db.init_db
 ```
 
 De dev-omgeving seed automatisch een beheerder:
-- **E-mail:** `admin@vvetooling.local`
+- **E-mail:** `admin@vvetooling.example.com`
 - **Wachtwoord:** `Admin123!`
 - **VVE:** `VVETooling Demo VVE`
 

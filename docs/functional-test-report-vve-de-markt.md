@@ -53,7 +53,7 @@ Dit rapport bevat de resultaten van een uitgebreide functionele UI/UX test van d
 - ✅ "Onthoud mij" checkbox aanwezig
 - ✅ "Wachtwoord vergeten?" link beschikbaar
 - ✅ Error handling werkt correct (inline foutmeldingen)
-- ⚠️ **BUG:** Standaard dev admin e-mail `admin@vvetooling.local` wordt afgewezen door Pydantic EmailStr validatie (`.local` domein niet toegestaan)
+- ~~⚠️ **BUG:** Standaard dev admin e-mail `admin@vvetooling.local` wordt afgewezen door Pydantic EmailStr validatie (`.local` domein niet toegestaan)~~ ✅ **FIXED:** Dev admin e-mail gewijzigd naar `admin@vvetooling.example.com`
 
 **Screenshot:** `test-01-login-page.png`, `test-02-login-filled.png`
 
