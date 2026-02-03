@@ -2210,3 +2210,107 @@ class DataExportRequest(Base):
         Index("ix_data_export_requests_status", "status"),
         Index("ix_data_export_requests_download_token", "download_token"),
     )
+
+
+# =============================================================================
+# EPIC-017: AI-Assistent
+# =============================================================================
+
+
+class ChatMessageRole(str, Enum):
+    """Role of the chat message sender (FEAT-038)."""
+
+    USER = "user"
+    ASSISTANT = "assistant"
+    SYSTEM = "system"
+
+
+class ChatEscalationStatus(str, Enum):
+    """Status of chat escalation to the board (STORY-123)."""
+
+    NONE = "none"
+    REQUESTED = "requested"
+    ESCALATED = "escalated"
+    RESOLVED = "resolved"
+
+
+class ChatConversation(Base):
+    """Chat conversation with the AI chatbot (STORY-082).
+
+    Implements FEAT-038: AI Chatbot.
+    Allows owners to ask questions about VVE matters.
+    """
+
+    __tablename__ = "chat_conversations"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    vve_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("vves.id", ondelete="CASCADE"), nullable=False
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    # Escalation (STORY-123)
+    escalation_status: Mapped[ChatEscalationStatus] = mapped_column(
+        SQLEnum(ChatEscalationStatus), default=ChatEscalationStatus.NONE
+    )
+    escalation_reason: Mapped[str | None] = mapped_column(Text)
+    escalated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Timestamps
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    # Relationships
+    messages: Mapped[list["ChatMessage"]] = relationship(
+        "ChatMessage", back_populates="conversation", cascade="all, delete-orphan"
+    )
+
+    __table_args__ = (
+        Index("ix_chat_conversations_vve_id", "vve_id"),
+        Index("ix_chat_conversations_user_id", "user_id"),
+        Index("ix_chat_conversations_escalation_status", "escalation_status"),
+    )
+
+
+class ChatMessage(Base):
+    """Individual message in a chat conversation (STORY-082).
+
+    Implements FEAT-038: AI Chatbot message storage.
+    """
+
+    __tablename__ = "chat_messages"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    conversation_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("chat_conversations.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    role: Mapped[ChatMessageRole] = mapped_column(
+        SQLEnum(ChatMessageRole), nullable=False
+    )
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    # Suggestions for follow-up questions
+    follow_up_suggestions: Mapped[list[str] | None] = mapped_column(Text)  # JSON array
+    # Timestamp
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+    # Relationships
+    conversation: Mapped["ChatConversation"] = relationship(
+        "ChatConversation", back_populates="messages"
+    )
+
+    __table_args__ = (
+        Index("ix_chat_messages_conversation_id", "conversation_id"),
+        Index("ix_chat_messages_created_at", "created_at"),
+    )
