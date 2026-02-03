@@ -10,6 +10,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes import auth, transactions, units, contributions, documents, budgets, audit, tickets, splitsingsakte, email, contracts, meetings, mjop, compliance, voting, privacy, analytics, chatbot
 from app.core.config import get_settings
 from app.db.dev_seed import ensure_dev_admin
+from app.db.init_db import init_db
+from app.db.session import engine
 
 settings = get_settings()
 
@@ -74,8 +76,9 @@ def create_app() -> FastAPI:
     app.include_router(chatbot.router, prefix=api_prefix)
 
     @app.on_event("startup")
-    async def seed_dev_data() -> None:
-        """Seed development data on startup."""
+    async def startup() -> None:
+        """Initialize database and seed development data on startup."""
+        await init_db(engine)
         await ensure_dev_admin()
 
     @app.get("/health", tags=["system"])
