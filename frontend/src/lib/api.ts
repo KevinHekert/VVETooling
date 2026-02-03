@@ -1658,6 +1658,89 @@ class ApiClient {
     }
     return headers;
   }
+
+  // ==========================================================================
+  // EPIC-017: AI-Assistent (Chatbot) - STORY-082
+  // ==========================================================================
+
+  /**
+   * Start a new chatbot conversation (STORY-082)
+   */
+  async createChatConversation(
+    vveId: string,
+    initialMessage: string
+  ): Promise<import('@/types').ChatConversation> {
+    return this.fetch<import('@/types').ChatConversation>(
+      `/vves/${vveId}/chatbot/conversations`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ initial_message: initialMessage }),
+      }
+    );
+  }
+
+  /**
+   * List all chat conversations for the current user
+   */
+  async listChatConversations(
+    vveId: string,
+    options?: { limit?: number; offset?: number }
+  ): Promise<import('@/types').ChatConversationSummary[]> {
+    const params = new URLSearchParams();
+    if (options?.limit) params.set('limit', options.limit.toString());
+    if (options?.offset) params.set('offset', options.offset.toString());
+    const query = params.toString() ? `?${params.toString()}` : '';
+    
+    return this.fetch<import('@/types').ChatConversationSummary[]>(
+      `/vves/${vveId}/chatbot/conversations${query}`
+    );
+  }
+
+  /**
+   * Get a specific conversation with all messages
+   */
+  async getChatConversation(
+    vveId: string,
+    conversationId: string
+  ): Promise<import('@/types').ChatConversation> {
+    return this.fetch<import('@/types').ChatConversation>(
+      `/vves/${vveId}/chatbot/conversations/${conversationId}`
+    );
+  }
+
+  /**
+   * Add a message to an existing conversation
+   */
+  async addChatMessage(
+    vveId: string,
+    conversationId: string,
+    content: string
+  ): Promise<import('@/types').ChatMessage> {
+    return this.fetch<import('@/types').ChatMessage>(
+      `/vves/${vveId}/chatbot/conversations/${conversationId}/messages`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ content }),
+      }
+    );
+  }
+
+  /**
+   * Escalate a conversation to the board (STORY-123)
+   */
+  async escalateChatConversation(
+    vveId: string,
+    conversationId: string,
+    reason: string
+  ): Promise<import('@/types').ChatEscalationResponse> {
+    return this.fetch<import('@/types').ChatEscalationResponse>(
+      `/vves/${vveId}/chatbot/conversations/${conversationId}/escalate`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ reason }),
+      }
+    );
+  }
 }
 
 export const api = new ApiClient(API_BASE_URL);

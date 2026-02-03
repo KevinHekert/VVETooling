@@ -1945,3 +1945,74 @@ export interface ReserveCalculationResponse {
   yearly_projections: { year: number; balance: number; contributions: number; expenses: number }[];
   shortfall_years: number[];
 }
+
+// =============================================================================
+// EPIC-017: AI-Assistent (Chatbot)
+// =============================================================================
+
+// Chat Message Role (STORY-082)
+export type ChatMessageRole = 'user' | 'assistant' | 'system';
+
+// Chat Escalation Status (STORY-123)
+export type ChatEscalationStatus = 'none' | 'requested' | 'escalated' | 'resolved';
+
+// Document Reference in chat responses
+export interface DocumentReference {
+  document_id: string;
+  title: string;
+  path?: string;
+}
+
+// Chat Message (STORY-082)
+export interface ChatMessage {
+  id: string;
+  role: ChatMessageRole;
+  content: string;
+  created_at: string;
+  document_references: DocumentReference[];
+  follow_up_suggestions: string[];
+}
+
+// Chat Conversation (STORY-082)
+export interface ChatConversation {
+  id: string;
+  vve_id: string;
+  user_id: string;
+  messages: ChatMessage[];
+  escalation_status: ChatEscalationStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+// Chat Conversation Summary for listing
+export interface ChatConversationSummary {
+  id: string;
+  first_message: string;
+  message_count: number;
+  escalation_status: ChatEscalationStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+// Create new conversation request
+export interface ChatConversationCreate {
+  initial_message: string;
+}
+
+// Add message to conversation request
+export interface ChatMessageCreate {
+  content: string;
+}
+
+// Escalation request (STORY-123)
+export interface ChatEscalationRequest {
+  reason: string;
+}
+
+// Escalation response
+export interface ChatEscalationResponse {
+  conversation_id: string;
+  escalation_status: ChatEscalationStatus;
+  reason: string;
+  escalated_at: string;
+}
