@@ -7,7 +7,7 @@ Based on architecture documentation and ADRs.
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import auth, transactions, units, contributions, documents, budgets, audit, tickets, splitsingsakte, email, contracts, meetings, mjop, compliance, voting, privacy, analytics
+from app.api.routes import auth, transactions, units, contributions, documents, budgets, audit, tickets, splitsingsakte, email, contracts, meetings, mjop, compliance, voting, privacy, analytics, chatbot
 from app.core.config import get_settings
 from app.db.dev_seed import ensure_dev_admin
 
@@ -28,6 +28,7 @@ def create_app() -> FastAPI:
         - **Splitsingssleutel** (FEAT-003): Eigendomsverhouding configureren
         - **Contributieberekening** (FEAT-004): Bijdrageberekening per eenheid
         - **Documentbeheer** (FEAT-011): Documenten uploaden en delen
+        - **AI Chatbot** (FEAT-038): AI-assistent voor VVE-vragen
 
         ## Rollen
         - **Bewoner**: Eigen betalingsstatus inzien
@@ -70,6 +71,7 @@ def create_app() -> FastAPI:
     app.include_router(voting.router, prefix=api_prefix)
     app.include_router(privacy.router, prefix=api_prefix)
     app.include_router(analytics.router, prefix=api_prefix)
+    app.include_router(chatbot.router, prefix=api_prefix)
 
     @app.on_event("startup")
     async def seed_dev_data() -> None:
