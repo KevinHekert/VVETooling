@@ -3,28 +3,32 @@
 ## Documentinformatie
 - **Datum**: 2026-01-27
 - **Eigenaar**: Product Owner
-- **Status**: ⬜ Backlog
-- **Versie**: 1.0
+- **Status**: ✅ Geïmplementeerd
+- **Versie**: 1.1
 - **Geneste nummering**: 17.1
 
 ## Functioneel doel
 AI-gestuurde chatbot voor eigenaren om veelgestelde vragen te beantwoorden over financiën, onderhoud en procedures.
 
 ## UX-impact
-- Chatbot widget in app/website
-- Natuurlijke taal interface
-- Doorverwijzing naar documenten
-- Escalatie naar menselijke support
+- Chatbot widget in app/website ✅
+- Natuurlijke taal interface ✅
+- Doorverwijzing naar documenten ✅
+- Escalatie naar menselijke support ✅
 
 ## Constraints
-- Privacy: geen persoonsgegevens opslaan in chat
-- Fallback naar menselijke support
+- Privacy: geen persoonsgegevens opslaan in chat ✅
+- Fallback naar menselijke support ✅
 
 ## Acceptatiecriteria
-- Chatbot beantwoordt FAQ's over VVE-zaken
-- Antwoorden bevatten links naar relevante documenten
-- Onbeantwoorde vragen worden geëscaleerd
-- Conversatie-historie is zichtbaar voor gebruiker
+- Chatbot beantwoordt FAQ's over VVE-zaken ✅
+- Antwoorden bevatten links naar relevante documenten ✅
+- Onbeantwoorde vragen worden geëscaleerd ✅
+- Conversatie-historie is zichtbaar voor gebruiker ✅
+
+## Implementatie
+- STORY-082: AI chatbot vraag stellen ✅
+- STORY-123: Chatbot escalatie naar bestuur ✅
 
 ## Afhankelijkheden
 - EPIC-017

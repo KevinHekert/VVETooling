@@ -164,10 +164,10 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
     - 16.3 **FEAT-037 Besluiten Register** ✅
       - 16.3.1 ✅ STORY-081 Besluit doorzoeken in register (Should)
 
-17. **EPIC-017 AI-Assistent** ⬜
-    - 17.1 **FEAT-038 AI Chatbot** ⬜
-      - 17.1.1 ⬜ STORY-082 AI chatbot vraag stellen (Could)
-      - 17.1.2 ⬜ STORY-123 Chatbot escalatie naar bestuur (Could)
+17. **EPIC-017 AI-Assistent** ⚠️
+    - 17.1 **FEAT-038 AI Chatbot** ✅
+      - 17.1.1 ✅ STORY-082 AI chatbot vraag stellen (Could)
+      - 17.1.2 ✅ STORY-123 Chatbot escalatie naar bestuur (Could)
     - 17.2 **FEAT-039 Document AI Analyse** ⬜
       - 17.2.1 ⬜ STORY-083 Factuur automatisch analyseren (Could)
     - 17.3 **FEAT-040 Slimme Alerts & Suggesties** ⬜
@@ -264,13 +264,13 @@ Onderstaande structuur toont alle epics met hun features en bijbehorende stories
 
 | Niveau | Totaal | ✅ Gereed | ⚠️ Deels | ⬜ Backlog | % Gereed |
 |--------|--------|-----------|----------|-----------|----------|
-| Epics | 27 | 17 | 0 | 10 | 63% |
-| Features | 69 | 41 | 0 | 28 | 59% |
-| Stories | 124 | 89 | - | 35 | 72% |
+| Epics | 27 | 17 | 1 | 9 | 63% |
+| Features | 69 | 42 | 0 | 27 | 61% |
+| Stories | 124 | 91 | - | 33 | 73% |
 
 **Volledig afgeronde Epics (Horizon 1 - MVP):** EPIC-001, EPIC-002, EPIC-003, EPIC-004, EPIC-005, EPIC-006, EPIC-007, EPIC-008, EPIC-009, EPIC-010, EPIC-011, EPIC-012, EPIC-013, EPIC-014, EPIC-015, EPIC-016, EPIC-027
 
-**Deels afgeronde Epics:** (geen)
+**Deels afgeronde Epics:** EPIC-017 (AI Chatbot geïmplementeerd)
 
 **Nieuwe Epics (Horizon 2 - Uitbreiding):** EPIC-014, EPIC-017, EPIC-018, EPIC-019, EPIC-020, EPIC-021, EPIC-022, EPIC-023, EPIC-024, EPIC-025, EPIC-026
 
