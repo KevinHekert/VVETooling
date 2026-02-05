@@ -95,7 +95,6 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { currentRole, logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [expandedGroups, setExpandedGroups] = useState<string[]>(['Overzicht']);
   
   // Default to 'bewoner' if no role set (for demo)
   const activeRole = currentRole || 'bewoner';
@@ -107,6 +106,21 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
     ...group,
     items: group.items.filter(item => item.roles.includes(activeRole))
   })).filter(group => group.items.length > 0);
+
+  // Find the group containing the active page and expand it by default
+  const findActiveGroup = (): string[] => {
+    for (const group of visibleGroups) {
+      const hasActiveItem = group.items.some(item => 
+        pathname === item.href || pathname.startsWith(item.href + '/')
+      );
+      if (hasActiveItem) {
+        return [group.label];
+      }
+    }
+    return ['Overzicht']; // Default fallback
+  };
+
+  const [expandedGroups, setExpandedGroups] = useState<string[]>(findActiveGroup);
 
   // Toggle group expansion
   const toggleGroup = (groupLabel: string) => {

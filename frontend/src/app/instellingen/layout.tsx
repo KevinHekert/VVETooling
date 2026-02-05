@@ -19,7 +19,7 @@ interface SettingsNavItem {
 }
 
 const SETTINGS_NAV_ITEMS: SettingsNavItem[] = [
-  { label: 'Overzicht', href: '/instellingen', icon: '⚙️' },
+  { label: 'Overzicht', href: '/instellingen', icon: '📊' },
   { label: 'Onboarding', href: '/instellingen/onboarding', icon: '🚀' },
   { label: 'Splitsingsakte', href: '/instellingen/splitsingsakte', icon: '📜' },
   { label: 'Splitsingssleutel', href: '/instellingen/splitsingssleutel', icon: '🔑' },
