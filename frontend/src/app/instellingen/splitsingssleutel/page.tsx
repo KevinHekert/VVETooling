@@ -74,6 +74,8 @@ export default function SplitsingssleutelWizardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
+  // VVE ID for API calls (prepared for future integration)
+
   // Load data from backend or localStorage
   useEffect(() => {
     const loadData = async () => {
@@ -263,7 +265,7 @@ export default function SplitsingssleutelWizardPage() {
 
     setIsSaving(true);
     try {
-      // In real implementation: await api.updateSplitsingssleutel(vveId, formData.units);
+      // In real implementation: await api.updateSplitsingssleutel(currentVveId, formData.units);
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       // Create new version
