@@ -81,9 +81,10 @@ export default function DigitalVotingPage() {
   // Create voting (STORY-113)
   const handleCreateVoting = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!currentVveId) return;
     setIsCreating(true);
     try {
-      await api.createVoting(currentVveId!, newVoting);
+      await api.createVoting(currentVveId, newVoting);
       setSuccessMessage('Stemming aangemaakt');
       setShowCreateForm(false);
       setNewVoting({
@@ -104,8 +105,9 @@ export default function DigitalVotingPage() {
 
   // Open voting (STORY-113)
   const handleOpenVoting = async (votingId: string) => {
+    if (!currentVveId) return;
     try {
-      await api.openVoting(currentVveId!, votingId);
+      await api.openVoting(currentVveId, votingId);
       setSuccessMessage('Stemming geopend');
       fetchVotings();
       setTimeout(() => setSuccessMessage(null), 3000);
@@ -116,8 +118,9 @@ export default function DigitalVotingPage() {
 
   // Close voting (STORY-115)
   const handleCloseVoting = async (votingId: string) => {
+    if (!currentVveId) return;
     try {
-      await api.closeVoting(currentVveId!, votingId);
+      await api.closeVoting(currentVveId, votingId);
       setSuccessMessage('Stemming gesloten');
       fetchVotings();
       setTimeout(() => setSuccessMessage(null), 3000);
@@ -128,10 +131,11 @@ export default function DigitalVotingPage() {
 
   // View voting results (STORY-115)
   const handleViewResults = async (voting: VotingListItem) => {
+    if (!currentVveId) return;
     try {
       const [details, results] = await Promise.all([
-        api.getVoting(currentVveId!, voting.id),
-        api.getVotingResults(currentVveId!, voting.id),
+        api.getVoting(currentVveId, voting.id),
+        api.getVotingResults(currentVveId, voting.id),
       ]);
       setSelectedVoting(details);
       setVotingResults(results);
@@ -142,10 +146,14 @@ export default function DigitalVotingPage() {
 
   // Fetch proxies (STORY-117)
   const fetchProxies = async () => {
+    if (!currentVveId) {
+      setIsLoadingProxies(false);
+      return;
+    }
     setIsLoadingProxies(true);
     try {
       const params = statusFilter ? { status: statusFilter } : undefined;
-      const data = await api.listVotingProxies(currentVveId!, params);
+      const data = await api.listVotingProxies(currentVveId, params);
       setProxies(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Kon volmachten niet ophalen');
@@ -163,8 +171,9 @@ export default function DigitalVotingPage() {
   }, [activeTab, statusFilter]);
 
   const handleViewProxy = async (proxyId: string) => {
+    if (!currentVveId) return;
     try {
-      const proxy = await api.getVotingProxy(currentVveId!, proxyId);
+      const proxy = await api.getVotingProxy(currentVveId, proxyId);
       setSelectedProxy(proxy);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Kon volmacht niet ophalen');
@@ -172,12 +181,13 @@ export default function DigitalVotingPage() {
   };
 
   const handleConfirm = async (proxyId: string) => {
+    if (!currentVveId) return;
     try {
-      await api.confirmVotingProxy(vveId, proxyId);
+      await api.confirmVotingProxy(currentVveId, proxyId);
       setSuccessMessage('Volmacht bevestigd!');
       fetchProxies();
       if (selectedProxy?.id === proxyId) {
-        const updated = await api.getVotingProxy(currentVveId!, proxyId);
+        const updated = await api.getVotingProxy(currentVveId, proxyId);
         setSelectedProxy(updated);
       }
       setTimeout(() => setSuccessMessage(null), 3000);
@@ -188,12 +198,13 @@ export default function DigitalVotingPage() {
 
   const handleRevoke = async (proxyId: string) => {
     if (!confirm('Weet u zeker dat u deze volmacht wilt intrekken?')) return;
+    if (!currentVveId) return;
     try {
-      await api.revokeVotingProxy(vveId, proxyId);
+      await api.revokeVotingProxy(currentVveId, proxyId);
       setSuccessMessage('Volmacht ingetrokken!');
       fetchProxies();
       if (selectedProxy?.id === proxyId) {
-        const updated = await api.getVotingProxy(currentVveId!, proxyId);
+        const updated = await api.getVotingProxy(currentVveId, proxyId);
         setSelectedProxy(updated);
       }
       setTimeout(() => setSuccessMessage(null), 3000);
@@ -204,8 +215,9 @@ export default function DigitalVotingPage() {
 
   const handleDelete = async (proxyId: string) => {
     if (!confirm('Weet u zeker dat u deze volmacht wilt verwijderen?')) return;
+    if (!currentVveId) return;
     try {
-      await api.deleteVotingProxy(vveId, proxyId);
+      await api.deleteVotingProxy(currentVveId, proxyId);
       setSuccessMessage('Volmacht verwijderd!');
       fetchProxies();
       if (selectedProxy?.id === proxyId) {

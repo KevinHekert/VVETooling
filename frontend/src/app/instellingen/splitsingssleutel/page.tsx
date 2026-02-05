@@ -68,7 +68,6 @@ const INITIAL_STATE: WizardState = {
 export default function SplitsingssleutelWizardPage() {
   const router = useRouter();
   const { addToast } = useToast();
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { currentVveId } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<WizardState>(INITIAL_STATE);
