@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     allowed_origins: list[str] = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
+        "http://localhost:81",  # Docker Compose dev (nginx)
     ]
 
     # Database (PostgreSQL - ADR-003)
