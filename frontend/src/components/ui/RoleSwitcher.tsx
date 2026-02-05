@@ -38,9 +38,9 @@ export function RoleSwitcher({ onRoleChange }: RoleSwitcherProps) {
   if (memberships.length <= 1) {
     // Single membership - show badge only, no switcher
     return (
-      <div className="flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-lg">
+      <div className="flex items-center gap-2 px-3 py-2 bg-slate-100 rounded-lg">
         <RoleBadge role={currentMembership?.role as UserRole} />
-        <span className="text-sm text-gray-600">{currentMembership?.vve_name}</span>
+        <span className="text-sm text-slate-700">{currentMembership?.vve_name}</span>
       </div>
     );
   }
@@ -49,12 +49,12 @@ export function RoleSwitcher({ onRoleChange }: RoleSwitcherProps) {
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+        className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
         aria-expanded={isOpen}
         aria-haspopup="listbox"
       >
         <RoleBadge role={currentMembership?.role as UserRole} />
-        <span className="text-sm text-gray-900 font-medium">
+        <span className="text-sm text-slate-800 font-medium">
           {currentMembership?.vve_name}
         </span>
         <ChevronIcon isOpen={isOpen} />
@@ -69,9 +69,9 @@ export function RoleSwitcher({ onRoleChange }: RoleSwitcherProps) {
           />
           
           {/* Dropdown */}
-          <div className="absolute top-full left-0 mt-1 w-72 bg-white border border-gray-200 rounded-lg shadow-lg z-20">
+          <div className="absolute top-full left-0 mt-1 w-72 bg-white border border-slate-300 rounded-lg shadow-lg z-20">
             <div className="p-2">
-              <p className="px-3 py-2 text-xs font-medium text-gray-500 uppercase">
+              <p className="px-3 py-2 text-xs font-medium text-slate-600 uppercase">
                 VVE Contexten
               </p>
               <ul role="listbox">
@@ -84,7 +84,7 @@ export function RoleSwitcher({ onRoleChange }: RoleSwitcherProps) {
                         transition-colors
                         ${membership.vve_id === currentVveId 
                           ? 'bg-blue-50 text-blue-700' 
-                          : 'hover:bg-gray-50'
+                          : 'hover:bg-slate-50'
                         }
                       `}
                       role="option"
@@ -95,7 +95,7 @@ export function RoleSwitcher({ onRoleChange }: RoleSwitcherProps) {
                         <p className="text-sm font-medium truncate">
                           {membership.vve_name}
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-slate-600">
                           {getRoleLabel(membership.role as UserRole)}
                         </p>
                       </div>
@@ -150,7 +150,7 @@ export function RoleBadge({ role, size = 'sm' }: { role: UserRole; size?: 'sm' |
 function ChevronIcon({ isOpen }: { isOpen: boolean }) {
   return (
     <svg
-      className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+      className={`w-4 h-4 text-slate-500 transition-transform ${isOpen ? 'rotate-180' : ''}`}
       fill="none"
       stroke="currentColor"
       viewBox="0 0 24 24"
