@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Chatbot from '@/components/ui/Chatbot';
+import { useAuth } from '@/hooks/useAuth';
 
 /**
  * Chatbot Page - STORY-082: AI chatbot vraag stellen
@@ -10,19 +11,15 @@ import Chatbot from '@/components/ui/Chatbot';
  * Allows residents to ask questions about VVE matters.
  */
 export default function ChatbotPage() {
+  const { currentVveId } = useAuth();
   const [vveId, setVveId] = useState<string | null>(null);
 
   useEffect(() => {
-    // Get VVE ID from localStorage or context
-    // In a real implementation, this would come from user context
-    const storedVveId = localStorage.getItem('current_vve_id');
-    if (storedVveId) {
-      setVveId(storedVveId);
-    } else {
-      // Use a default for demo purposes
-      setVveId('demo-vve-id');
+    // Use currentVveId from auth context
+    if (currentVveId) {
+      setVveId(currentVveId);
     }
-  }, []);
+  }, [currentVveId]);
 
   if (!vveId) {
     return (

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/ui/Toast';
+import { useAuth } from '@/hooks/useAuth';
 import type { BudgetCreate, BudgetItemCreate, TransactionCategory } from '@/types';
 
 /**
@@ -36,6 +37,7 @@ interface FormErrors {
 export default function NewBudgetPage() {
   const router = useRouter();
   const { addToast } = useToast();
+  const { currentVveId } = useAuth();
   
   // Budget metadata
   const [year, setYear] = useState(new Date().getFullYear() + 1);
@@ -138,6 +140,10 @@ export default function NewBudgetPage() {
     setIsSubmitting(true);
 
     try {
+      if (!currentVveId) {
+        addToast('Geen VVE geselecteerd', 'error');
+        return;
+      }
       const budgetData: BudgetCreate = {
         year,
         name,
@@ -146,9 +152,7 @@ export default function NewBudgetPage() {
         items,
       };
 
-      // TODO: Get vveId from context
-      const vveId = 'demo-vve-id';
-      await api.createBudget(vveId, budgetData);
+      await api.createBudget(currentVveId, budgetData);
 
       // Success toast (auto-dismiss as per UX guidelines)
       addToast('Begroting succesvol aangemaakt', 'success');

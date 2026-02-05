@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { ProgressIndicator } from '@/components/ui/ProgressIndicator';
 import { useToast } from '@/components/ui/Toast';
+import { useAuth } from '@/hooks/useAuth';
 
 /**
  * Splitsingssleutel Wizard - STORY-016
@@ -67,14 +68,12 @@ const INITIAL_STATE: WizardState = {
 export default function SplitsingssleutelWizardPage() {
   const router = useRouter();
   const { addToast } = useToast();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { currentVveId } = useAuth();  // Prepared for future API integration
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<WizardState>(INITIAL_STATE);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-
-  // Get VVE ID from context (mock for now - will be used in backend integration)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const vveId = 'demo-vve-id';
 
   // Load data from backend or localStorage
   useEffect(() => {
@@ -265,7 +264,7 @@ export default function SplitsingssleutelWizardPage() {
 
     setIsSaving(true);
     try {
-      // In real implementation: await api.updateSplitsingssleutel(vveId, formData.units);
+      // In real implementation: await api.updateSplitsingssleutel(currentVveId, formData.units);
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       // Create new version

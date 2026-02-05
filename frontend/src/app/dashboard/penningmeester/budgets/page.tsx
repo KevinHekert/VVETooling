@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/ui/Toast';
+import { useAuth } from '@/hooks/useAuth';
 import type { Budget } from '@/types';
 
 /**
@@ -18,16 +19,19 @@ import type { Budget } from '@/types';
 
 export default function BudgetsPage() {
   const { addToast } = useToast();
+  const { currentVveId } = useAuth();
   
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [exportingId, setExportingId] = useState<string | null>(null);
 
   const loadBudgets = useCallback(async () => {
+    if (!currentVveId) {
+      setIsLoading(false);
+      return;
+    }
     try {
-      // TODO: Get vveId from context
-      const vveId = 'demo-vve-id';
-      const data = await api.getBudgets(vveId);
+      const data = await api.getBudgets(currentVveId);
       setBudgets(data);
     } catch (err) {
       addToast(
@@ -37,18 +41,17 @@ export default function BudgetsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [addToast]);
+  }, [addToast, currentVveId]);
 
   useEffect(() => {
     loadBudgets();
   }, [loadBudgets]);
 
   const handleExport = async (budgetId: string, budgetName: string) => {
+    if (!currentVveId) return;
     setExportingId(budgetId);
     try {
-      // TODO: Get vveId from context
-      const vveId = 'demo-vve-id';
-      const blob = await api.exportBudgetPdf(vveId, budgetId);
+      const blob = await api.exportBudgetPdf(currentVveId, budgetId);
       
       // Create download link
       const url = window.URL.createObjectURL(blob);
@@ -75,11 +78,10 @@ export default function BudgetsPage() {
     if (!confirm('Weet je zeker dat je deze begroting wilt verwijderen?')) {
       return;
     }
+    if (!currentVveId) return;
 
     try {
-      // TODO: Get vveId from context
-      const vveId = 'demo-vve-id';
-      await api.deleteBudget(vveId, budgetId);
+      await api.deleteBudget(currentVveId, budgetId);
       addToast('Begroting verwijderd', 'success');
       loadBudgets();
     } catch (err) {

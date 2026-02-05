@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
+import { useAuth } from '@/hooks/useAuth';
 import type { DataExportListItem, DataExportRequest, PrivacyStatement, DataExportFormat } from '@/types';
 
 /**
@@ -23,6 +24,7 @@ const EXPORT_STATUS_LABELS: Record<string, { label: string; color: string }> = {
 };
 
 export default function BewonerPrivacyPage() {
+  const { currentVveId } = useAuth();
   const [privacyStatement, setPrivacyStatement] = useState<PrivacyStatement | null>(null);
   const [exports, setExports] = useState<DataExportListItem[]>([]);
   const [selectedExport, setSelectedExport] = useState<DataExportRequest | null>(null);
@@ -33,15 +35,16 @@ export default function BewonerPrivacyPage() {
   const [exportFormat, setExportFormat] = useState<DataExportFormat>('json');
   const [showPrivacyStatement, setShowPrivacyStatement] = useState(false);
 
-  // TODO: Get VVE ID from context/session
-  const vveId = 'demo-vve-id';
-
   const fetchData = async () => {
+    if (!currentVveId) {
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     try {
       const [statement, exportsList] = await Promise.all([
-        api.getCurrentPrivacyStatement(vveId),
-        api.listDataExports(vveId),
+        api.getCurrentPrivacyStatement(currentVveId),
+        api.listDataExports(currentVveId),
       ]);
       setPrivacyStatement(statement);
       setExports(exportsList);
@@ -54,14 +57,15 @@ export default function BewonerPrivacyPage() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [currentVveId]);
 
   const handleRequestExport = async () => {
+    if (!currentVveId) return;
     setIsRequesting(true);
     setError(null);
 
     try {
-      const result = await api.requestDataExport(vveId, { export_format: exportFormat });
+      const result = await api.requestDataExport(currentVveId, { export_format: exportFormat });
       setSuccessMessage(result.message);
       fetchData();
       setTimeout(() => setSuccessMessage(null), 5000);
@@ -73,8 +77,9 @@ export default function BewonerPrivacyPage() {
   };
 
   const handleViewExport = async (exportId: string) => {
+    if (!currentVveId) return;
     try {
-      const exportData = await api.getDataExport(vveId, exportId);
+      const exportData = await api.getDataExport(currentVveId, exportId);
       setSelectedExport(exportData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Kon export niet ophalen');
@@ -82,9 +87,10 @@ export default function BewonerPrivacyPage() {
   };
 
   const handleCancelExport = async (exportId: string) => {
+    if (!currentVveId) return;
     if (!confirm('Weet u zeker dat u deze aanvraag wilt annuleren?')) return;
     try {
-      await api.cancelDataExport(vveId, exportId);
+      await api.cancelDataExport(currentVveId, exportId);
       setSuccessMessage('Aanvraag geannuleerd');
       fetchData();
       if (selectedExport?.id === exportId) {

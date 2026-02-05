@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 import type {
   MaintenanceElement,
   MaintenanceElementCreate,
@@ -49,7 +50,7 @@ const PRIORITY_LABELS: Record<MaintenancePriority, { label: string; color: strin
 const MOCK_ELEMENTS: MaintenanceElement[] = [
   {
     id: '1',
-    vve_id: 'demo-vve-id',
+    vve_id: '00000000-0000-0000-0000-000000000000',
     name: 'Dakbedekking',
     description: 'Bitumen dakbedekking plat dak',
     category: 'roof',
@@ -67,7 +68,7 @@ const MOCK_ELEMENTS: MaintenanceElement[] = [
   },
   {
     id: '2',
-    vve_id: 'demo-vve-id',
+    vve_id: '00000000-0000-0000-0000-000000000000',
     name: 'Lift',
     description: 'Personenlift 6 personen',
     category: 'elevator',
@@ -83,7 +84,7 @@ const MOCK_ELEMENTS: MaintenanceElement[] = [
   },
   {
     id: '3',
-    vve_id: 'demo-vve-id',
+    vve_id: '00000000-0000-0000-0000-000000000000',
     name: 'CV-ketel',
     description: 'Collectieve verwarmingsinstallatie',
     category: 'heating',
@@ -99,6 +100,7 @@ const MOCK_ELEMENTS: MaintenanceElement[] = [
 ];
 
 export default function MJOPPage() {
+  const { currentVveId } = useAuth();
   const [elements, setElements] = useState<MaintenanceElement[]>(MOCK_ELEMENTS);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -217,7 +219,7 @@ export default function MJOPPage() {
       // In real implementation, call API
       const newElement: MaintenanceElement = {
         id: String(Date.now()),
-        vve_id: 'demo-vve-id',
+        vve_id: currentVveId || '',
         ...formData,
         quantity: formData.quantity || 1,
         priority: formData.priority || 'medium',
@@ -258,7 +260,7 @@ export default function MJOPPage() {
       const totalRequired = Object.values(byYear).reduce((sum, cost) => sum + cost, 0);
       
       setReserveCalculation({
-        vve_id: 'demo-vve-id',
+        vve_id: currentVveId || '',
         years_ahead: 10,
         total_required: totalRequired * 1.1, // 10% contingency
         annual_contribution: (totalRequired * 1.1) / 10,

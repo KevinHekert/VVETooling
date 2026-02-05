@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
+import { useAuth } from '@/hooks/useAuth';
 import type { MeetingListItem, MeetingCreate, MeetingType, MeetingStatus, AgendaItem, AgendaItemCreate, MeetingInvitationPreview, MeetingRsvp, RsvpSummary, RsvpStatus, QuorumCalculation, ProxySummary, MeetingDecision, DecisionCreate, DecisionType } from '@/types';
 
 /**
@@ -38,6 +39,7 @@ const DECISION_TYPE_LABELS: Record<DecisionType, { label: string; color: string 
 };
 
 export default function ALVPage() {
+  const { currentVveId } = useAuth();
   const [meetings, setMeetings] = useState<MeetingListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -96,18 +98,19 @@ export default function ALVPage() {
   });
   const [isSubmittingActionItem, setIsSubmittingActionItem] = useState(false);
 
-  // TODO: Get VVE ID from context/session
-  const vveId = 'demo-vve-id';
-
   // Calculate minimum date (8 days from now)
   const minDate = new Date();
   minDate.setDate(minDate.getDate() + 8);
   const minDateStr = minDate.toISOString().split('T')[0];
 
   const fetchMeetings = async () => {
+    if (!currentVveId) {
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     try {
-      const data = await api.getMeetings(vveId, { upcoming_only: !showPast });
+      const data = await api.getMeetings(currentVveId, { upcoming_only: !showPast });
       setMeetings(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Kon vergaderingen niet ophalen');
@@ -118,9 +121,10 @@ export default function ALVPage() {
 
   // STORY-077: Load action items for selected meeting
   const loadActionItems = async (meetingId: string) => {
+    if (!currentVveId) return;
     setIsLoadingActionItems(true);
     try {
-      const data = await api.listDecisions(vveId, meetingId, 'actiepunt');
+      const data = await api.listDecisions(currentVveId, meetingId, 'actiepunt');
       setActionItems(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Kon actiepunten niet ophalen');
@@ -132,11 +136,11 @@ export default function ALVPage() {
   // STORY-077: Create action item
   const handleCreateActionItem = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedMeeting) return;
+    if (!selectedMeeting || !currentVveId) return;
     
     setIsSubmittingActionItem(true);
     try {
-      await api.createDecision(vveId, selectedMeeting.id, newActionItem);
+      await api.createDecision(currentVveId, selectedMeeting.id, newActionItem);
       setSuccessMessage('Actiepunt toegevoegd');
       setNewActionItem({
         decision_type: 'actiepunt',
@@ -159,11 +163,12 @@ export default function ALVPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!currentVveId) return;
     setIsSubmitting(true);
     setError(null);
 
     try {
-      await api.createMeeting(vveId, {
+      await api.createMeeting(currentVveId, {
         ...formData,
         meeting_date: new Date(formData.meeting_date).toISOString(),
         end_time: formData.end_time ? new Date(formData.end_time).toISOString() : undefined,
@@ -188,11 +193,12 @@ export default function ALVPage() {
 
   // STORY-070: Agenda functions
   const openAgendaModal = async (meeting: MeetingListItem) => {
+    if (!currentVveId) return;
     setSelectedMeeting(meeting);
     setIsLoadingAgenda(true);
     setError(null);
     try {
-      const items = await api.getAgendaItems(vveId, meeting.id);
+      const items = await api.getAgendaItems(currentVveId, meeting.id);
       setAgendaItems(items);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Kon agenda niet ophalen');
@@ -209,11 +215,11 @@ export default function ALVPage() {
   };
 
   const handleLoadTemplate = async () => {
-    if (!selectedMeeting) return;
+    if (!selectedMeeting || !currentVveId) return;
     setIsSubmittingAgenda(true);
     setError(null);
     try {
-      const items = await api.createStandardAgenda(vveId, selectedMeeting.id);
+      const items = await api.createStandardAgenda(currentVveId, selectedMeeting.id);
       setAgendaItems(items);
       setSuccessMessage('Standaard agenda geladen');
       setTimeout(() => setSuccessMessage(null), 3000);
@@ -226,12 +232,12 @@ export default function ALVPage() {
 
   const handleAddAgendaItem = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedMeeting || !newAgendaItem.title.trim()) return;
+    if (!selectedMeeting || !newAgendaItem.title.trim() || !currentVveId) return;
     
     setIsSubmittingAgenda(true);
     setError(null);
     try {
-      const item = await api.createAgendaItem(vveId, selectedMeeting.id, newAgendaItem);
+      const item = await api.createAgendaItem(currentVveId, selectedMeeting.id, newAgendaItem);
       setAgendaItems([...agendaItems, item]);
       setNewAgendaItem({ title: '', duration_minutes: 10 });
       setShowAgendaForm(false);
@@ -245,9 +251,9 @@ export default function ALVPage() {
   };
 
   const handleDeleteAgendaItem = async (itemId: string) => {
-    if (!selectedMeeting) return;
+    if (!selectedMeeting || !currentVveId) return;
     try {
-      await api.deleteAgendaItem(vveId, selectedMeeting.id, itemId);
+      await api.deleteAgendaItem(currentVveId, selectedMeeting.id, itemId);
       setAgendaItems(agendaItems.filter(item => item.id !== itemId));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Kon agendapunt niet verwijderen');
@@ -255,7 +261,7 @@ export default function ALVPage() {
   };
 
   const handleMoveItem = async (itemId: string, direction: 'up' | 'down') => {
-    if (!selectedMeeting) return;
+    if (!selectedMeeting || !currentVveId) return;
     const currentIndex = agendaItems.findIndex(item => item.id === itemId);
     if (currentIndex === -1) return;
     if (direction === 'up' && currentIndex === 0) return;
@@ -269,7 +275,7 @@ export default function ALVPage() {
     
     // Persist new order
     try {
-      await api.reorderAgendaItems(vveId, selectedMeeting.id, {
+      await api.reorderAgendaItems(currentVveId, selectedMeeting.id, {
         item_ids: newItems.map(item => item.id),
       });
     } catch (err) {
@@ -285,12 +291,13 @@ export default function ALVPage() {
 
   // STORY-071: Invitation functions
   const openInvitationModal = async (meeting: MeetingListItem) => {
+    if (!currentVveId) return;
     setSelectedMeeting(meeting); // Ensure meeting is set for send
     setShowInvitationModal(true);
     setIsLoadingInvitation(true);
     setError(null);
     try {
-      const preview = await api.previewInvitation(vveId, meeting.id);
+      const preview = await api.previewInvitation(currentVveId, meeting.id);
       setInvitationPreview(preview);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Kon uitnodiging preview niet laden');
@@ -305,11 +312,11 @@ export default function ALVPage() {
   };
 
   const handleSendInvitation = async () => {
-    if (!selectedMeeting) return;
+    if (!selectedMeeting || !currentVveId) return;
     setIsSendingInvitation(true);
     setError(null);
     try {
-      const result = await api.sendInvitation(vveId, selectedMeeting.id, {
+      const result = await api.sendInvitation(currentVveId, selectedMeeting.id, {
         include_agenda: true,
         include_documents: false,
       });
@@ -327,14 +334,15 @@ export default function ALVPage() {
 
   // STORY-072: RSVP functions
   const openRsvpModal = async (meeting: MeetingListItem) => {
+    if (!currentVveId) return;
     setSelectedMeeting(meeting);
     setShowRsvpModal(true);
     setIsLoadingRsvp(true);
     setError(null);
     try {
       const [rsvps, summary] = await Promise.all([
-        api.listRsvps(vveId, meeting.id),
-        api.getRsvpSummary(vveId, meeting.id),
+        api.listRsvps(currentVveId, meeting.id),
+        api.getRsvpSummary(currentVveId, meeting.id),
       ]);
       setRsvpList(rsvps);
       setRsvpSummary(summary);
@@ -353,14 +361,15 @@ export default function ALVPage() {
 
   // STORY-074: Quorum modal functions
   const openQuorumModal = async (meeting: MeetingListItem) => {
+    if (!currentVveId) return;
     setSelectedMeeting(meeting);
     setShowQuorumModal(true);
     setIsLoadingQuorum(true);
     setError(null);
     try {
       const [quorum, proxies] = await Promise.all([
-        api.getQuorum(vveId, meeting.id),
-        api.getProxySummary(vveId, meeting.id),
+        api.getQuorum(currentVveId, meeting.id),
+        api.getProxySummary(currentVveId, meeting.id),
       ]);
       setQuorumData(quorum);
       setProxySummary(proxies);
@@ -378,10 +387,10 @@ export default function ALVPage() {
   };
 
   const refreshQuorum = async () => {
-    if (!selectedMeeting) return;
+    if (!selectedMeeting || !currentVveId) return;
     setIsLoadingQuorum(true);
     try {
-      const quorum = await api.getQuorum(vveId, selectedMeeting.id);
+      const quorum = await api.getQuorum(currentVveId, selectedMeeting.id);
       setQuorumData(quorum);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Kon quorum niet verversen');

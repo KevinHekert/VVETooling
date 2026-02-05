@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { api } from '@/lib/api';
+import { useAuth } from '@/hooks/useAuth';
 import type { 
   Ticket, 
   TicketComment, 
@@ -95,6 +96,7 @@ const TIMELINE_ICONS: Record<string, string> = {
 export default function TicketDetailPage() {
   const params = useParams();
   const ticketId = params.id as string;
+  const { currentVveId } = useAuth();
 
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [comments, setComments] = useState<TicketComment[]>([]);
@@ -109,16 +111,17 @@ export default function TicketDetailPage() {
   // Attachment upload state (STORY-030)
   const [isUploading, setIsUploading] = useState(false);
 
-  // TODO: Get VVE ID from context/session
-  const vveId = 'demo-vve-id';
-
   useEffect(() => {
     async function fetchTicketData() {
+      if (!currentVveId) {
+        setIsLoading(false);
+        return;
+      }
       try {
         const [ticketData, commentsData, timelineData] = await Promise.all([
-          api.getTicket(vveId, ticketId),
-          api.getTicketComments(vveId, ticketId),
-          api.getTicketTimeline(vveId, ticketId),
+          api.getTicket(currentVveId, ticketId),
+          api.getTicketComments(currentVveId, ticketId),
+          api.getTicketTimeline(currentVveId, ticketId),
         ]);
         setTicket(ticketData);
         setComments(commentsData);
@@ -130,7 +133,7 @@ export default function TicketDetailPage() {
       }
     }
     fetchTicketData();
-  }, [ticketId]);
+  }, [ticketId, currentVveId]);
 
   // Handle attachment upload (STORY-030)
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -155,14 +158,15 @@ export default function TicketDetailPage() {
     setError(null);
     
     try {
-      await api.uploadTicketAttachment(vveId, ticketId, file);
+      if (!currentVveId) return;
+      await api.uploadTicketAttachment(currentVveId, ticketId, file);
       
       // Refresh ticket to get updated attachments
-      const ticketData = await api.getTicket(vveId, ticketId);
+      const ticketData = await api.getTicket(currentVveId, ticketId);
       setTicket(ticketData);
       
       // Refresh timeline
-      const timelineData = await api.getTicketTimeline(vveId, ticketId);
+      const timelineData = await api.getTicketTimeline(currentVveId, ticketId);
       setTimeline(timelineData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Kon bestand niet uploaden');
@@ -174,7 +178,7 @@ export default function TicketDetailPage() {
 
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newComment.trim()) return;
+    if (!newComment.trim() || !currentVveId) return;
 
     setIsSubmittingComment(true);
     try {
@@ -182,12 +186,12 @@ export default function TicketDetailPage() {
         content: newComment,
         is_internal: false,
       };
-      const comment = await api.addTicketComment(vveId, ticketId, commentData);
+      const comment = await api.addTicketComment(currentVveId, ticketId, commentData);
       setComments([...comments, comment]);
       setNewComment('');
       
       // Refresh timeline
-      const timelineData = await api.getTicketTimeline(vveId, ticketId);
+      const timelineData = await api.getTicketTimeline(currentVveId, ticketId);
       setTimeline(timelineData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Kon reactie niet toevoegen');

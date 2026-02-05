@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/Toast';
 import { api } from '@/lib/api';
+import { useAuth } from '@/hooks/useAuth';
 import type { MeetingListItem } from '@/types';
 
 /**
@@ -173,6 +174,7 @@ const MOCK_DECISIONS: DecisionSearchResult[] = [
 
 export default function BesluitenRegisterPage() {
   const { addToast } = useToast();
+  const { currentVveId } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
   const [results, setResults] = useState<DecisionSearchResult[]>([]);
@@ -186,9 +188,6 @@ export default function BesluitenRegisterPage() {
   const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(null);
   const [isExtracting, setIsExtracting] = useState(false);
   
-  // TODO: Get VVE ID from context/session
-  const vveId = 'demo-vve-id';
-  
   // Search filters
   const [filters, setFilters] = useState<SearchFilters>({
     query: '',
@@ -200,9 +199,10 @@ export default function BesluitenRegisterPage() {
 
   // STORY-076: Load meetings for extraction modal
   const loadMeetings = async () => {
+    if (!currentVveId) return;
     setIsLoadingMeetings(true);
     try {
-      const data = await api.getMeetings(vveId);
+      const data = await api.getMeetings(currentVveId);
       setMeetings(data);
     } catch (err) {
       addToast('Kon vergaderingen niet ophalen', 'error');
@@ -213,14 +213,14 @@ export default function BesluitenRegisterPage() {
 
   // STORY-076: Handle extract decisions from meeting
   const handleExtractDecisions = async () => {
-    if (!selectedMeetingId) {
+    if (!selectedMeetingId || !currentVveId) {
       addToast('Selecteer eerst een vergadering', 'error');
       return;
     }
     
     setIsExtracting(true);
     try {
-      const result = await api.extractDecisions(vveId, selectedMeetingId);
+      const result = await api.extractDecisions(currentVveId, selectedMeetingId);
       addToast(`${result.extracted_count} besluit(en) geëxtraheerd naar het register`, 'success');
       setShowExtractModal(false);
       setSelectedMeetingId(null);
