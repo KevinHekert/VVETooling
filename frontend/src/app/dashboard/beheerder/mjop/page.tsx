@@ -50,7 +50,7 @@ const PRIORITY_LABELS: Record<MaintenancePriority, { label: string; color: strin
 const MOCK_ELEMENTS: MaintenanceElement[] = [
   {
     id: '1',
-    vve_id: 'demo-vve-id',
+    vve_id: '00000000-0000-0000-0000-000000000000',
     name: 'Dakbedekking',
     description: 'Bitumen dakbedekking plat dak',
     category: 'roof',
@@ -68,7 +68,7 @@ const MOCK_ELEMENTS: MaintenanceElement[] = [
   },
   {
     id: '2',
-    vve_id: 'demo-vve-id',
+    vve_id: '00000000-0000-0000-0000-000000000000',
     name: 'Lift',
     description: 'Personenlift 6 personen',
     category: 'elevator',
@@ -84,7 +84,7 @@ const MOCK_ELEMENTS: MaintenanceElement[] = [
   },
   {
     id: '3',
-    vve_id: 'demo-vve-id',
+    vve_id: '00000000-0000-0000-0000-000000000000',
     name: 'CV-ketel',
     description: 'Collectieve verwarmingsinstallatie',
     category: 'heating',
