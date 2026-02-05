@@ -93,6 +93,10 @@ class ApiClient {
     return this.fetch<import('@/types').User>('/auth/me');
   }
 
+  async getMyMemberships() {
+    return this.fetch<import('@/types').VVEMembership[]>('/auth/me/memberships');
+  }
+
   async refreshToken(refreshToken: string) {
     return this.fetch<{
       access_token: string;
@@ -157,6 +161,31 @@ class ApiClient {
         body: JSON.stringify({ updates }),
       }
     );
+  }
+
+  // VVE Members (Leden Beheren)
+  async getVVEMembers(vveId: string) {
+    return this.fetch<import('@/types').VVEMemberWithUser[]>(`/vves/${vveId}/members`);
+  }
+
+  async inviteVVEMember(vveId: string, data: { email: string; role: string }) {
+    return this.fetch<import('@/types').VVEMembership>(`/vves/${vveId}/members/invite`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateVVEMember(vveId: string, memberId: string, data: { role?: string; unit_id?: string }) {
+    return this.fetch<import('@/types').VVEMembership>(`/vves/${vveId}/members/${memberId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async removeVVEMember(vveId: string, memberId: string) {
+    return this.fetch<void>(`/vves/${vveId}/members/${memberId}`, {
+      method: 'DELETE',
+    });
   }
 
   // Contributions (STORY-003)

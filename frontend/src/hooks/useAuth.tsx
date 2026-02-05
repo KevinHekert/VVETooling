@@ -40,9 +40,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const userData = await api.getMe();
       setUser(userData);
       
-      // TODO: Fetch memberships from API
-      // For now, using mock data
-      setMemberships([]);
+      // Fetch memberships from API
+      try {
+        const membershipData = await api.getMyMemberships();
+        setMemberships(membershipData);
+      } catch {
+        // API not available or error - keep empty memberships
+        setMemberships([]);
+      }
     } catch {
       // Token invalid or expired
       localStorage.removeItem('access_token');
