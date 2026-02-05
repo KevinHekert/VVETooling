@@ -23,6 +23,8 @@ class Settings(BaseSettings):
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "http://localhost:81",  # Docker Compose dev (nginx)
+        "http://frontend:3000",  # Docker network hostname
+        "http://nginx",  # Docker network hostname (nginx on port 80)
     ]
 
     # Database (PostgreSQL - ADR-003)

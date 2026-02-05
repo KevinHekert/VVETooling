@@ -31,8 +31,8 @@ services:
       DATABASE_NAME: vvetooling
       DATABASE_USER: postgres
       DATABASE_PASSWORD: postgres
-      # Include both common dev origins for flexibility
-      ALLOWED_ORIGINS: '["http://localhost:81","http://localhost:3000"]'
+      # Include both common dev origins and docker network hostnames for flexibility
+      ALLOWED_ORIGINS: '["http://localhost:81","http://localhost:3000","http://frontend:3000","http://nginx"]'
     ports:
       - "7001:8000"
     volumes:
