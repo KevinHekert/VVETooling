@@ -3,7 +3,8 @@
  * Handles authentication and API requests
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+// Default to port 7001 (Docker Compose dev mapping), or use NEXT_PUBLIC_API_URL if set
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7001/api/v1';
 
 interface FetchOptions extends RequestInit {
   token?: string;
