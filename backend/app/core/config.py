@@ -47,7 +47,7 @@ class Settings(BaseSettings):
     jwt_refresh_token_expire_days: int = 7
 
     # Development admin seed user
-    dev_admin_email: str = "admin@vvetooling.local"
+    dev_admin_email: str = "admin@vvetooling.example.com"
     dev_admin_password: str = "Admin123!"
     dev_admin_first_name: str = "Dev"
     dev_admin_last_name: str = "Admin"
