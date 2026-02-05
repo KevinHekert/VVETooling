@@ -111,7 +111,10 @@ async def get_current_user(
     # Fetch user with memberships
     result = await db.execute(
         select(User)
-        .options(joinedload(User.memberships).joinedload(VVEMember.vve))
+        .options(
+            joinedload(User.memberships).joinedload(VVEMember.vve),
+            joinedload(User.memberships).joinedload(VVEMember.unit),
+        )
         .where(User.id == user_id, User.is_active.is_(True))
     )
     user = result.unique().scalar_one_or_none()

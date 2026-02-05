@@ -78,16 +78,16 @@ export default function BewonersPage() {
         <div className="bg-white rounded-lg shadow p-4">
           <h3 className="text-sm font-medium text-gray-500">Dit Jaar</h3>
           <p className="text-2xl font-bold text-gray-900 mt-1">
-            €{status.total_paid_year.toFixed(2)}
+            €{Number(status.total_paid_year).toFixed(2)}
           </p>
           <p className="text-sm text-gray-500">
-            van €{status.total_due_year.toFixed(2)}
+            van €{Number(status.total_due_year).toFixed(2)}
           </p>
           <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
             <div
               className="bg-blue-600 h-2 rounded-full"
               style={{
-                width: `${Math.min(100, (status.total_paid_year / status.total_due_year) * 100)}%`,
+                width: `${Math.min(100, Number(status.total_due_year) > 0 ? (Number(status.total_paid_year) / Number(status.total_due_year)) * 100 : 0)}%`,
               }}
             ></div>
           </div>
@@ -97,9 +97,9 @@ export default function BewonersPage() {
         <div className="bg-white rounded-lg shadow p-4">
           <h3 className="text-sm font-medium text-gray-500">Openstaand</h3>
           <p className={`text-2xl font-bold mt-1 ${
-            status.outstanding_balance > 0 ? 'text-red-600' : 'text-green-600'
+            Number(status.outstanding_balance) > 0 ? 'text-red-600' : 'text-green-600'
           }`}>
-            €{status.outstanding_balance.toFixed(2)}
+            €{Number(status.outstanding_balance).toFixed(2)}
           </p>
           {status.has_overdue_payments && (
             <p className="text-sm text-red-500 mt-1">
@@ -166,8 +166,8 @@ function StatusCard({
 }: {
   title: string;
   status: ContributionStatus;
-  amount: number;
-  total: number;
+  amount: number | string;
+  total: number | string;
 }) {
   const statusColors = {
     paid: 'bg-green-100 border-green-200',
@@ -179,9 +179,9 @@ function StatusCard({
     <div className={`rounded-lg border p-4 ${statusColors[status]}`}>
       <h3 className="text-sm font-medium text-gray-700">{title}</h3>
       <p className="text-2xl font-bold text-gray-900 mt-1">
-        €{amount.toFixed(2)}
+        €{Number(amount).toFixed(2)}
       </p>
-      <p className="text-sm text-gray-600">van €{total.toFixed(2)}</p>
+      <p className="text-sm text-gray-600">van €{Number(total).toFixed(2)}</p>
       <ContributionStatusBadge status={status} className="mt-2" />
     </div>
   );
