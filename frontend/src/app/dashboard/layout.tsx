@@ -12,12 +12,13 @@ import type { UserRole } from '@/types';
  * Dashboard Layout - STORY-009 Enhanced
  * Wraps all dashboard pages with:
  * - Auth and toast providers
- * - Role-specific navigation
+ * - Role-specific navigation with sidebar
+ * - Nested navigation groups for better organization
  * - Role switcher for multi-VVE users
- * - Modular menu structure
+ * - Improved color contrast
  */
 
-// Navigation items per role - STORY-009
+// Navigation items per role - organized in groups
 interface NavItem {
   label: string;
   href: string;
@@ -25,78 +26,120 @@ interface NavItem {
   roles: UserRole[];
 }
 
-const NAV_ITEMS: NavItem[] = [
-  // Bewoner items
-  { label: 'Mijn Status', href: '/dashboard/bewoner', icon: '🏠', roles: ['bewoner', 'bestuurslid', 'penningmeester', 'beheerder'] },
-  { label: 'Mijn Reserves', href: '/dashboard/bewoner/reserves', icon: '🏦', roles: ['bewoner', 'bestuurslid'] },
-  
-  // Penningmeester/Beheerder items
-  { label: 'Transacties', href: '/dashboard/penningmeester/transactions', icon: '💰', roles: ['penningmeester', 'beheerder'] },
-  { label: 'Begrotingen', href: '/dashboard/penningmeester/budgets', icon: '📊', roles: ['penningmeester', 'beheerder'] },
-  { label: 'Reserves', href: '/dashboard/penningmeester/reserves', icon: '🏦', roles: ['penningmeester', 'beheerder'] },
-  { label: 'Contributies', href: '/dashboard/penningmeester/contributions', icon: '💵', roles: ['penningmeester', 'beheerder'] },
-  { label: 'Jaarrekening', href: '/dashboard/penningmeester/jaarrekening', icon: '📈', roles: ['bestuurslid', 'penningmeester', 'beheerder'] },
-  
-  // All roles - Documenten
-  { label: 'Documenten', href: '/dashboard/documenten', icon: '📁', roles: ['bewoner', 'bestuurslid', 'penningmeester', 'beheerder'] },
-  
-  // Beheerder only
-  { label: 'Leden Beheren', href: '/dashboard/beheerder/leden', icon: '👤', roles: ['beheerder'] },
-  { label: 'Contracten', href: '/dashboard/beheerder/contracten', icon: '📝', roles: ['beheerder', 'bestuurslid'] },
-  { label: 'ALV', href: '/dashboard/beheerder/alv', icon: '📅', roles: ['beheerder', 'bestuurslid'] },
-  { label: 'Audit Log', href: '/dashboard/beheerder/audit', icon: '📋', roles: ['beheerder'] },
-  { label: 'Sjablonen', href: '/dashboard/beheerder/correspondentie/sjablonen', icon: '📝', roles: ['beheerder', 'bestuurslid'] },
-  { label: 'Brieven', href: '/dashboard/beheerder/correspondentie/brieven', icon: '✉️', roles: ['beheerder', 'bestuurslid'] },
-  { label: 'Verzending', href: '/dashboard/beheerder/correspondentie/verzending', icon: '📤', roles: ['beheerder', 'bestuurslid'] },
-  { label: 'Splitsingssleutel', href: '/instellingen/splitsingssleutel', icon: '🔑', roles: ['beheerder'] },
-  { label: 'Rollen & Rechten', href: '/instellingen/rollen', icon: '👥', roles: ['beheerder'] },
-  { label: 'Instellingen', href: '/instellingen/onboarding', icon: '⚙️', roles: ['beheerder'] },
+interface NavGroup {
+  label: string;
+  icon: string;
+  roles: UserRole[];
+  items: NavItem[];
+}
+
+// Grouped navigation structure
+const NAV_GROUPS: NavGroup[] = [
+  {
+    label: 'Overzicht',
+    icon: '🏠',
+    roles: ['bewoner', 'bestuurslid', 'penningmeester', 'beheerder'],
+    items: [
+      { label: 'Dashboard', href: '/dashboard', icon: '📊', roles: ['bewoner', 'bestuurslid', 'penningmeester', 'beheerder'] },
+      { label: 'Mijn Status', href: '/dashboard/bewoner', icon: '🏠', roles: ['bewoner', 'bestuurslid', 'penningmeester', 'beheerder'] },
+      { label: 'Documenten', href: '/dashboard/documenten', icon: '📁', roles: ['bewoner', 'bestuurslid', 'penningmeester', 'beheerder'] },
+    ],
+  },
+  {
+    label: 'Financiën',
+    icon: '💰',
+    roles: ['penningmeester', 'beheerder', 'bestuurslid', 'bewoner'],
+    items: [
+      { label: 'Mijn Reserves', href: '/dashboard/bewoner/reserves', icon: '🏦', roles: ['bewoner', 'bestuurslid'] },
+      { label: 'Transacties', href: '/dashboard/penningmeester/transactions', icon: '💰', roles: ['penningmeester', 'beheerder'] },
+      { label: 'Begrotingen', href: '/dashboard/penningmeester/budgets', icon: '📊', roles: ['penningmeester', 'beheerder'] },
+      { label: 'Reserves', href: '/dashboard/penningmeester/reserves', icon: '🏦', roles: ['penningmeester', 'beheerder'] },
+      { label: 'Contributies', href: '/dashboard/penningmeester/contributions', icon: '💵', roles: ['penningmeester', 'beheerder'] },
+      { label: 'Jaarrekening', href: '/dashboard/penningmeester/jaarrekening', icon: '📈', roles: ['bestuurslid', 'penningmeester', 'beheerder'] },
+    ],
+  },
+  {
+    label: 'Beheer',
+    icon: '⚙️',
+    roles: ['beheerder', 'bestuurslid'],
+    items: [
+      { label: 'Ledenadministratie', href: '/dashboard/beheerder/leden', icon: '👤', roles: ['beheerder'] },
+      { label: 'Contracten', href: '/dashboard/beheerder/contracten', icon: '📝', roles: ['beheerder', 'bestuurslid'] },
+      { label: 'ALV', href: '/dashboard/beheerder/alv', icon: '📅', roles: ['beheerder', 'bestuurslid'] },
+      { label: 'Audit Log', href: '/dashboard/beheerder/audit', icon: '📋', roles: ['beheerder'] },
+    ],
+  },
+  {
+    label: 'Correspondentie',
+    icon: '✉️',
+    roles: ['beheerder', 'bestuurslid'],
+    items: [
+      { label: 'Sjablonen', href: '/dashboard/beheerder/correspondentie/sjablonen', icon: '📝', roles: ['beheerder', 'bestuurslid'] },
+      { label: 'Brieven', href: '/dashboard/beheerder/correspondentie/brieven', icon: '✉️', roles: ['beheerder', 'bestuurslid'] },
+      { label: 'Verzending', href: '/dashboard/beheerder/correspondentie/verzending', icon: '📤', roles: ['beheerder', 'bestuurslid'] },
+    ],
+  },
+  {
+    label: 'Instellingen',
+    icon: '🔧',
+    roles: ['beheerder'],
+    items: [
+      { label: 'Splitsingssleutel', href: '/instellingen/splitsingssleutel', icon: '🔑', roles: ['beheerder'] },
+      { label: 'Rollen & Rechten', href: '/instellingen/rollen', icon: '👥', roles: ['beheerder'] },
+      { label: 'VVE Instellingen', href: '/instellingen/onboarding', icon: '⚙️', roles: ['beheerder'] },
+    ],
+  },
 ];
 
 function DashboardLayoutContent({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { currentRole, logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState<string[]>(['Overzicht']);
   
   // Default to 'bewoner' if no role set (for demo)
   const activeRole = currentRole || 'bewoner';
   
-  // Filter nav items based on current role
-  const visibleNavItems = NAV_ITEMS.filter(item => 
-    item.roles.includes(activeRole)
-  );
+  // Filter nav groups and items based on current role
+  const visibleGroups = NAV_GROUPS.filter(group => 
+    group.roles.includes(activeRole)
+  ).map(group => ({
+    ...group,
+    items: group.items.filter(item => item.roles.includes(activeRole))
+  })).filter(group => group.items.length > 0);
+
+  // Toggle group expansion
+  const toggleGroup = (groupLabel: string) => {
+    setExpandedGroups(prev => 
+      prev.includes(groupLabel) 
+        ? prev.filter(g => g !== groupLabel)
+        : [...prev, groupLabel]
+    );
+  };
+
+  // Find current page label for breadcrumb
+  const findCurrentPageLabel = () => {
+    for (const group of visibleGroups) {
+      const item = group.items.find(item => 
+        pathname === item.href || pathname.startsWith(item.href + '/')
+      );
+      if (item) return { group: group.label, item: item.label };
+    }
+    return null;
+  };
+  const currentPage = findCurrentPageLabel();
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Navigation Header */}
-      <nav className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-slate-100">
+      {/* Top Navigation Header */}
+      <nav className="bg-white shadow-md border-b border-slate-200">
+        <div className="px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
-            {/* Logo and Desktop Nav */}
-            <div className="flex items-center gap-8">
+            {/* Logo */}
+            <div className="flex items-center">
               <Link href="/dashboard" className="text-xl font-bold text-blue-600">
                 VVE Tooling
               </Link>
-              
-              {/* Desktop Navigation */}
-              <div className="hidden md:flex items-center gap-1">
-                {visibleNavItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`
-                      px-3 py-2 rounded-lg text-sm font-medium transition-colors
-                      ${pathname === item.href || pathname.startsWith(item.href + '/')
-                        ? 'bg-blue-50 text-blue-700'
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                      }
-                    `}
-                  >
-                    <span className="mr-1">{item.icon}</span>
-                    {item.label}
-                  </Link>
-                ))}
-              </div>
             </div>
 
             {/* Right side: Role Switcher + Logout */}
@@ -108,7 +151,7 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
               
               <button 
                 onClick={logout}
-                className="text-gray-500 hover:text-gray-700 text-sm"
+                className="text-slate-600 hover:text-slate-800 text-sm font-medium"
               >
                 Uitloggen
               </button>
@@ -116,7 +159,7 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
               {/* Mobile menu button */}
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="md:hidden p-2 text-gray-500 hover:text-gray-700"
+                className="lg:hidden p-2 text-slate-600 hover:text-slate-800"
                 aria-label="Menu"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -130,64 +173,163 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
             </div>
           </div>
         </div>
+      </nav>
 
-        {/* Mobile Navigation */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden border-t border-gray-200 bg-white">
-            {/* Mobile Role Switcher */}
-            <div className="p-4 border-b border-gray-100">
-              <RoleSwitcher />
-            </div>
-            
-            {/* Mobile Nav Items */}
-            <div className="py-2">
-              {visibleNavItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`
-                    flex items-center gap-3 px-4 py-3
-                    ${pathname === item.href || pathname.startsWith(item.href + '/')
-                      ? 'bg-blue-50 text-blue-700'
-                      : 'text-gray-600 hover:bg-gray-50'
-                    }
-                  `}
+      <div className="flex">
+        {/* Left Sidebar - Desktop */}
+        <aside className="hidden lg:block w-64 bg-white border-r border-slate-200 min-h-[calc(100vh-4rem)]">
+          <nav className="p-4 space-y-2">
+            {visibleGroups.map((group) => (
+              <div key={group.label} className="mb-2">
+                {/* Group Header */}
+                <button
+                  onClick={() => toggleGroup(group.label)}
+                  className="w-full flex items-center justify-between px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
                 >
-                  <span>{item.icon}</span>
-                  <span className="font-medium">{item.label}</span>
-                </Link>
-              ))}
+                  <span className="flex items-center gap-2">
+                    <span>{group.icon}</span>
+                    <span>{group.label}</span>
+                  </span>
+                  <svg 
+                    className={`w-4 h-4 text-slate-500 transition-transform ${expandedGroups.includes(group.label) ? 'rotate-180' : ''}`}
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                
+                {/* Group Items */}
+                {expandedGroups.includes(group.label) && (
+                  <div className="mt-1 ml-4 space-y-1">
+                    {group.items.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={`
+                          flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors
+                          ${pathname === item.href || pathname.startsWith(item.href + '/')
+                            ? 'bg-blue-50 text-blue-700 font-medium border-l-2 border-blue-600'
+                            : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                          }
+                        `}
+                      >
+                        <span>{item.icon}</span>
+                        <span>{item.label}</span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </nav>
+        </aside>
+
+        {/* Mobile Navigation Overlay */}
+        {isMobileMenuOpen && (
+          <div className="lg:hidden fixed inset-0 z-50 flex">
+            {/* Backdrop */}
+            <div
+              className="fixed inset-0 bg-slate-900/50"
+              onClick={() => setIsMobileMenuOpen(false)}
+            />
+            
+            {/* Sidebar */}
+            <div className="relative w-72 bg-white shadow-xl">
+              <div className="p-4 border-b border-slate-200">
+                <div className="flex items-center justify-between">
+                  <span className="text-lg font-bold text-blue-600">Menu</span>
+                  <button
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="p-2 text-slate-600 hover:text-slate-800"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <div className="mt-3">
+                  <RoleSwitcher />
+                </div>
+              </div>
+              
+              <nav className="p-4 space-y-2 overflow-y-auto max-h-[calc(100vh-8rem)]">
+                {visibleGroups.map((group) => (
+                  <div key={group.label} className="mb-2">
+                    <button
+                      onClick={() => toggleGroup(group.label)}
+                      className="w-full flex items-center justify-between px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 rounded-lg"
+                    >
+                      <span className="flex items-center gap-2">
+                        <span>{group.icon}</span>
+                        <span>{group.label}</span>
+                      </span>
+                      <svg 
+                        className={`w-4 h-4 text-slate-500 transition-transform ${expandedGroups.includes(group.label) ? 'rotate-180' : ''}`}
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                    
+                    {expandedGroups.includes(group.label) && (
+                      <div className="mt-1 ml-4 space-y-1">
+                        {group.items.map((item) => (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className={`
+                              flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors
+                              ${pathname === item.href || pathname.startsWith(item.href + '/')
+                                ? 'bg-blue-50 text-blue-700 font-medium'
+                                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                              }
+                            `}
+                          >
+                            <span>{item.icon}</span>
+                            <span>{item.label}</span>
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </nav>
             </div>
           </div>
         )}
-      </nav>
 
-      {/* Breadcrumb / Section Label - STORY-009 */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
-          <div className="flex items-center text-sm text-gray-500">
-            <span>Dashboard</span>
-            {pathname !== '/dashboard' && (
-              <>
-                <span className="mx-2">/</span>
-                <span className="text-gray-900 font-medium">
-                  {visibleNavItems.find(item => 
-                    pathname === item.href || pathname.startsWith(item.href + '/')
-                  )?.label || 'Pagina'}
-                </span>
-              </>
-            )}
+        {/* Main Content Area */}
+        <div className="flex-1">
+          {/* Breadcrumb */}
+          <div className="bg-white border-b border-slate-200">
+            <div className="px-4 sm:px-6 lg:px-8 py-3">
+              <div className="flex items-center text-sm text-slate-500">
+                <Link href="/dashboard" className="hover:text-slate-700">Dashboard</Link>
+                {currentPage && (
+                  <>
+                    <span className="mx-2 text-slate-400">/</span>
+                    <span className="text-slate-600">{currentPage.group}</span>
+                    <span className="mx-2 text-slate-400">/</span>
+                    <span className="text-slate-800 font-medium">{currentPage.item}</span>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
+
+          {/* Main Content */}
+          <main className="py-6">
+            <div className="px-4 sm:px-6 lg:px-8">
+              {children}
+            </div>
+          </main>
         </div>
       </div>
-
-      {/* Main Content */}
-      <main className="py-6">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {children}
-        </div>
-      </main>
     </div>
   );
 }
