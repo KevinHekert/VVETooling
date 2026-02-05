@@ -7,7 +7,7 @@ Based on architecture documentation and ADRs.
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import auth, transactions, units, contributions, documents, budgets, audit, tickets, splitsingsakte, email, contracts, meetings, mjop, compliance, voting, privacy, analytics, chatbot
+from app.api.routes import auth, transactions, units, contributions, documents, budgets, audit, tickets, splitsingsakte, email, contracts, meetings, mjop, compliance, voting, privacy, analytics, chatbot, members
 from app.core.config import get_settings
 from app.db.dev_seed import ensure_dev_admin
 from app.db.init_db import init_db
@@ -74,6 +74,7 @@ def create_app() -> FastAPI:
     app.include_router(privacy.router, prefix=api_prefix)
     app.include_router(analytics.router, prefix=api_prefix)
     app.include_router(chatbot.router, prefix=api_prefix)
+    app.include_router(members.router, prefix=api_prefix)
 
     @app.on_event("startup")
     async def startup() -> None:

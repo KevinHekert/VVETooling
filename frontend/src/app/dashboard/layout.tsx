@@ -41,6 +41,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Documenten', href: '/dashboard/documenten', icon: '📁', roles: ['bewoner', 'bestuurslid', 'penningmeester', 'beheerder'] },
   
   // Beheerder only
+  { label: 'Leden Beheren', href: '/dashboard/beheerder/leden', icon: '👤', roles: ['beheerder'] },
   { label: 'Contracten', href: '/dashboard/beheerder/contracten', icon: '📝', roles: ['beheerder', 'bestuurslid'] },
   { label: 'ALV', href: '/dashboard/beheerder/alv', icon: '📅', roles: ['beheerder', 'bestuurslid'] },
   { label: 'Audit Log', href: '/dashboard/beheerder/audit', icon: '📋', roles: ['beheerder'] },

@@ -77,6 +77,12 @@ export interface VVEMembership {
   joined_at: string;
 }
 
+export interface VVEMemberWithUser extends VVEMembership {
+  email?: string;
+  first_name?: string;
+  last_name?: string;
+}
+
 // Transaction types (STORY-001)
 export interface Transaction {
   id: string;

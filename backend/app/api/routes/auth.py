@@ -28,6 +28,7 @@ from app.schemas.user import (
     TokenResponse,
     UserCreate,
     UserResponse,
+    VVEMembershipResponse,
 )
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
@@ -185,6 +186,35 @@ async def get_me(
 ) -> UserResponse:
     """Get the current authenticated user's profile."""
     return UserResponse.model_validate(current_user.user)
+
+
+@router.get(
+    "/me/memberships",
+    response_model=list[VVEMembershipResponse],
+    summary="VVE lidmaatschappen van huidige gebruiker ophalen",
+)
+async def get_my_memberships(
+    current_user: Annotated[CurrentUser, Depends(get_current_active_user)],
+) -> list[VVEMembershipResponse]:
+    """Get the current user's VVE memberships.
+
+    Returns a list of VVEs the user is a member of, including their role
+    and unit assignment for each VVE.
+    """
+    return [
+        VVEMembershipResponse(
+            id=m.id,
+            vve_id=m.vve_id,
+            vve_name=m.vve.name if m.vve else "Onbekend",
+            role=m.role,
+            unit_id=m.unit_id,
+            unit_number=m.unit.unit_number if m.unit else None,
+            is_active=m.is_active,
+            joined_at=m.joined_at,
+        )
+        for m in current_user.memberships
+        if m.is_active
+    ]
 
 
 @router.post(

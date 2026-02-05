@@ -8,9 +8,11 @@ from asyncpg.exceptions import UndefinedTableError
 from sqlalchemy import select
 from sqlalchemy.exc import OperationalError, ProgrammingError
 
+from decimal import Decimal
+
 from app.core.config import get_settings
 from app.core.security import UserRole, get_password_hash
-from app.db.models.models import User, VVE, VVEMember
+from app.db.models.models import Unit, User, VVE, VVEMember
 from app.db.session import async_session_maker
 
 logger = logging.getLogger(__name__)
@@ -52,6 +54,25 @@ async def ensure_dev_admin() -> None:
                     session.add(vve)
                     await session.flush()
 
+                # Ensure a default unit exists for the VVE
+                unit_result = await session.execute(
+                    select(Unit).where(
+                        Unit.vve_id == vve.id,
+                        Unit.unit_number == "1",
+                    )
+                )
+                unit = unit_result.scalar_one_or_none()
+                if unit is None:
+                    unit = Unit(
+                        vve_id=vve.id,
+                        unit_number="1",
+                        description="Hoofd eenheid",
+                        share_percentage=Decimal("100.00000"),
+                        is_active=True,
+                    )
+                    session.add(unit)
+                    await session.flush()
+
                 membership_result = await session.execute(
                     select(VVEMember).where(
                         VVEMember.user_id == user.id,
@@ -65,9 +86,12 @@ async def ensure_dev_admin() -> None:
                             user_id=user.id,
                             vve_id=vve.id,
                             role=UserRole.BEHEERDER,
+                            unit_id=unit.id,
                             is_active=True,
                         )
                     )
+                elif membership.unit_id is None:
+                    membership.unit_id = unit.id
     except OperationalError as exc:
         logger.warning(
             "Skipping dev seed because database is unavailable.",

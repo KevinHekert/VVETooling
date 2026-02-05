@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
+import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/Toast';
 import type { Document, DocumentVersion, DocumentShareLink } from '@/types';
 
@@ -25,11 +26,9 @@ interface DocumentWithSection extends Document {
   section?: DocumentSection;
 }
 
-// Mock VVE ID - in production this would come from auth context
-const MOCK_VVE_ID = '123e4567-e89b-12d3-a456-426614174000';
-
 export default function DocumentenPage() {
   const { addToast } = useToast();
+  const { currentVveId, isLoading: authLoading } = useAuth();
   const [documents, setDocuments] = useState<DocumentWithSection[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -49,22 +48,29 @@ export default function DocumentenPage() {
 
   useEffect(() => {
     async function fetchDocuments() {
+      if (!currentVveId) {
+        setIsLoading(false);
+        return;
+      }
       try {
-        const data = await api.getDocuments(MOCK_VVE_ID);
+        const data = await api.getDocuments(currentVveId);
         // Categorize documents into sections
         const categorized = data.map((doc: Document) => ({
           ...doc,
           section: categorizeDocument(doc),
         }));
         setDocuments(categorized);
+        setError(null);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Kon documenten niet ophalen');
       } finally {
         setIsLoading(false);
       }
     }
-    fetchDocuments();
-  }, []);
+    if (!authLoading) {
+      fetchDocuments();
+    }
+  }, [currentVveId, authLoading]);
 
   function categorizeDocument(doc: Document): DocumentSection {
     // Archief: older than 1 year
@@ -83,12 +89,16 @@ export default function DocumentenPage() {
 
   // STORY-019: Enhanced download with secure URL and notifications
   const handleDownload = async (doc: DocumentWithSection) => {
+    if (!currentVveId) {
+      addToast('Geen VVE geselecteerd', 'error');
+      return;
+    }
     try {
       addToast(`Download wordt voorbereid: ${doc.file_name}`, 'info');
       
       // Try to get secure download URL from API
       try {
-        const downloadInfo = await api.getDocumentDownloadUrl(MOCK_VVE_ID, doc.id);
+        const downloadInfo = await api.getDocumentDownloadUrl(currentVveId, doc.id);
         
         // In production, this would use the signed URL
         // For now, simulate with mock content
@@ -126,12 +136,16 @@ export default function DocumentenPage() {
 
   // STORY-019: Open share panel and load existing share links
   const handleShare = async (doc: DocumentWithSection) => {
+    if (!currentVveId) {
+      addToast('Geen VVE geselecteerd', 'error');
+      return;
+    }
     setShareModalDoc(doc);
     setShareLinks([]);
     setIsLoadingShareLinks(true);
     
     try {
-      const links = await api.getDocumentShareLinks(MOCK_VVE_ID, doc.id);
+      const links = await api.getDocumentShareLinks(currentVveId, doc.id);
       setShareLinks(links);
     } catch {
       // API not available, show empty state
@@ -143,8 +157,12 @@ export default function DocumentenPage() {
 
   // STORY-019: Generate secure share link with options
   const generateShareLink = async (doc: DocumentWithSection) => {
+    if (!currentVveId) {
+      addToast('Geen VVE geselecteerd', 'error');
+      return;
+    }
     try {
-      const shareLink = await api.createDocumentShareLink(MOCK_VVE_ID, doc.id, {
+      const shareLink = await api.createDocumentShareLink(currentVveId, doc.id, {
         expires_in_hours: shareLinkExpiry,
         allow_download: shareLinkAllowDownload,
       });
@@ -169,8 +187,12 @@ export default function DocumentenPage() {
 
   // STORY-019: Revoke a share link
   const handleRevokeShareLink = async (doc: DocumentWithSection, linkToken: string) => {
+    if (!currentVveId) {
+      addToast('Geen VVE geselecteerd', 'error');
+      return;
+    }
     try {
-      await api.revokeDocumentShareLink(MOCK_VVE_ID, doc.id, linkToken);
+      await api.revokeDocumentShareLink(currentVveId, doc.id, linkToken);
       setShareLinks(prev => prev.filter(link => link.token !== linkToken));
       addToast('Link ingetrokken', 'success');
     } catch {
@@ -191,10 +213,14 @@ export default function DocumentenPage() {
 
   // STORY-018: Version management functions
   const handleShowVersions = async (doc: DocumentWithSection) => {
+    if (!currentVveId) {
+      addToast('Geen VVE geselecteerd', 'error');
+      return;
+    }
     setVersionPanelDoc(doc);
     setIsLoadingVersions(true);
     try {
-      const versions = await api.getDocumentVersions(MOCK_VVE_ID, doc.id);
+      const versions = await api.getDocumentVersions(currentVveId, doc.id);
       setDocumentVersions(versions);
     } catch {
       // DEV/DEMO ONLY: Show current document as single version when API is unavailable.
@@ -217,8 +243,12 @@ export default function DocumentenPage() {
   };
 
   const handleUploadVersion = async (doc: DocumentWithSection, file: File) => {
+    if (!currentVveId) {
+      addToast('Geen VVE geselecteerd', 'error');
+      return;
+    }
     try {
-      await api.uploadDocumentVersion(MOCK_VVE_ID, doc.id, file);
+      await api.uploadDocumentVersion(currentVveId, doc.id, file);
       addToast(`Nieuwe versie van ${doc.title} geüpload`, 'success');
       // Refresh versions
       handleShowVersions(doc);
@@ -228,8 +258,12 @@ export default function DocumentenPage() {
   };
 
   const handleRestoreVersion = async (doc: DocumentWithSection, versionId: string) => {
+    if (!currentVveId) {
+      addToast('Geen VVE geselecteerd', 'error');
+      return;
+    }
     try {
-      await api.restoreDocumentVersion(MOCK_VVE_ID, doc.id, versionId);
+      await api.restoreDocumentVersion(currentVveId, doc.id, versionId);
       addToast('Versie hersteld', 'success');
       // Refresh versions
       handleShowVersions(doc);
@@ -249,10 +283,18 @@ export default function DocumentenPage() {
     archief: documents.filter(d => d.section === 'archief').length,
   };
 
-  if (isLoading) {
+  if (isLoading || authLoading) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (!currentVveId) {
+    return (
+      <div className="rounded-md bg-yellow-50 border border-yellow-200 p-4">
+        <p className="text-sm text-yellow-700">Geen VVE geselecteerd. Selecteer eerst een VVE via het menu.</p>
       </div>
     );
   }
