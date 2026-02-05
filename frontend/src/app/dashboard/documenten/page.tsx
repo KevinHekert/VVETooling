@@ -52,6 +52,7 @@ export default function DocumentenPage() {
         setIsLoading(false);
         return;
       }
+      setError(null);
       try {
         const data = await api.getDocuments(currentVveId);
         // Categorize documents into sections
@@ -60,7 +61,6 @@ export default function DocumentenPage() {
           section: categorizeDocument(doc),
         }));
         setDocuments(categorized);
-        setError(null);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Kon documenten niet ophalen');
       } finally {

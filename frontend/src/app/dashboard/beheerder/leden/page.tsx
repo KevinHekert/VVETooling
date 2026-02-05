@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/Toast';
-import type { VVEMembership, UserRole } from '@/types';
+import type { VVEMemberWithUser, UserRole } from '@/types';
 
 /**
  * Member Management Page - Leden Beheren
@@ -16,16 +16,10 @@ import type { VVEMembership, UserRole } from '@/types';
  * - Update member roles
  */
 
-interface MemberWithDetails extends VVEMembership {
-  email?: string;
-  first_name?: string;
-  last_name?: string;
-}
-
 export default function LedenBeheerPage() {
   const { currentVveId, isLoading: authLoading } = useAuth();
   const { addToast } = useToast();
-  const [members, setMembers] = useState<MemberWithDetails[]>([]);
+  const [members, setMembers] = useState<VVEMemberWithUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
