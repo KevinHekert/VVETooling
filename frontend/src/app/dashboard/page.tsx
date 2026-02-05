@@ -179,21 +179,23 @@ function BeheerderDashboard() {
  * Shows contracts with upcoming notice deadlines
  */
 function ExpiringContractsWidget() {
+  const { currentVveId } = useAuth();
   const [alerts, setAlerts] = useState<ContractAlertResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [displayCount, setDisplayCount] = useState(5);
-  
-  // TODO: Get VVE ID from context/session
-  const vveId = 'demo-vve-id';
 
   useEffect(() => {
     async function fetchAlerts() {
+      if (!currentVveId) {
+        setIsLoading(false);
+        return;
+      }
       try {
-        const data = await api.getContractAlerts(vveId, true);
+        const data = await api.getContractAlerts(currentVveId, true);
         // Filter to only show contracts expiring within 90 days
         const filtered = data.filter(a => a.days_until_notice <= 90);
         setAlerts(filtered);
-      } catch (err) {
+      } catch {
         // Silently fail for demo - widget shows empty state
         setAlerts([]);
       } finally {
@@ -201,7 +203,7 @@ function ExpiringContractsWidget() {
       }
     }
     fetchAlerts();
-  }, []);
+  }, [currentVveId]);
 
   // Color coding based on urgency
   const getUrgencyColor = (daysUntilNotice: number) => {

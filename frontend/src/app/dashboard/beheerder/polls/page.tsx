@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
+import { useAuth } from '@/hooks/useAuth';
 import type { PollListItem, PollCreate, Poll, PollStatus, PollResultsVisibility } from '@/types';
 
 /**
@@ -27,6 +28,7 @@ const RESULTS_VISIBILITY_LABELS: Record<PollResultsVisibility, string> = {
 };
 
 export default function PollsPage() {
+  const { currentVveId } = useAuth();
   const [polls, setPolls] = useState<PollListItem[]>([]);
   const [selectedPoll, setSelectedPoll] = useState<Poll | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -46,13 +48,14 @@ export default function PollsPage() {
     results_visibility: 'all',
   });
 
-  // TODO: Get VVE ID from context/session
-  const vveId = 'demo-vve-id';
-
   const fetchPolls = async () => {
+    if (!currentVveId) {
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     try {
-      const data = await api.listPolls(vveId);
+      const data = await api.listPolls(currentVveId);
       setPolls(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Kon polls niet ophalen');
@@ -63,7 +66,7 @@ export default function PollsPage() {
 
   useEffect(() => {
     fetchPolls();
-  }, []);
+  }, [currentVveId]);
 
   const handleAddOption = () => {
     if (formData.options.length < 10) {
@@ -90,12 +93,13 @@ export default function PollsPage() {
     setError(null);
 
     try {
+      if (!currentVveId) return;
       const validOptions = formData.options.filter(o => o.trim() !== '');
       if (validOptions.length < 2) {
         throw new Error('Minimaal 2 opties vereist');
       }
 
-      await api.createPoll(vveId, {
+      await api.createPoll(currentVveId, {
         ...formData,
         options: validOptions,
         end_date: new Date(formData.end_date).toISOString(),
@@ -123,12 +127,13 @@ export default function PollsPage() {
   };
 
   const handleOpenPoll = async (pollId: string) => {
+    if (!currentVveId) return;
     try {
-      await api.openPoll(vveId, pollId);
+      await api.openPoll(currentVveId, pollId);
       setSuccessMessage('Poll geopend!');
       fetchPolls();
       if (selectedPoll?.id === pollId) {
-        const updated = await api.getPoll(vveId, pollId);
+        const updated = await api.getPoll(currentVveId, pollId);
         setSelectedPoll(updated);
       }
       setTimeout(() => setSuccessMessage(null), 3000);
@@ -138,12 +143,13 @@ export default function PollsPage() {
   };
 
   const handleClosePoll = async (pollId: string) => {
+    if (!currentVveId) return;
     try {
-      await api.closePoll(vveId, pollId);
+      await api.closePoll(currentVveId, pollId);
       setSuccessMessage('Poll gesloten!');
       fetchPolls();
       if (selectedPoll?.id === pollId) {
-        const updated = await api.getPoll(vveId, pollId);
+        const updated = await api.getPoll(currentVveId, pollId);
         setSelectedPoll(updated);
       }
       setTimeout(() => setSuccessMessage(null), 3000);
@@ -153,9 +159,10 @@ export default function PollsPage() {
   };
 
   const handleDeletePoll = async (pollId: string) => {
+    if (!currentVveId) return;
     if (!confirm('Weet u zeker dat u deze poll wilt verwijderen?')) return;
     try {
-      await api.deletePoll(vveId, pollId);
+      await api.deletePoll(currentVveId, pollId);
       setSuccessMessage('Poll verwijderd!');
       fetchPolls();
       if (selectedPoll?.id === pollId) {
@@ -168,8 +175,9 @@ export default function PollsPage() {
   };
 
   const handleViewPoll = async (pollId: string) => {
+    if (!currentVveId) return;
     try {
-      const poll = await api.getPoll(vveId, pollId);
+      const poll = await api.getPoll(currentVveId, pollId);
       setSelectedPoll(poll);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Kon poll niet ophalen');

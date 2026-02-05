@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/ui/Toast';
+import { useAuth } from '@/hooks/useAuth';
 import type { TransactionCreate, TransactionCategory } from '@/types';
 
 /**
@@ -36,6 +37,7 @@ interface FormErrors {
 export default function NewTransactionPage() {
   const router = useRouter();
   const { addToast } = useToast();
+  const { currentVveId } = useAuth();
   
   // Form state
   const [amount, setAmount] = useState('');
@@ -94,9 +96,12 @@ export default function NewTransactionPage() {
         reserve_fund_id: reserveFundId || undefined,
       };
 
-      // TODO: Get vveId from context
-      const vveId = 'demo-vve-id';
-      await api.createTransaction(vveId, transaction);
+      if (!currentVveId) {
+        addToast('Geen VVE geselecteerd', 'error');
+        return;
+      }
+
+      await api.createTransaction(currentVveId, transaction);
 
       // Success toast (auto-dismiss as per UX guidelines)
       addToast('Transactie succesvol toegevoegd', 'success');

@@ -18,9 +18,6 @@ import type { Transaction, TransactionCategory, TransactionSummary } from '@/typ
  * - Read-only roles see only view-widgets
  */
 
-// Mock VVE ID for demo
-const MOCK_VVE_ID = '123e4567-e89b-12d3-a456-426614174000';
-
 // Category labels
 const CATEGORY_LABELS: Record<TransactionCategory, string> = {
   contribution: 'Contributie',
@@ -34,7 +31,7 @@ const CATEGORY_LABELS: Record<TransactionCategory, string> = {
 
 export default function TransactionsPage() {
   const { addToast } = useToast();
-  const { currentRole } = useAuth();
+  const { currentRole, currentVveId } = useAuth();
   const canEdit = currentRole === 'beheerder' || currentRole === 'penningmeester';
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -52,13 +49,18 @@ export default function TransactionsPage() {
   const [showWidgets, setShowWidgets] = useState(true);
 
   const loadTransactions = useCallback(async () => {
+    if (!currentVveId) {
+      setIsLoading(false);
+      return;
+    }
+    
     try {
       const params: { category?: string } = {};
       if (categoryFilter) params.category = categoryFilter;
       
       const [txData, summaryData] = await Promise.all([
-        api.getTransactions(MOCK_VVE_ID, params),
-        api.getTransactionSummary(MOCK_VVE_ID),
+        api.getTransactions(currentVveId, params),
+        api.getTransactionSummary(currentVveId),
       ]);
       
       setTransactions(txData);
@@ -68,7 +70,7 @@ export default function TransactionsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [categoryFilter]);
+  }, [categoryFilter, currentVveId]);
 
   useEffect(() => {
     loadTransactions();

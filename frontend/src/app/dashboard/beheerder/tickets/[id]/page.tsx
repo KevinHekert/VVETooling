@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { api } from '@/lib/api';
+import { useAuth } from '@/hooks/useAuth';
 import type { 
   Ticket, 
   TicketComment, 
@@ -104,6 +105,7 @@ const TIMELINE_ICONS: Record<string, string> = {
 export default function BeheerderTicketDetailPage() {
   const params = useParams();
   const ticketId = params.id as string;
+  const { currentVveId } = useAuth();
 
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [comments, setComments] = useState<TicketComment[]>([]);
@@ -139,18 +141,19 @@ export default function BeheerderTicketDetailPage() {
   const [followUpDate, setFollowUpDate] = useState('');
   const [isAddingFollowUp, setIsAddingFollowUp] = useState(false);
 
-  // TODO: Get VVE ID from context/session
-  const vveId = 'demo-vve-id';
-
   useEffect(() => {
     async function fetchTicketData() {
+      if (!currentVveId) {
+        setIsLoading(false);
+        return;
+      }
       try {
         const [ticketData, commentsData, timelineData, suppliersData, followUpsData] = await Promise.all([
-          api.getTicket(vveId, ticketId),
-          api.getTicketComments(vveId, ticketId),
-          api.getTicketTimeline(vveId, ticketId),
-          api.getSuppliers(vveId).catch(() => []), // Gracefully handle if suppliers API fails
-          api.getSupplierFollowUps(vveId, ticketId).catch(() => []),
+          api.getTicket(currentVveId, ticketId),
+          api.getTicketComments(currentVveId, ticketId),
+          api.getTicketTimeline(currentVveId, ticketId),
+          api.getSuppliers(currentVveId).catch(() => []), // Gracefully handle if suppliers API fails
+          api.getSupplierFollowUps(currentVveId, ticketId).catch(() => []),
         ]);
         setTicket(ticketData);
         setComments(commentsData);
@@ -176,7 +179,7 @@ export default function BeheerderTicketDetailPage() {
       }
     }
     fetchTicketData();
-  }, [ticketId]);
+  }, [ticketId, currentVveId]);
 
   // STORY-036: Handle add follow-up
   const handleAddFollowUp = async (e: React.FormEvent) => {
@@ -194,12 +197,12 @@ export default function BeheerderTicketDetailPage() {
         contact_date: followUpDate || new Date().toISOString(),
       };
       
-      await api.createSupplierFollowUp(vveId, ticketId, followUpData);
+      await api.createSupplierFollowUp(currentVveId!, ticketId, followUpData);
       
       // Refresh follow-ups and timeline
       const [followUpsData, timelineData] = await Promise.all([
-        api.getSupplierFollowUps(vveId, ticketId),
-        api.getTicketTimeline(vveId, ticketId),
+        api.getSupplierFollowUps(currentVveId!, ticketId),
+        api.getTicketTimeline(currentVveId!, ticketId),
       ]);
       setFollowUps(followUpsData);
       setTimeline(timelineData);
@@ -226,11 +229,11 @@ export default function BeheerderTicketDetailPage() {
     
     try {
       const updateData: TicketUpdate = { status: newStatus };
-      const updatedTicket = await api.updateTicket(vveId, ticketId, updateData);
+      const updatedTicket = await api.updateTicket(currentVveId!, ticketId, updateData);
       setTicket(updatedTicket);
       
       // Refresh timeline
-      const timelineData = await api.getTicketTimeline(vveId, ticketId);
+      const timelineData = await api.getTicketTimeline(currentVveId!, ticketId);
       setTimeline(timelineData);
       
       setSuccessMessage('Status succesvol bijgewerkt');
@@ -252,13 +255,13 @@ export default function BeheerderTicketDetailPage() {
         content: newComment,
         is_internal: isInternalNote,
       };
-      const comment = await api.addTicketComment(vveId, ticketId, commentData);
+      const comment = await api.addTicketComment(currentVveId!, ticketId, commentData);
       setComments([...comments, comment]);
       setNewComment('');
       setIsInternalNote(false);
       
       // Refresh timeline
-      const timelineData = await api.getTicketTimeline(vveId, ticketId);
+      const timelineData = await api.getTicketTimeline(currentVveId!, ticketId);
       setTimeline(timelineData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Kon reactie niet toevoegen');
@@ -280,11 +283,11 @@ export default function BeheerderTicketDetailPage() {
       });
       
       // Refresh ticket
-      const ticketData = await api.getTicket(vveId, ticketId);
+      const ticketData = await api.getTicket(currentVveId!, ticketId);
       setTicket(ticketData);
       
       // Refresh timeline
-      const timelineData = await api.getTicketTimeline(vveId, ticketId);
+      const timelineData = await api.getTicketTimeline(currentVveId!, ticketId);
       setTimeline(timelineData);
       
       setRejectionReason('');
@@ -312,11 +315,11 @@ export default function BeheerderTicketDetailPage() {
         supplier_status_note: supplierStatusNote || undefined,
       };
       
-      const updatedTicket = await api.updateTicketSupplierStatus(vveId, ticketId, updateData);
+      const updatedTicket = await api.updateTicketSupplierStatus(currentVveId!, ticketId, updateData);
       setTicket(updatedTicket);
       
       // Refresh timeline
-      const timelineData = await api.getTicketTimeline(vveId, ticketId);
+      const timelineData = await api.getTicketTimeline(currentVveId!, ticketId);
       setTimeline(timelineData);
       
       setSuccessMessage('Leveranciersstatus succesvol bijgewerkt');
@@ -568,10 +571,10 @@ export default function BeheerderTicketDetailPage() {
                                 is_answered: true,
                               });
                               // Refresh comments
-                              const commentsData = await api.getTicketComments(vveId, ticketId);
+                              const commentsData = await api.getTicketComments(currentVveId!, ticketId);
                               setComments(commentsData);
                               // Refresh timeline
-                              const timelineData = await api.getTicketTimeline(vveId, ticketId);
+                              const timelineData = await api.getTicketTimeline(currentVveId!, ticketId);
                               setTimeline(timelineData);
                               setSuccessMessage('Reactie gemarkeerd als beantwoord');
                               setTimeout(() => setSuccessMessage(null), 3000);
@@ -941,7 +944,7 @@ export default function BeheerderTicketDetailPage() {
                           new Date(ticket.created_at).getTime() + hours * 60 * 60 * 1000
                         ).toISOString()
                       };
-                      const updatedTicket = await api.updateTicket(vveId, ticketId, updateData);
+                      const updatedTicket = await api.updateTicket(currentVveId!, ticketId, updateData);
                       setTicket(updatedTicket);
                       setSuccessMessage('SLA bijgewerkt');
                       setTimeout(() => setSuccessMessage(null), 3000);

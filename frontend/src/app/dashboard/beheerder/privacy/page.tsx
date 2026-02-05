@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
+import { useAuth } from '@/hooks/useAuth';
 import type { PrivacyStatementListItem, PrivacyStatement, PrivacyStatementCreate, PrivacyStatementStatus } from '@/types';
 
 /**
@@ -36,6 +37,7 @@ const SECTION_LABELS: Record<string, string> = {
 };
 
 export default function PrivacyPage() {
+  const { currentVveId } = useAuth();
   const [statements, setStatements] = useState<PrivacyStatementListItem[]>([]);
   const [selectedStatement, setSelectedStatement] = useState<PrivacyStatement | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -51,13 +53,14 @@ export default function PrivacyPage() {
     version: '1.0',
   });
 
-  // TODO: Get VVE ID from context/session
-  const vveId = 'demo-vve-id';
-
   const fetchStatements = async () => {
+    if (!currentVveId) {
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     try {
-      const data = await api.listPrivacyStatements(vveId);
+      const data = await api.listPrivacyStatements(currentVveId);
       setStatements(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Kon privacy statements niet ophalen');
@@ -68,15 +71,16 @@ export default function PrivacyPage() {
 
   useEffect(() => {
     fetchStatements();
-  }, []);
+  }, [currentVveId]);
 
   const handleCreateNew = async () => {
+    if (!currentVveId) return;
     setIsSubmitting(true);
     setError(null);
 
     try {
       // Create with template defaults
-      const statement = await api.createPrivacyStatement(vveId, formData);
+      const statement = await api.createPrivacyStatement(currentVveId, formData);
       setSuccessMessage('Privacy statement aangemaakt met standaard template!');
       setShowAddForm(false);
       setFormData({ title: 'Privacy Statement', version: '1.0' });
@@ -93,13 +97,14 @@ export default function PrivacyPage() {
   };
 
   const handlePublish = async (statementId: string) => {
+    if (!currentVveId) return;
     if (!confirm('Weet u zeker dat u dit privacy statement wilt publiceren? Eerder gepubliceerde versies worden gearchiveerd.')) return;
     try {
-      await api.publishPrivacyStatement(vveId, statementId);
+      await api.publishPrivacyStatement(currentVveId, statementId);
       setSuccessMessage('Privacy statement gepubliceerd!');
       fetchStatements();
       if (selectedStatement?.id === statementId) {
-        const updated = await api.getPrivacyStatement(vveId, statementId);
+        const updated = await api.getPrivacyStatement(currentVveId, statementId);
         setSelectedStatement(updated);
       }
       setTimeout(() => setSuccessMessage(null), 3000);
@@ -109,13 +114,14 @@ export default function PrivacyPage() {
   };
 
   const handleArchive = async (statementId: string) => {
+    if (!currentVveId) return;
     if (!confirm('Weet u zeker dat u dit privacy statement wilt archiveren?')) return;
     try {
-      await api.archivePrivacyStatement(vveId, statementId);
+      await api.archivePrivacyStatement(currentVveId, statementId);
       setSuccessMessage('Privacy statement gearchiveerd!');
       fetchStatements();
       if (selectedStatement?.id === statementId) {
-        const updated = await api.getPrivacyStatement(vveId, statementId);
+        const updated = await api.getPrivacyStatement(currentVveId, statementId);
         setSelectedStatement(updated);
       }
       setTimeout(() => setSuccessMessage(null), 3000);
@@ -125,9 +131,10 @@ export default function PrivacyPage() {
   };
 
   const handleDelete = async (statementId: string) => {
+    if (!currentVveId) return;
     if (!confirm('Weet u zeker dat u dit concept wilt verwijderen?')) return;
     try {
-      await api.deletePrivacyStatement(vveId, statementId);
+      await api.deletePrivacyStatement(currentVveId, statementId);
       setSuccessMessage('Concept verwijderd!');
       fetchStatements();
       if (selectedStatement?.id === statementId) {
@@ -140,8 +147,9 @@ export default function PrivacyPage() {
   };
 
   const handleViewStatement = async (statementId: string) => {
+    if (!currentVveId) return;
     try {
-      const statement = await api.getPrivacyStatement(vveId, statementId);
+      const statement = await api.getPrivacyStatement(currentVveId, statementId);
       setSelectedStatement(statement);
       setIsEditing(false);
     } catch (err) {
@@ -150,10 +158,10 @@ export default function PrivacyPage() {
   };
 
   const handleSaveEdit = async () => {
-    if (!selectedStatement) return;
+    if (!selectedStatement || !currentVveId) return;
     setIsSubmitting(true);
     try {
-      const updated = await api.updatePrivacyStatement(vveId, selectedStatement.id, selectedStatement);
+      const updated = await api.updatePrivacyStatement(currentVveId, selectedStatement.id, selectedStatement);
       setSelectedStatement(updated);
       setIsEditing(false);
       setSuccessMessage('Wijzigingen opgeslagen!');

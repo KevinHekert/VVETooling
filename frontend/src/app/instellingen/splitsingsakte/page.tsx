@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/ui/Toast';
+import { useAuth } from '@/hooks/useAuth';
 import type { 
   SplitsingsakteVersionListItem,
   SplitsingsakteVersion,
@@ -49,6 +50,7 @@ const STATUS_LABELS: Record<SplitsingsakteVersionStatus, { label: string; color:
 
 export default function SplitsingsakteVersionsPage() {
   const { addToast } = useToast();
+  const { currentVveId } = useAuth();
   const [versions, setVersions] = useState<SplitsingsakteVersionListItem[]>([]);
   const [selectedVersion, setSelectedVersion] = useState<SplitsingsakteVersion | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -74,27 +76,29 @@ export default function SplitsingsakteVersionsPage() {
   const [newAmendmentType, setNewAmendmentType] = useState<SplitsingsakteAmendmentType>('wijziging');
   const [isAddingAmendment, setIsAddingAmendment] = useState(false);
 
-  // TODO: Get VVE ID from context/session
-  const vveId = 'demo-vve-id';
-
   const fetchVersions = useCallback(async () => {
+    if (!currentVveId) {
+      setIsLoading(false);
+      return;
+    }
     try {
-      const data = await api.getSplitsingsakteVersions(vveId, includeArchived);
+      const data = await api.getSplitsingsakteVersions(currentVveId, includeArchived);
       setVersions(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Kon versies niet ophalen');
     } finally {
       setIsLoading(false);
     }
-  }, [includeArchived]);
+  }, [includeArchived, currentVveId]);
 
   useEffect(() => {
     fetchVersions();
   }, [fetchVersions]);
 
   const handleViewDetails = async (versionId: string) => {
+    if (!currentVveId) return;
     try {
-      const version = await api.getSplitsingsakteVersion(vveId, versionId);
+      const version = await api.getSplitsingsakteVersion(currentVveId, versionId);
       setSelectedVersion(version);
       // STORY-032: Load amendments for this version
       await loadAmendments(versionId);
@@ -186,9 +190,10 @@ export default function SplitsingsakteVersionsPage() {
   };
 
   const handleActivate = async (versionId: string) => {
+    if (!currentVveId) return;
     setError(null);
     try {
-      await api.activateSplitsingsakteVersion(vveId, versionId);
+      await api.activateSplitsingsakteVersion(currentVveId, versionId);
       await fetchVersions();
       setSuccessMessage('Versie succesvol geactiveerd');
       setTimeout(() => setSuccessMessage(null), 3000);
@@ -198,9 +203,10 @@ export default function SplitsingsakteVersionsPage() {
   };
 
   const handleArchive = async (versionId: string) => {
+    if (!currentVveId) return;
     setError(null);
     try {
-      await api.archiveSplitsingsakteVersion(vveId, versionId);
+      await api.archiveSplitsingsakteVersion(currentVveId, versionId);
       await fetchVersions();
       setSuccessMessage('Versie succesvol gearchiveerd');
       setTimeout(() => setSuccessMessage(null), 3000);
@@ -211,7 +217,7 @@ export default function SplitsingsakteVersionsPage() {
 
   const handleCreateVersion = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newVersionName.trim()) return;
+    if (!newVersionName.trim() || !currentVveId) return;
 
     setIsCreating(true);
     setError(null);
@@ -223,7 +229,7 @@ export default function SplitsingsakteVersionsPage() {
         effective_date: newVersionEffectiveDate || undefined,
       };
       
-      await api.createSplitsingsakteVersion(vveId, createData);
+      await api.createSplitsingsakteVersion(currentVveId, createData);
       await fetchVersions();
       
       // Reset form

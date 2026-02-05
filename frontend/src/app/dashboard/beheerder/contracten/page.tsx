@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
+import { useAuth } from '@/hooks/useAuth';
 import type { ContractListItem, ContractCreate, ContractType, CostsPeriod } from '@/types';
 
 /**
@@ -27,6 +28,7 @@ const COSTS_PERIOD_LABELS: Record<CostsPeriod, string> = {
 };
 
 export default function ContractenPage() {
+  const { currentVveId } = useAuth();
   const [contracts, setContracts] = useState<ContractListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,10 +53,11 @@ export default function ContractenPage() {
     start_date: new Date().toISOString().split('T')[0],
   });
 
-  // TODO: Get VVE ID from context/session
-  const vveId = 'demo-vve-id';
-
   const fetchContracts = async () => {
+    if (!currentVveId) {
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     try {
       const params: { search?: string; contract_type?: ContractType; is_active?: boolean } = {};
@@ -62,7 +65,7 @@ export default function ContractenPage() {
       if (typeFilter !== 'all') params.contract_type = typeFilter as ContractType;
       if (activeFilter !== 'all') params.is_active = activeFilter === 'active';
 
-      const data = await api.getContracts(vveId, params);
+      const data = await api.getContracts(currentVveId, params);
       setContracts(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Kon contracten niet ophalen');
@@ -73,7 +76,7 @@ export default function ContractenPage() {
 
   useEffect(() => {
     fetchContracts();
-  }, [searchQuery, typeFilter, activeFilter]);
+  }, [searchQuery, typeFilter, activeFilter, currentVveId]);
 
   // Debounced search handler (STORY-057)
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -138,8 +141,9 @@ export default function ContractenPage() {
     setUploadProgress(0);
 
     try {
+      if (!currentVveId) return;
       // Create contract first
-      const contract = await api.createContract(vveId, {
+      const contract = await api.createContract(currentVveId, {
         ...formData,
         start_date: new Date(formData.start_date).toISOString(),
         end_date: formData.end_date ? new Date(formData.end_date).toISOString() : undefined,
@@ -149,7 +153,7 @@ export default function ContractenPage() {
 
       // Upload document if provided (STORY-056)
       if (documentFile) {
-        await api.uploadContractDocument(vveId, contract.id, documentFile);
+        await api.uploadContractDocument(currentVveId, contract.id, documentFile);
         setUploadProgress(100);
       }
       

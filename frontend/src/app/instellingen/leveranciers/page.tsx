@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { api } from '@/lib/api';
+import { useAuth } from '@/hooks/useAuth';
 import type { Supplier, SupplierCreate, SupplierUpdate, SupplierEvaluation, SupplierEvaluationCreate, SupplierEvaluationSummary } from '@/types';
 
 /**
@@ -47,6 +48,7 @@ function StarRating({
 }
 
 export default function LeveranciersPage() {
+  const { currentVveId } = useAuth();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -80,19 +82,20 @@ export default function LeveranciersPage() {
   const [isSubmittingEval, setIsSubmittingEval] = useState(false);
   const [evalSummaries, setEvalSummaries] = useState<Record<string, SupplierEvaluationSummary>>({});
 
-  // TODO: Get VVE ID from context/session
-  const vveId = 'demo-vve-id';
-
   const fetchSuppliers = useCallback(async () => {
+    if (!currentVveId) {
+      setIsLoading(false);
+      return;
+    }
     try {
-      const data = await api.getSuppliers(vveId, !showInactive);
+      const data = await api.getSuppliers(currentVveId, !showInactive);
       setSuppliers(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Kon leveranciers niet ophalen');
     } finally {
       setIsLoading(false);
     }
-  }, [showInactive]);
+  }, [showInactive, currentVveId]);
 
   useEffect(() => {
     fetchSuppliers();
@@ -100,7 +103,7 @@ export default function LeveranciersPage() {
 
   const handleCreateSupplier = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newSupplierName.trim()) return;
+    if (!newSupplierName.trim() || !currentVveId) return;
 
     setIsCreating(true);
     setError(null);
@@ -117,7 +120,7 @@ export default function LeveranciersPage() {
         is_active: true,
       };
       
-      await api.createSupplier(vveId, createData);
+      await api.createSupplier(currentVveId, createData);
       await fetchSuppliers();
       
       // Reset form
@@ -140,9 +143,10 @@ export default function LeveranciersPage() {
   };
 
   const handleUpdateSupplier = async (supplierId: string, updates: SupplierUpdate) => {
+    if (!currentVveId) return;
     setError(null);
     try {
-      await api.updateSupplier(vveId, supplierId, updates);
+      await api.updateSupplier(currentVveId, supplierId, updates);
       await fetchSuppliers();
       setEditingSupplier(null);
       setSuccessMessage('Leverancier succesvol bijgewerkt');
@@ -158,17 +162,18 @@ export default function LeveranciersPage() {
 
   // STORY-061: Evaluation functions
   const fetchEvaluationSummaries = useCallback(async (supplierList: Supplier[]) => {
+    if (!currentVveId) return;
     const summaries: Record<string, SupplierEvaluationSummary> = {};
     for (const supplier of supplierList) {
       try {
-        const summary = await api.getSupplierEvaluationSummary(vveId, supplier.id);
+        const summary = await api.getSupplierEvaluationSummary(currentVveId, supplier.id);
         summaries[supplier.id] = summary;
       } catch {
         // Ignore errors for individual summaries
       }
     }
     setEvalSummaries(summaries);
-  }, []);
+  }, [currentVveId]);
 
   useEffect(() => {
     if (suppliers.length > 0) {
@@ -177,12 +182,13 @@ export default function LeveranciersPage() {
   }, [suppliers, fetchEvaluationSummaries]);
 
   const openEvaluationModal = async (supplier: Supplier) => {
+    if (!currentVveId) return;
     setSelectedSupplierForEval(supplier);
     setError(null);
     try {
       const [evals, summary] = await Promise.all([
-        api.getSupplierEvaluations(vveId, supplier.id),
-        api.getSupplierEvaluationSummary(vveId, supplier.id),
+        api.getSupplierEvaluations(currentVveId, supplier.id),
+        api.getSupplierEvaluationSummary(currentVveId, supplier.id),
       ]);
       setEvaluations(evals);
       setEvaluationSummary(summary);
@@ -203,7 +209,7 @@ export default function LeveranciersPage() {
 
   const handleSubmitEvaluation = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedSupplierForEval || evalRating === 0) return;
+    if (!selectedSupplierForEval || evalRating === 0 || !currentVveId) return;
 
     setIsSubmittingEval(true);
     setError(null);
@@ -216,12 +222,12 @@ export default function LeveranciersPage() {
         is_anonymous: evalIsAnonymous,
       };
 
-      await api.createSupplierEvaluation(vveId, selectedSupplierForEval.id, evalData);
+      await api.createSupplierEvaluation(currentVveId, selectedSupplierForEval.id, evalData);
       
       // Refresh evaluations
       const [evals, summary] = await Promise.all([
-        api.getSupplierEvaluations(vveId, selectedSupplierForEval.id),
-        api.getSupplierEvaluationSummary(vveId, selectedSupplierForEval.id),
+        api.getSupplierEvaluations(currentVveId, selectedSupplierForEval.id),
+        api.getSupplierEvaluationSummary(currentVveId, selectedSupplierForEval.id),
       ]);
       setEvaluations(evals);
       setEvaluationSummary(summary);

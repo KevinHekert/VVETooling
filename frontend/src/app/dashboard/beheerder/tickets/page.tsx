@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
+import { useAuth } from '@/hooks/useAuth';
 import type { Ticket, TicketStatus, TicketCategory, TicketPriority } from '@/types';
 
 /**
@@ -42,6 +43,7 @@ const PRIORITY_LABELS: Record<TicketPriority, { label: string; color: string }> 
 };
 
 export default function BeheerderTicketsPage() {
+  const { currentVveId } = useAuth();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,11 +53,12 @@ export default function BeheerderTicketsPage() {
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
 
-  // TODO: Get VVE ID from context/session
-  const vveId = 'demo-vve-id';
-
   useEffect(() => {
     async function fetchTickets() {
+      if (!currentVveId) {
+        setIsLoading(false);
+        return;
+      }
       setIsLoading(true);
       try {
         const params: { status?: string; priority?: string; category?: string } = {};
@@ -63,7 +66,7 @@ export default function BeheerderTicketsPage() {
         if (priorityFilter !== 'all') params.priority = priorityFilter;
         if (categoryFilter !== 'all') params.category = categoryFilter;
         
-        const data = await api.getTickets(vveId, params);
+        const data = await api.getTickets(currentVveId, params);
         setTickets(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Kon tickets niet ophalen');
@@ -72,7 +75,7 @@ export default function BeheerderTicketsPage() {
       }
     }
     fetchTickets();
-  }, [statusFilter, priorityFilter, categoryFilter]);
+  }, [statusFilter, priorityFilter, categoryFilter, currentVveId]);
 
   // Stats for quick overview
   const stats = {

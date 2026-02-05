@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
+import { useAuth } from '@/hooks/useAuth';
 import type { Ticket, TicketStatus, TicketCategory, TicketPriority } from '@/types';
 
 /**
@@ -40,6 +41,7 @@ const PRIORITY_COLORS: Record<TicketPriority, string> = {
 };
 
 export default function TicketsPage() {
+  const { currentVveId } = useAuth();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -47,11 +49,13 @@ export default function TicketsPage() {
 
   useEffect(() => {
     async function fetchTickets() {
+      if (!currentVveId) {
+        setIsLoading(false);
+        return;
+      }
       try {
-        // TODO: Get VVE ID from context/session
-        const vveId = 'demo-vve-id';
         const params = statusFilter !== 'all' ? { status: statusFilter } : undefined;
-        const data = await api.getTickets(vveId, params);
+        const data = await api.getTickets(currentVveId, params);
         setTickets(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Kon tickets niet ophalen');
@@ -60,7 +64,7 @@ export default function TicketsPage() {
       }
     }
     fetchTickets();
-  }, [statusFilter]);
+  }, [statusFilter, currentVveId]);
 
   if (isLoading) {
     return (

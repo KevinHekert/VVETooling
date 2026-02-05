@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ProgressIndicator } from '@/components/ui/ProgressIndicator';
 import { api } from '@/lib/api';
+import { useAuth } from '@/hooks/useAuth';
 import type { TicketCategory, TicketCreate, TicketDraft } from '@/types';
 
 /**
@@ -42,6 +43,7 @@ const DRAFT_STORAGE_KEY = 'vve_ticket_draft';
 
 export default function NewTicketPage() {
   const router = useRouter();
+  const { currentVveId } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -117,14 +119,15 @@ export default function NewTicketPage() {
       setError('Vul alle verplichte velden in');
       return;
     }
+    if (!currentVveId) {
+      setError('Geen VVE geselecteerd');
+      return;
+    }
 
     setIsSubmitting(true);
     setError(null);
 
     try {
-      // TODO: Get VVE ID from context/session
-      const vveId = 'demo-vve-id';
-      
       const ticketData: TicketCreate = {
         title: draft.title,
         description: draft.description,
@@ -132,11 +135,11 @@ export default function NewTicketPage() {
         location: draft.location,
       };
 
-      const ticket = await api.createTicket(vveId, ticketData);
+      const ticket = await api.createTicket(currentVveId, ticketData);
 
       // Upload attachments if any
       for (const file of attachments) {
-        await api.uploadTicketAttachment(vveId, ticket.id, file);
+        await api.uploadTicketAttachment(currentVveId, ticket.id, file);
       }
 
       clearDraft();

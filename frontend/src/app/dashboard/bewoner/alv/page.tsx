@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
+import { useAuth } from '@/hooks/useAuth';
 import type {
   MeetingListItem,
   MeetingProxy,
@@ -35,6 +36,7 @@ const PROXY_STATUS_LABELS: Record<ProxyStatusType, { label: string; color: strin
 };
 
 export default function BewonerALVPage() {
+  const { currentVveId } = useAuth();
   const [meetings, setMeetings] = useState<MeetingListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -60,13 +62,14 @@ export default function BewonerALVPage() {
   });
   const [selectedAgendaItems, setSelectedAgendaItems] = useState<string[]>([]);
 
-  // TODO: Get VVE ID from context/session
-  const vveId = 'demo-vve-id';
-
   const fetchMeetings = async () => {
+    if (!currentVveId) {
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     try {
-      const data = await api.getMeetings(vveId, { upcoming_only: true });
+      const data = await api.getMeetings(currentVveId, { upcoming_only: true });
       setMeetings(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Kon vergaderingen niet ophalen');
@@ -77,9 +80,10 @@ export default function BewonerALVPage() {
 
   useEffect(() => {
     fetchMeetings();
-  }, []);
+  }, [currentVveId]);
 
   const handleSelectMeeting = async (meeting: MeetingListItem) => {
+    if (!currentVveId) return;
     setSelectedMeeting(meeting);
     setIsLoadingProxy(true);
     setError(null);
@@ -87,10 +91,10 @@ export default function BewonerALVPage() {
     try {
       // Load proxy data for this meeting
       const [myProxyData, receivedData, granteesData, agendaData] = await Promise.all([
-        api.getMyProxy(vveId, meeting.id).catch(() => null),
-        api.getReceivedProxies(vveId, meeting.id),
-        api.getEligibleGrantees(vveId, meeting.id),
-        api.getAgendaItems(vveId, meeting.id),
+        api.getMyProxy(currentVveId, meeting.id).catch(() => null),
+        api.getReceivedProxies(currentVveId, meeting.id),
+        api.getEligibleGrantees(currentVveId, meeting.id),
+        api.getAgendaItems(currentVveId, meeting.id),
       ]);
 
       setMyProxy(myProxyData);
@@ -106,7 +110,7 @@ export default function BewonerALVPage() {
 
   const handleSubmitProxy = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedMeeting) return;
+    if (!selectedMeeting || !currentVveId) return;
 
     setIsSubmittingProxy(true);
     setError(null);
@@ -122,7 +126,7 @@ export default function BewonerALVPage() {
         proxyData.agenda_item_ids = selectedAgendaItems;
       }
 
-      const newProxy = await api.createProxy(vveId, selectedMeeting.id, proxyData);
+      const newProxy = await api.createProxy(currentVveId, selectedMeeting.id, proxyData);
       setMyProxy(newProxy);
       setShowProxyForm(false);
       setSuccessMessage('Volmacht succesvol afgegeven! De gevolmachtigde ontvangt een bevestigingsverzoek.');
@@ -139,13 +143,13 @@ export default function BewonerALVPage() {
   };
 
   const handleRevokeProxy = async () => {
-    if (!selectedMeeting || !myProxy) return;
+    if (!selectedMeeting || !myProxy || !currentVveId) return;
 
     if (!confirm('Weet u zeker dat u deze volmacht wilt intrekken?')) return;
 
     setIsLoadingProxy(true);
     try {
-      const revokedProxy = await api.revokeProxy(vveId, selectedMeeting.id, myProxy.id);
+      const revokedProxy = await api.revokeProxy(currentVveId, selectedMeeting.id, myProxy.id);
       setMyProxy(revokedProxy);
       setSuccessMessage('Volmacht ingetrokken.');
       setTimeout(() => setSuccessMessage(null), 5000);
@@ -157,13 +161,13 @@ export default function BewonerALVPage() {
   };
 
   const handleConfirmProxy = async (proxyId: string) => {
-    if (!selectedMeeting) return;
+    if (!selectedMeeting || !currentVveId) return;
 
     setIsLoadingProxy(true);
     try {
-      await api.confirmProxy(vveId, selectedMeeting.id, proxyId);
+      await api.confirmProxy(currentVveId, selectedMeeting.id, proxyId);
       // Refresh received proxies
-      const receivedData = await api.getReceivedProxies(vveId, selectedMeeting.id);
+      const receivedData = await api.getReceivedProxies(currentVveId, selectedMeeting.id);
       setReceivedProxies(receivedData);
       setSuccessMessage('Volmacht bevestigd!');
       setTimeout(() => setSuccessMessage(null), 5000);

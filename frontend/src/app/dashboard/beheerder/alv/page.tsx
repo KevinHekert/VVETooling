@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
+import { useAuth } from '@/hooks/useAuth';
 import type { MeetingListItem, MeetingCreate, MeetingType, MeetingStatus, AgendaItem, AgendaItemCreate, MeetingInvitationPreview, MeetingRsvp, RsvpSummary, RsvpStatus, QuorumCalculation, ProxySummary, MeetingDecision, DecisionCreate, DecisionType } from '@/types';
 
 /**
@@ -38,6 +39,7 @@ const DECISION_TYPE_LABELS: Record<DecisionType, { label: string; color: string 
 };
 
 export default function ALVPage() {
+  const { currentVveId } = useAuth();
   const [meetings, setMeetings] = useState<MeetingListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -96,18 +98,19 @@ export default function ALVPage() {
   });
   const [isSubmittingActionItem, setIsSubmittingActionItem] = useState(false);
 
-  // TODO: Get VVE ID from context/session
-  const vveId = 'demo-vve-id';
-
   // Calculate minimum date (8 days from now)
   const minDate = new Date();
   minDate.setDate(minDate.getDate() + 8);
   const minDateStr = minDate.toISOString().split('T')[0];
 
   const fetchMeetings = async () => {
+    if (!currentVveId) {
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     try {
-      const data = await api.getMeetings(vveId, { upcoming_only: !showPast });
+      const data = await api.getMeetings(currentVveId, { upcoming_only: !showPast });
       setMeetings(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Kon vergaderingen niet ophalen');
@@ -118,9 +121,10 @@ export default function ALVPage() {
 
   // STORY-077: Load action items for selected meeting
   const loadActionItems = async (meetingId: string) => {
+    if (!currentVveId) return;
     setIsLoadingActionItems(true);
     try {
-      const data = await api.listDecisions(vveId, meetingId, 'actiepunt');
+      const data = await api.listDecisions(currentVveId, meetingId, 'actiepunt');
       setActionItems(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Kon actiepunten niet ophalen');
@@ -136,7 +140,7 @@ export default function ALVPage() {
     
     setIsSubmittingActionItem(true);
     try {
-      await api.createDecision(vveId, selectedMeeting.id, newActionItem);
+      await api.createDecision(currentVveId!, selectedMeeting.id, newActionItem);
       setSuccessMessage('Actiepunt toegevoegd');
       setNewActionItem({
         decision_type: 'actiepunt',
@@ -163,7 +167,7 @@ export default function ALVPage() {
     setError(null);
 
     try {
-      await api.createMeeting(vveId, {
+      await api.createMeeting(currentVveId!, {
         ...formData,
         meeting_date: new Date(formData.meeting_date).toISOString(),
         end_time: formData.end_time ? new Date(formData.end_time).toISOString() : undefined,
@@ -192,7 +196,7 @@ export default function ALVPage() {
     setIsLoadingAgenda(true);
     setError(null);
     try {
-      const items = await api.getAgendaItems(vveId, meeting.id);
+      const items = await api.getAgendaItems(currentVveId!, meeting.id);
       setAgendaItems(items);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Kon agenda niet ophalen');
@@ -231,7 +235,7 @@ export default function ALVPage() {
     setIsSubmittingAgenda(true);
     setError(null);
     try {
-      const item = await api.createAgendaItem(vveId, selectedMeeting.id, newAgendaItem);
+      const item = await api.createAgendaItem(currentVveId!, selectedMeeting.id, newAgendaItem);
       setAgendaItems([...agendaItems, item]);
       setNewAgendaItem({ title: '', duration_minutes: 10 });
       setShowAgendaForm(false);
@@ -247,7 +251,7 @@ export default function ALVPage() {
   const handleDeleteAgendaItem = async (itemId: string) => {
     if (!selectedMeeting) return;
     try {
-      await api.deleteAgendaItem(vveId, selectedMeeting.id, itemId);
+      await api.deleteAgendaItem(currentVveId!, selectedMeeting.id, itemId);
       setAgendaItems(agendaItems.filter(item => item.id !== itemId));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Kon agendapunt niet verwijderen');
@@ -269,7 +273,7 @@ export default function ALVPage() {
     
     // Persist new order
     try {
-      await api.reorderAgendaItems(vveId, selectedMeeting.id, {
+      await api.reorderAgendaItems(currentVveId!, selectedMeeting.id, {
         item_ids: newItems.map(item => item.id),
       });
     } catch (err) {
@@ -334,7 +338,7 @@ export default function ALVPage() {
     try {
       const [rsvps, summary] = await Promise.all([
         api.listRsvps(vveId, meeting.id),
-        api.getRsvpSummary(vveId, meeting.id),
+        api.getRsvpSummary(currentVveId!, meeting.id),
       ]);
       setRsvpList(rsvps);
       setRsvpSummary(summary);
@@ -360,7 +364,7 @@ export default function ALVPage() {
     try {
       const [quorum, proxies] = await Promise.all([
         api.getQuorum(vveId, meeting.id),
-        api.getProxySummary(vveId, meeting.id),
+        api.getProxySummary(currentVveId!, meeting.id),
       ]);
       setQuorumData(quorum);
       setProxySummary(proxies);

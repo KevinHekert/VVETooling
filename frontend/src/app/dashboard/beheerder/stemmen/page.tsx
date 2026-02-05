@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
+import { useAuth } from '@/hooks/useAuth';
 import type { VotingProxyListItem, VotingProxy, VotingProxyStatus, VotingListItem, Voting, VotingStatus, VotingCreate, VotingResults } from '@/types';
 
 /**
@@ -32,6 +33,7 @@ const VOTING_STATUS_LABELS: Record<VotingStatus, { label: string; color: string;
 type TabType = 'votings' | 'proxies';
 
 export default function DigitalVotingPage() {
+  const { currentVveId } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('votings');
   
   // Voting state (STORY-113)
@@ -59,14 +61,15 @@ export default function DigitalVotingPage() {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // TODO: Get VVE ID from context/session
-  const vveId = 'demo-vve-id';
-
   // Fetch votings (STORY-113)
   const fetchVotings = async () => {
+    if (!currentVveId) {
+      setIsLoadingVotings(false);
+      return;
+    }
     setIsLoadingVotings(true);
     try {
-      const data = await api.listVotings(vveId);
+      const data = await api.listVotings(currentVveId);
       setVotings(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Kon stemmingen niet ophalen');
@@ -80,7 +83,7 @@ export default function DigitalVotingPage() {
     e.preventDefault();
     setIsCreating(true);
     try {
-      await api.createVoting(vveId, newVoting);
+      await api.createVoting(currentVveId!, newVoting);
       setSuccessMessage('Stemming aangemaakt');
       setShowCreateForm(false);
       setNewVoting({
@@ -102,7 +105,7 @@ export default function DigitalVotingPage() {
   // Open voting (STORY-113)
   const handleOpenVoting = async (votingId: string) => {
     try {
-      await api.openVoting(vveId, votingId);
+      await api.openVoting(currentVveId!, votingId);
       setSuccessMessage('Stemming geopend');
       fetchVotings();
       setTimeout(() => setSuccessMessage(null), 3000);
@@ -114,7 +117,7 @@ export default function DigitalVotingPage() {
   // Close voting (STORY-115)
   const handleCloseVoting = async (votingId: string) => {
     try {
-      await api.closeVoting(vveId, votingId);
+      await api.closeVoting(currentVveId!, votingId);
       setSuccessMessage('Stemming gesloten');
       fetchVotings();
       setTimeout(() => setSuccessMessage(null), 3000);
@@ -127,8 +130,8 @@ export default function DigitalVotingPage() {
   const handleViewResults = async (voting: VotingListItem) => {
     try {
       const [details, results] = await Promise.all([
-        api.getVoting(vveId, voting.id),
-        api.getVotingResults(vveId, voting.id),
+        api.getVoting(currentVveId!, voting.id),
+        api.getVotingResults(currentVveId!, voting.id),
       ]);
       setSelectedVoting(details);
       setVotingResults(results);
@@ -142,7 +145,7 @@ export default function DigitalVotingPage() {
     setIsLoadingProxies(true);
     try {
       const params = statusFilter ? { status: statusFilter } : undefined;
-      const data = await api.listVotingProxies(vveId, params);
+      const data = await api.listVotingProxies(currentVveId!, params);
       setProxies(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Kon volmachten niet ophalen');
@@ -161,7 +164,7 @@ export default function DigitalVotingPage() {
 
   const handleViewProxy = async (proxyId: string) => {
     try {
-      const proxy = await api.getVotingProxy(vveId, proxyId);
+      const proxy = await api.getVotingProxy(currentVveId!, proxyId);
       setSelectedProxy(proxy);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Kon volmacht niet ophalen');
@@ -174,7 +177,7 @@ export default function DigitalVotingPage() {
       setSuccessMessage('Volmacht bevestigd!');
       fetchProxies();
       if (selectedProxy?.id === proxyId) {
-        const updated = await api.getVotingProxy(vveId, proxyId);
+        const updated = await api.getVotingProxy(currentVveId!, proxyId);
         setSelectedProxy(updated);
       }
       setTimeout(() => setSuccessMessage(null), 3000);
@@ -190,7 +193,7 @@ export default function DigitalVotingPage() {
       setSuccessMessage('Volmacht ingetrokken!');
       fetchProxies();
       if (selectedProxy?.id === proxyId) {
-        const updated = await api.getVotingProxy(vveId, proxyId);
+        const updated = await api.getVotingProxy(currentVveId!, proxyId);
         setSelectedProxy(updated);
       }
       setTimeout(() => setSuccessMessage(null), 3000);
